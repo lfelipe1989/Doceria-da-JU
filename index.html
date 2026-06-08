@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Doceria da Ju Artesanais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --pink:        #F2A7C3;
+    --pink-dark:   #D4759C;
+    --pink-pale:   #FDF0F6;
+    --pink-border: rgba(242,167,195,0.5);
+    --tiffany:     #5BC8C0;
+    --tiffany-dark:#3AADA5;
+    --tiffany-pale:#EAF8F7;
+    --brown:       #4A2410;
+    --brown-mid:   #7A4020;
+    --cream:       #FFF9FB;
+    --text:        #3A1A10;
+    --muted:       #9A6070;
+    --border:      rgba(74,36,16,0.10);
+    --radius:      16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+
+  header {
+    background: white;
+    border-bottom: 2px solid var(--pink-border);
+    padding: 1.5rem 1rem 1.25rem;
+    text-align: center;
+  }
+  header img.logo { width: 110px; height: 110px; object-fit: contain; display: block; margin: 0 auto 0.25rem; }
+  .logo-sub {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  main { max-width: 480px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+
+  .section-label {
+    font-size: 0.7rem; font-weight: 500; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem;
+  }
+
+  .products { display: flex; flex-direction: column; gap: 10px; margin-bottom: 2rem; }
+  .product {
+    background: white; border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 1rem 1.25rem;
+    display: flex; align-items: center; gap: 1rem; transition: all 0.2s;
+  }
+  .product.selected {
+    border-color: var(--pink);
+    background: var(--pink-pale);
+    box-shadow: 0 0 0 3px rgba(242,167,195,0.18);
+  }
+  .product-emoji { font-size: 2rem; flex-shrink: 0; }
+  .product-info { flex: 1; }
+  .product-name { font-weight: 500; font-size: 1rem; }
+  .product-desc { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+  .product-price { font-weight: 500; color: var(--tiffany-dark); font-size: 0.9rem; margin-top: 3px; }
+
+  .qty-ctrl { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .qty-btn {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--pink-pale); border: 1.5px solid var(--pink-border);
+    font-size: 1.1rem; cursor: pointer; color: var(--pink-dark);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s; flex-shrink: 0;
+  }
+  .qty-btn:hover { background: var(--pink); color: white; }
+  .qty-num { font-size: 1rem; font-weight: 500; min-width: 18px; text-align: center; color: var(--text); }
+
+  .form-group { margin-bottom: 1rem; }
+  label { font-size: 0.8rem; font-weight: 500; color: var(--muted); display: block; margin-bottom: 0.4rem; }
+  input, textarea {
+    width: 100%; padding: 0.75rem 1rem;
+    border: 1.5px solid var(--border); border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+    background: white; color: var(--text); transition: border-color 0.2s; outline: none;
+  }
+  input:focus, textarea:focus { border-color: var(--pink); }
+  textarea { resize: none; }
+
+  .delivery-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+  .delivery-opt {
+    border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 0.75rem; cursor: pointer; text-align: center; background: white; transition: all 0.2s;
+  }
+  .delivery-opt:hover { border-color: var(--tiffany); }
+  .delivery-opt.selected { border-color: var(--tiffany); background: var(--tiffany-pale); }
+  .delivery-opt .d-icon { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+  .delivery-opt .d-label { font-size: 0.8rem; font-weight: 500; }
+  .delivery-opt .d-sub { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+  .info-box {
+    background: #EAF8F7; border: 1px solid #5BC8C0; border-radius: 10px;
+    padding: 0.75rem 1rem; font-size: 0.8rem; color: #2A7A76;
+    margin-bottom: 1rem; display: none;
+  }
+  .info-box.show { display: block; }
+
+  .summary {
+    background: white; border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem; display: none;
+  }
+  .summary.show { display: block; }
+  .summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; padding: 4px 0; color: var(--text); }
+  .summary-row.total { font-weight: 500; font-size: 1rem; border-top: 1px solid var(--border); margin-top: 6px; padding-top: 10px; }
+
+  .btn-order {
+    width: 100%; background: var(--tiffany); color: white;
+    border: none; border-radius: var(--radius); padding: 1rem;
+    font-family: 'Playfair Display', serif; font-size: 1.1rem;
+    font-style: italic; cursor: pointer; transition: background 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .btn-order:hover { background: var(--tiffany-dark); }
+
+  #screen-tracking { display: none; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .track-header { text-align: center; padding: 1.5rem 0 1rem; }
+  .track-icon { margin-bottom: 0.5rem; }
+  .track-icon img { width: 70px; height: 70px; object-fit: contain; }
+  .track-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--brown); }
+  .track-sub { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+
+  .track-status {
+    background: white; border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;
+  }
+  .status-badge {
+    display: inline-block; padding: 4px 14px; border-radius: 20px;
+    font-size: 0.8rem; font-weight: 500;
+    background: var(--tiffany-pale); color: var(--tiffany-dark); margin-bottom: 1rem;
+  }
+  .timeline { padding-left: 1.5rem; }
+  .tl-step { position: relative; padding-bottom: 1.25rem; }
+  .tl-step:last-child { padding-bottom: 0; }
+  .tl-step::before {
+    content: ''; position: absolute; left: -1.25rem; top: 14px;
+    width: 1px; height: calc(100% - 6px); background: var(--border);
+  }
+  .tl-step:last-child::before { display: none; }
+  .tl-dot {
+    position: absolute; left: -1.625rem; top: 3px;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid var(--border); background: white; transition: all 0.3s;
+  }
+  .tl-dot.done { background: var(--tiffany); border-color: var(--tiffany); }
+  .tl-dot.active { background: white; border-color: var(--pink); box-shadow: 0 0 0 3px rgba(242,167,195,0.3); }
+  .tl-text { font-size: 0.9rem; font-weight: 500; }
+  .tl-sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+  .payment-section {
+    background: white; border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;
+  }
+  .payment-title { font-size: 0.85rem; font-weight: 500; margin-bottom: 1rem; color: var(--brown); }
+  .pay-options { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .pay-opt {
+    border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 0.75rem 0.5rem; text-align: center; cursor: pointer;
+    transition: all 0.2s; background: white;
+  }
+  .pay-opt:hover, .pay-opt.selected { border-color: var(--tiffany); background: var(--tiffany-pale); }
+  .pay-opt .p-icon { font-size: 1.3rem; margin-bottom: 4px; }
+  .pay-opt .p-name { font-size: 0.72rem; font-weight: 500; }
+
+  .btn-pay {
+    width: 100%; background: var(--pink); color: white;
+    border: none; border-radius: var(--radius); padding: 1rem;
+    font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 500;
+    cursor: pointer; transition: background 0.2s; margin-top: 0.75rem;
+  }
+  .btn-pay:hover { background: var(--pink-dark); }
+
+  .order-detail {
+    background: var(--pink-pale); border: 1px solid var(--pink-border);
+    border-radius: 10px; padding: 0.75rem 1rem;
+    font-size: 0.85rem; color: var(--brown); margin-bottom: 1rem; line-height: 1.7;
+  }
+
+  .new-order-link {
+    text-align: center; margin-top: 1rem; font-size: 0.85rem;
+    color: var(--muted); cursor: pointer; text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img class="logo" src="logo.jpg" alt="Doceria da Ju Artesanais"/>
+  <p class="logo-sub">Feito com amor · Sul da Ilha · Florianópolis</p>
+</header>
+
+<div id="screen-order">
+<main>
+
+  <div style="margin-bottom:2rem;">
+    <p class="section-label">Escolha os sabores</p>
+    <div class="products">
+      <div class="product" id="prod-nutella">
+        <span class="product-emoji">🫙</span>
+        <div class="product-info">
+          <div class="product-name">Nutella</div>
+          <div class="product-desc">Cookie recheado com creme de avelã</div>
+          <div class="product-price">R$ 6,50 cada</div>
+        </div>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="changeQty('nutella',-1)">−</button>
+          <span class="qty-num" id="qty-nutella">0</span>
+          <button class="qty-btn" onclick="changeQty('nutella',1)">+</button>
+        </div>
+      </div>
+      <div class="product" id="prod-redvelvet">
+        <span class="product-emoji">❤️</span>
+        <div class="product-info">
+          <div class="product-name">Red Velvet</div>
+          <div class="product-desc">Massa aveludada com gotas de chocolate branco</div>
+          <div class="product-price">R$ 6,50 cada</div>
+        </div>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="changeQty('redvelvet',-1)">−</button>
+          <span class="qty-num" id="qty-redvelvet">0</span>
+          <button class="qty-btn" onclick="changeQty('redvelvet',1)">+</button>
+        </div>
+      </div>
+      <div class="product" id="prod-oreo">
+        <span class="product-emoji">🖤</span>
+        <div class="product-info">
+          <div class="product-name">Oreo</div>
+          <div class="product-desc">Massa de chocolate com pedaços de Oreo</div>
+          <div class="product-price">R$ 6,50 cada</div>
+        </div>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="changeQty('oreo',-1)">−</button>
+          <span class="qty-num" id="qty-oreo">0</span>
+          <button class="qty-btn" onclick="changeQty('oreo',1)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:2rem;">
+    <p class="section-label">Entrega</p>
+    <div class="delivery-options">
+      <div class="delivery-opt selected" id="del-sul" onclick="selectDelivery('sul')">
+        <span class="d-icon">🏝️</span>
+        <div class="d-label">Sul da Ilha</div>
+        <div class="d-sub">Entrega grátis</div>
+      </div>
+      <div class="delivery-opt" id="del-outro" onclick="selectDelivery('outro')">
+        <span class="d-icon">📍</span>
+        <div class="d-label">Outro bairro</div>
+        <div class="d-sub">A combinar</div>
+      </div>
+    </div>
+    <div class="info-box" id="info-outro">
+      📋 Para entregas fora do Sul da Ilha, o pedido mínimo e o frete serão combinados via WhatsApp após o envio.
+    </div>
+  </div>
+
+  <div style="margin-bottom:2rem;">
+    <p class="section-label">Seus dados</p>
+    <div class="form-group">
+      <label>Nome completo</label>
+      <input type="text" id="f-name" placeholder="Ex: Juliana Mendes"/>
+    </div>
+    <div class="form-group">
+      <label>WhatsApp</label>
+      <input type="tel" id="f-phone" placeholder="(48) 99999-0000"/>
+    </div>
+    <div class="form-group">
+      <label>Endereço de entrega</label>
+      <input type="text" id="f-address" placeholder="Rua, número, bairro"/>
+    </div>
+    <div class="form-group">
+      <label>Observações (opcional)</label>
+      <textarea id="f-obs" rows="2" placeholder="Ex: embalagem presenteável, sem recheio extra..."></textarea>
+    </div>
+  </div>
+
+  <div class="summary" id="summary">
+    <p style="font-size:0.8rem; font-weight:500; color:var(--muted); margin-bottom:8px;">Resumo do pedido</p>
+    <div id="sum-items"></div>
+    <div class="summary-row"><span>Entrega</span><span id="sum-frete">Grátis</span></div>
+    <div class="summary-row total"><span>Total</span><span id="sum-total">-</span></div>
+  </div>
+
+  <button class="btn-order" onclick="submitOrder()">Fazer pedido 🍪</button>
+</main>
+</div>
+
+<div id="screen-tracking">
+<main>
+  <div class="track-header">
+    <div class="track-icon"><img src="logo.jpg" alt="logo"/></div>
+    <div class="track-title">Pedido enviado!</div>
+    <div class="track-sub">Aguardando confirmação da Ju</div>
+  </div>
+
+  <div class="order-detail" id="order-detail-box"></div>
+
+  <div class="payment-section" id="payment-section">
+    <div class="payment-title">💳 Forma de pagamento</div>
+    <div class="pay-options">
+      <div class="pay-opt selected" id="pay-pix" onclick="selectPay('pix')">
+        <div class="p-icon">⚡</div><div class="p-name">Pix</div>
+      </div>
+      <div class="pay-opt" id="pay-card" onclick="selectPay('card')">
+        <div class="p-icon">💳</div><div class="p-name">Cartão</div>
+      </div>
+      <div class="pay-opt" id="pay-boleto" onclick="selectPay('boleto')">
+        <div class="p-icon">🏦</div><div class="p-name">Boleto</div>
+      </div>
+    </div>
+    <button class="btn-pay" onclick="simulatePay()">Pagar agora via Mercado Pago</button>
+  </div>
+
+  <div class="track-status">
+    <div class="status-badge" id="status-badge">Aguardando confirmação</div>
+    <div class="timeline">
+      <div class="tl-step">
+        <div class="tl-dot done" id="tl-1"></div>
+        <div class="tl-text">Pedido recebido</div>
+        <div class="tl-sub">Estamos vendo seu pedido</div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-dot" id="tl-2"></div>
+        <div class="tl-text">Pedido confirmado</div>
+        <div class="tl-sub">A Ju aceitou e vai preparar</div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-dot" id="tl-3"></div>
+        <div class="tl-text">Em preparo 🧁</div>
+        <div class="tl-sub">Seus cookies estão no forno</div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-dot" id="tl-4"></div>
+        <div class="tl-text">Saiu para entrega 🛵</div>
+        <div class="tl-sub">A caminho de você!</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="new-order-link" onclick="resetAll()">← Fazer novo pedido</p>
+</main>
+</div>
+
+<script>
+const PRICE = 6.50;
+const products = {
+  nutella:   { name: 'Nutella',    emoji: '🫙' },
+  redvelvet: { name: 'Red Velvet', emoji: '❤️' },
+  oreo:      { name: 'Oreo',       emoji: '🖤' }
+};
+const qtys = { nutella: 0, redvelvet: 0, oreo: 0 };
+let delivery = 'sul';
+
+function changeQty(key, delta) {
+  qtys[key] = Math.max(0, qtys[key] + delta);
+  document.getElementById('qty-' + key).textContent = qtys[key];
+  document.getElementById('prod-' + key).classList.toggle('selected', qtys[key] > 0);
+  updateSummary();
+}
+
+function totalQty() { return qtys.nutella + qtys.redvelvet + qtys.oreo; }
+function totalValue() { return totalQty() * PRICE; }
+
+function updateSummary() {
+  if (totalQty() === 0) { document.getElementById('summary').classList.remove('show'); return; }
+  const lines = Object.entries(qtys).filter(([k,q]) => q > 0)
+    .map(([k,q]) => `<div class="summary-row"><span>${q}x Cookie ${products[k].name}</span><span>R$ ${(q*PRICE).toFixed(2).replace('.',',')}</span></div>`).join('');
+  document.getElementById('sum-items').innerHTML = lines;
+  document.getElementById('sum-frete').textContent = delivery === 'sul' ? 'Grátis' : 'A combinar';
+  document.getElementById('sum-total').textContent = 'R$ ' + totalValue().toFixed(2).replace('.',',') + (delivery==='outro' ? ' + frete' : '');
+  document.getElementById('summary').classList.add('show');
+}
+
+function selectDelivery(type) {
+  delivery = type;
+  document.getElementById('del-sul').classList.toggle('selected', type==='sul');
+  document.getElementById('del-outro').classList.toggle('selected', type==='outro');
+  document.getElementById('info-outro').classList.toggle('show', type==='outro');
+  updateSummary();
+}
+
+function submitOrder() {
+  const name = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const address = document.getElementById('f-address').value.trim();
+  if (totalQty() === 0) { alert('Por favor adicione pelo menos um cookie!'); return; }
+  if (!name || !phone || !address) { alert('Por favor preencha seu nome, WhatsApp e endereço!'); return; }
+  const itemLines = Object.entries(qtys).filter(([k,q]) => q > 0)
+    .map(([k,q]) => products[k].emoji + ' ' + q + 'x ' + products[k].name).join('<br>');
+  document.getElementById('order-detail-box').innerHTML =
+    '<strong>' + itemLines + '</strong><br><br>👤 ' + name + '<br>📍 ' + address +
+    '<br>💰 Total: R$ ' + totalValue().toFixed(2).replace('.',',');
+  document.getElementById('screen-order').style.display = 'none';
+  document.getElementById('screen-tracking').style.display = 'block';
+}
+
+let paySelected = 'pix';
+function selectPay(type) {
+  paySelected = type;
+  ['pix','card','boleto'].forEach(t => document.getElementById('pay-'+t).classList.toggle('selected', t===type));
+}
+
+function simulatePay() {
+  document.getElementById('payment-section').innerHTML = '<div style="text-align:center;padding:1rem;"><div style="font-size:2rem;margin-bottom:8px;">✅</div><p style="font-weight:500;color:#2a7a3a;">Pagamento confirmado!</p><p style="font-size:0.8rem;color:var(--muted);margin-top:4px;">Agora é só aguardar a confirmação da Ju 🍪</p></div>';
+}
+
+let trackStep = 0;
+const statusLabels = ['Aguardando confirmação','Pedido confirmado ✓','Em preparo 🧁','Saiu para entrega 🛵'];
+
+function resetAll() {
+  Object.keys(qtys).forEach(k => { qtys[k]=0; document.getElementById('qty-'+k).textContent=0; document.getElementById('prod-'+k).classList.remove('selected'); });
+  delivery='sul'; trackStep=0;
+  document.getElementById('screen-order').style.display='block';
+  document.getElementById('screen-tracking').style.display='none';
+  document.getElementById('summary').classList.remove('show');
+  ['f-name','f-phone','f-address','f-obs'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('del-sul').classList.add('selected');
+  document.getElementById('del-outro').classList.remove('selected');
+  document.getElementById('info-outro').classList.remove('show');
+}
+</script>
+</body>
+</html>
