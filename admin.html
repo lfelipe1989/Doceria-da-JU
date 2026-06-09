@@ -8,142 +8,124 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
   :root {
-    --pink:        #F2A7C3;
-    --pink-dark:   #D4759C;
-    --pink-pale:   #FDF0F6;
-    --pink-border: rgba(242,167,195,0.4);
-    --tiffany:     #5BC8C0;
-    --tiffany-dark:#3AADA5;
-    --tiffany-pale:#EAF8F7;
-    --brown:       #4A2410;
-    --brown-mid:   #7A4020;
-    --cream:       #FFF9FB;
-    --text:        #3A1A10;
-    --muted:       #9A6070;
-    --border:      rgba(74,36,16,0.10);
-    --green: #1A6B3C; --green-bg: #E8F5EE;
-    --blue: #1A4A7A; --blue-bg: #E8F0FA;
-    --purple: #4A2A7A; --purple-bg: #F0EAF8;
-    --red: #8B1A1A; --red-bg: #FAE8E8;
-    --radius: 14px;
+    --pink:#F2A7C3; --pink-dark:#D4759C; --pink-pale:#FDF0F6; --pink-border:rgba(242,167,195,0.4);
+    --tiffany:#5BC8C0; --tiffany-dark:#3AADA5; --tiffany-pale:#EAF8F7;
+    --brown:#4A2410; --cream:#FFF9FB; --text:#3A1A10; --muted:#9A6070; --border:rgba(74,36,16,0.10);
+    --green:#1A6B3C; --green-bg:#E8F5EE; --blue:#1A4A7A; --blue-bg:#E8F0FA;
+    --purple:#4A2A7A; --purple-bg:#F0EAF8; --red:#8B1A1A; --red-bg:#FAE8E8;
+    --radius:14px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--pink-pale); color: var(--text); min-height: 100vh; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'DM Sans',sans-serif; background:var(--pink-pale); color:var(--text); min-height:100vh; }
 
-  /* SIDEBAR */
-  .layout { display: flex; min-height: 100vh; }
-  .sidebar {
-    width: 220px; background: var(--brown); padding: 1.5rem 1rem;
-    display: flex; flex-direction: column; flex-shrink: 0;
-  }
-  .sidebar-logo { color: var(--pink); margin-bottom: 2rem; padding: 0 0.5rem; text-align:center; }
-  .sidebar-logo img { width: 70px; height: 70px; object-fit: contain; border-radius: 50%; margin-bottom: 6px; }
-  .sidebar-logo .s-title { font-family: 'Playfair Display', serif; font-size: 0.9rem; line-height: 1.2; color: var(--pink); }
-  .sidebar-logo .s-sub { font-size: 0.65rem; opacity: 0.5; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; color: var(--pink); }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 0.6rem 0.75rem; border-radius: 8px;
-    color: rgba(242,167,195,0.6); font-size: 0.85rem;
-    cursor: pointer; margin-bottom: 4px; transition: all 0.15s;
-  }
-  .nav-item:hover { color: var(--pink); background: rgba(255,255,255,0.05); }
-  .nav-item.active { color: var(--pink); background: rgba(242,167,195,0.15); }
-  .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+  /* LOGIN */
+  #login-screen { position:fixed; inset:0; z-index:9999; background:var(--brown); display:flex; align-items:center; justify-content:center; }
+  .login-box { background:white; border-radius:20px; padding:2.5rem 2rem; width:100%; max-width:360px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+  .login-box img { width:90px; height:90px; object-fit:contain; margin-bottom:1rem; }
+  .login-box h2 { font-family:'Playfair Display',serif; font-size:1.3rem; color:var(--brown); margin-bottom:0.25rem; }
+  .login-box p { font-size:0.8rem; color:var(--muted); margin-bottom:1.5rem; }
+  .login-input { width:100%; padding:0.85rem 1rem; border:1.5px solid var(--pink-border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:1rem; color:var(--text); outline:none; margin-bottom:0.75rem; text-align:center; letter-spacing:0.2em; transition:border-color 0.2s; }
+  .login-input:focus { border-color:var(--pink); }
+  .login-btn { width:100%; padding:0.85rem; background:var(--tiffany); color:white; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:1rem; font-weight:500; cursor:pointer; transition:background 0.2s; }
+  .login-btn:hover { background:var(--tiffany-dark); }
+  .login-error { font-size:0.8rem; color:#B03030; margin-top:0.5rem; display:none; }
+  .login-error.show { display:block; }
 
-  /* MAIN */
-  .content { flex: 1; padding: 1.5rem; overflow-y: auto; }
-  .page { display: none; }
-  .page.active { display: block; }
+  /* LAYOUT */
+  .layout { display:flex; min-height:100vh; }
+  .sidebar { width:220px; background:var(--brown); padding:1.5rem 1rem; display:flex; flex-direction:column; flex-shrink:0; }
+  .sidebar-logo { color:var(--pink); margin-bottom:2rem; padding:0 0.5rem; text-align:center; }
+  .sidebar-logo img { width:70px; height:70px; object-fit:contain; border-radius:50%; margin-bottom:6px; }
+  .sidebar-logo .s-title { font-family:'Playfair Display',serif; font-size:0.9rem; line-height:1.2; color:var(--pink); }
+  .sidebar-logo .s-sub { font-size:0.65rem; opacity:0.5; letter-spacing:0.1em; text-transform:uppercase; margin-top:2px; color:var(--pink); }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:0.6rem 0.75rem; border-radius:8px; color:rgba(242,167,195,0.6); font-size:0.85rem; cursor:pointer; margin-bottom:4px; transition:all 0.15s; }
+  .nav-item:hover { color:var(--pink); background:rgba(255,255,255,0.05); }
+  .nav-item.active { color:var(--pink); background:rgba(242,167,195,0.15); }
+  .nav-icon { font-size:1rem; width:20px; text-align:center; }
 
-  .page-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--brown); margin-bottom: 1.5rem; }
+  .content { flex:1; padding:1.5rem; overflow-y:auto; }
+  .page { display:none; }
+  .page.active { display:block; }
+  .page-title { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--brown); margin-bottom:1.5rem; }
 
   /* METRICS */
-  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
-  .metric {
-    background: white; border-radius: var(--radius);
-    padding: 1rem 1.25rem; border: 1px solid var(--pink-border);
-  }
-  .metric-val { font-size: 1.6rem; font-weight: 500; color: var(--brown); }
-  .metric-lbl { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
-  .metric-badge { display: inline-block; font-size: 0.7rem; background: var(--tiffany-pale); color: var(--tiffany-dark); padding: 2px 8px; border-radius: 20px; margin-top: 6px; }
+  .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:1.5rem; }
+  .metric { background:white; border-radius:var(--radius); padding:1rem 1.25rem; border:1px solid var(--pink-border); }
+  .metric-val { font-size:1.6rem; font-weight:500; color:var(--brown); }
+  .metric-lbl { font-size:0.75rem; color:var(--muted); margin-top:4px; }
+  .metric-new { display:inline-block; font-size:0.7rem; background:var(--tiffany-pale); color:var(--tiffany-dark); padding:2px 8px; border-radius:20px; margin-top:6px; }
 
   /* ORDERS */
-  .orders-grid { display: flex; flex-direction: column; gap: 10px; }
-  .order-card {
-    background: white; border-radius: var(--radius);
-    border: 1px solid var(--pink-border); padding: 1rem 1.25rem;
-    transition: box-shadow 0.2s;
-  }
-  .order-card:hover { box-shadow: 0 2px 12px rgba(242,167,195,0.2); }
-  .order-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem; }
-  .order-client { font-weight: 500; font-size: 0.95rem; }
-  .order-detail { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
-  .order-time { font-size: 0.75rem; color: var(--muted); }
-  .badge {
-    display: inline-block; font-size: 0.72rem; font-weight: 500;
-    padding: 3px 10px; border-radius: 20px;
-  }
-  .badge-wait { background: #FEF3E2; color: #8B5E00; }
-  .badge-accepted { background: var(--blue-bg); color: var(--blue); }
-  .badge-prep { background: var(--purple-bg); color: var(--purple); }
-  .badge-delivery { background: var(--green-bg); color: var(--green); }
-  .badge-done { background: #F0F0F0; color: #666; }
-  .badge-paid { background: var(--green-bg); color: var(--green); font-size: 0.65rem; }
+  .orders-grid { display:flex; flex-direction:column; gap:10px; }
+  .order-card { background:white; border-radius:var(--radius); border:1px solid var(--pink-border); padding:1rem 1.25rem; transition:box-shadow 0.2s; }
+  .order-card:hover { box-shadow:0 2px 12px rgba(242,167,195,0.2); }
+  .order-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:0.75rem; }
+  .order-client { font-weight:500; font-size:0.95rem; }
+  .order-detail { font-size:0.8rem; color:var(--muted); margin-top:3px; }
+  .order-time { font-size:0.75rem; color:var(--muted); }
+  .badge { display:inline-block; font-size:0.72rem; font-weight:500; padding:3px 10px; border-radius:20px; }
+  .badge-wait { background:#FEF3E2; color:#8B5E00; }
+  .badge-accepted { background:var(--blue-bg); color:var(--blue); }
+  .badge-prep { background:var(--purple-bg); color:var(--purple); }
+  .badge-delivery { background:var(--green-bg); color:var(--green); }
+  .badge-done { background:#F0F0F0; color:#666; }
+  .order-actions { display:flex; gap:8px; margin-top:0.75rem; flex-wrap:wrap; }
+  .action-btn { padding:5px 14px; border-radius:8px; border:1px solid; cursor:pointer; font-size:0.78rem; font-weight:500; font-family:'DM Sans',sans-serif; transition:all 0.15s; }
+  .action-btn:hover { opacity:0.85; }
+  .btn-accept { background:var(--blue-bg); color:var(--blue); border-color:#B5CEF0; }
+  .btn-prep { background:var(--purple-bg); color:var(--purple); border-color:#CEBEF0; }
+  .btn-deliver { background:var(--green-bg); color:var(--green); border-color:#A5D5B5; }
+  .btn-done { background:#F0F0F0; color:#666; border-color:#DDD; }
+  .btn-reject { background:var(--red-bg); color:var(--red); border-color:#F0B5B5; }
+  .btn-wpp { background:#E7F7EF; color:#1A6B3C; border-color:#A5D5B5; font-weight:500; }
+  .btn-paid { background:var(--green-bg); color:var(--green); border-color:#A5D5B5; }
 
-  .order-actions { display: flex; gap: 8px; margin-top: 0.75rem; flex-wrap: wrap; }
-  .action-btn {
-    padding: 5px 14px; border-radius: 8px; border: 1px solid; cursor: pointer;
-    font-size: 0.78rem; font-weight: 500; font-family: 'DM Sans', sans-serif;
-    transition: all 0.15s;
-  }
-  .action-btn:hover { opacity: 0.85; }
-  .btn-accept { background: var(--blue-bg); color: var(--blue); border-color: #B5CEF0; }
-  .btn-prep { background: var(--purple-bg); color: var(--purple); border-color: #CEBEF0; }
-  .btn-deliver { background: var(--green-bg); color: var(--green); border-color: #A5D5B5; }
-  .btn-done { background: #F0F0F0; color: #666; border-color: #DDD; }
-  .btn-reject { background: var(--red-bg); color: var(--red); border-color: #F0B5B5; }
-
-  .order-payment { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
-  .pay-icon { font-size: 0.9rem; }
-
-  /* Toast */
-  .toast {
-    position: fixed; bottom: 1.5rem; right: 1.5rem;
-    background: var(--brown); color: var(--pink);
-    padding: 0.75rem 1.25rem; border-radius: 10px;
-    font-size: 0.85rem; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    transform: translateY(100px); opacity: 0;
-    transition: all 0.3s; z-index: 1000;
-  }
-  .toast.show { transform: translateY(0); opacity: 1; }
+  /* EMPTY / LOADING */
+  .empty { text-align:center; padding:3rem 1rem; color:var(--muted); }
+  .empty-icon { font-size:3rem; margin-bottom:0.75rem; }
+  .spinner { display:inline-block; width:20px; height:20px; border:2px solid var(--pink-border); border-top-color:var(--pink); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
 
   /* REPORTS */
-  .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .report-card { background: white; border-radius: var(--radius); border: 1px solid var(--border); padding: 1.25rem; }
-  .report-card-title { font-size: 0.8rem; font-weight: 500; color: var(--muted); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.08em; }
-  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .bar-label { font-size: 0.8rem; width: 80px; color: var(--text); }
-  .bar-track { flex: 1; background: #F5EFE6; border-radius: 4px; height: 18px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
-  .bar-val { font-size: 0.78rem; font-weight: 500; color: var(--muted); width: 30px; text-align: right; }
+  .report-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .report-card { background:white; border-radius:var(--radius); border:1px solid var(--pink-border); padding:1.25rem; }
+  .report-card-title { font-size:0.8rem; font-weight:500; color:var(--muted); margin-bottom:1rem; text-transform:uppercase; letter-spacing:0.08em; }
+  .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .bar-label { font-size:0.8rem; width:80px; color:var(--text); }
+  .bar-track { flex:1; background:#F5EFE6; border-radius:4px; height:18px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:4px; }
+  .bar-val { font-size:0.78rem; font-weight:500; color:var(--muted); width:30px; text-align:right; }
+  .client-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+  .client-table th { text-align:left; padding:6px 0; color:var(--muted); font-weight:500; border-bottom:1px solid var(--border); font-size:0.75rem; }
+  .client-table td { padding:8px 0; border-bottom:1px solid var(--border); }
+  .client-table tr:last-child td { border-bottom:none; }
 
-  .client-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  .client-table th { text-align: left; padding: 6px 0; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); font-size: 0.75rem; }
-  .client-table td { padding: 8px 0; border-bottom: 1px solid var(--border); }
-  .client-table tr:last-child td { border-bottom: none; }
+  .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:var(--brown); color:var(--pink); padding:0.75rem 1.25rem; border-radius:10px; font-size:0.85rem; box-shadow:0 4px 20px rgba(0,0,0,0.2); transform:translateY(100px); opacity:0; transition:all 0.3s; z-index:1000; }
+  .toast.show { transform:translateY(0); opacity:1; }
 
-  /* Responsive */
-  @media (max-width: 768px) {
-    .sidebar { width: 60px; padding: 1rem 0.5rem; }
-    .sidebar-logo .s-title, .sidebar-logo .s-sub, .nav-item span { display: none; }
-    .metrics { grid-template-columns: 1fr 1fr; }
-    .report-grid { grid-template-columns: 1fr; }
+  @media (max-width:768px) {
+    .sidebar { width:60px; padding:1rem 0.5rem; }
+    .sidebar-logo .s-title,.sidebar-logo .s-sub,.nav-item span { display:none; }
+    .metrics { grid-template-columns:1fr 1fr; }
+    .report-grid { grid-template-columns:1fr; }
   }
 </style>
 </head>
 <body>
 
-<div class="layout">
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <img src="logo.jpg" alt="Logo"/>
+    <h2>Painel Administrativo</h2>
+    <p>Digite a senha para entrar</p>
+    <input class="login-input" type="password" id="login-input" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <p class="login-error" id="login-error">Senha incorreta. Tente novamente.</p>
+  </div>
+</div>
+
+<div class="layout" id="main-layout" style="display:none;">
   <aside class="sidebar">
     <div class="sidebar-logo">
       <img src="logo.jpg" alt="Logo Doceria da Ju"/>
@@ -151,15 +133,9 @@
       <div class="s-sub">Painel Admin</div>
     </div>
     <nav>
-      <div class="nav-item active" onclick="showPage('pedidos',this)">
-        <span class="nav-icon">📋</span><span>Pedidos</span>
-      </div>
-      <div class="nav-item" onclick="showPage('relatorios',this)">
-        <span class="nav-icon">📊</span><span>Relatórios</span>
-      </div>
-      <div class="nav-item" onclick="showPage('cardapio',this)">
-        <span class="nav-icon">🍫</span><span>Cardápio</span>
-      </div>
+      <div class="nav-item active" onclick="showPage('pedidos',this)"><span class="nav-icon">📋</span><span>Pedidos</span></div>
+      <div class="nav-item" onclick="showPage('relatorios',this)"><span class="nav-icon">📊</span><span>Relatórios</span></div>
+      <div class="nav-item" onclick="showPage('cardapio',this)"><span class="nav-icon">🍫</span><span>Cardápio</span></div>
     </nav>
   </aside>
 
@@ -167,79 +143,40 @@
 
     <!-- PEDIDOS -->
     <div id="page-pedidos" class="page active">
-      <h1 class="page-title">Pedidos de hoje</h1>
-
-      <div class="metrics">
-        <div class="metric">
-          <div class="metric-val" id="m-total">5</div>
-          <div class="metric-lbl">Pedidos hoje</div>
-          <div class="metric-badge">+2 novos</div>
-        </div>
-        <div class="metric">
-          <div class="metric-val" id="m-open">3</div>
-          <div class="metric-lbl">Em aberto</div>
-        </div>
-        <div class="metric">
-          <div class="metric-val">R$ 186</div>
-          <div class="metric-lbl">Receita hoje</div>
-        </div>
-        <div class="metric">
-          <div class="metric-val">12</div>
-          <div class="metric-lbl">Cookies vendidos</div>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+        <h1 class="page-title" style="margin:0;">Pedidos de hoje</h1>
+        <button onclick="carregarPedidos()" style="background:var(--tiffany-pale);color:var(--tiffany-dark);border:1px solid var(--tiffany);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:0.82rem;font-family:'DM Sans',sans-serif;">↻ Atualizar</button>
       </div>
-
-      <div class="orders-grid" id="orders-container"></div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val" id="m-total">—</div><div class="metric-lbl">Pedidos hoje</div><div class="metric-new" id="m-new" style="display:none;"></div></div>
+        <div class="metric"><div class="metric-val" id="m-open">—</div><div class="metric-lbl">Em aberto</div></div>
+        <div class="metric"><div class="metric-val" id="m-receita">—</div><div class="metric-lbl">Receita hoje</div></div>
+        <div class="metric"><div class="metric-val" id="m-cookies">—</div><div class="metric-lbl">Cookies vendidos</div></div>
+      </div>
+      <div class="orders-grid" id="orders-container">
+        <div class="empty"><div class="spinner"></div><p style="margin-top:1rem;">Carregando pedidos...</p></div>
+      </div>
     </div>
 
     <!-- RELATÓRIOS -->
     <div id="page-relatorios" class="page">
       <h1 class="page-title">Relatórios</h1>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem;">
-        <div class="metric"><div class="metric-val">R$ 2.340</div><div class="metric-lbl">Receita no mês</div></div>
-        <div class="metric"><div class="metric-val">58</div><div class="metric-lbl">Pedidos no mês</div></div>
-        <div class="metric"><div class="metric-val">23</div><div class="metric-lbl">Clientes únicos</div></div>
-        <div class="metric"><div class="metric-val">R$ 40,34</div><div class="metric-lbl">Ticket médio</div></div>
+        <div class="metric"><div class="metric-val" id="r-receita">—</div><div class="metric-lbl">Receita total</div></div>
+        <div class="metric"><div class="metric-val" id="r-pedidos">—</div><div class="metric-lbl">Total pedidos</div></div>
+        <div class="metric"><div class="metric-val" id="r-clientes">—</div><div class="metric-lbl">Clientes únicos</div></div>
+        <div class="metric"><div class="metric-val" id="r-ticket">—</div><div class="metric-lbl">Ticket médio</div></div>
       </div>
       <div class="report-grid">
         <div class="report-card">
           <div class="report-card-title">Sabores mais vendidos</div>
-          <div class="bar-row"><span class="bar-label">Nutella</span><div class="bar-track"><div class="bar-fill" style="width:80%;background:#C8783A;"></div></div><span class="bar-val">24</span></div>
-          <div class="bar-row"><span class="bar-label">Red Velvet</span><div class="bar-track"><div class="bar-fill" style="width:60%;background:#B03030;"></div></div><span class="bar-val">18</span></div>
-          <div class="bar-row"><span class="bar-label">Oreo</span><div class="bar-track"><div class="bar-fill" style="width:40%;background:#3D1F0E;"></div></div><span class="bar-val">16</span></div>
-        </div>
-        <div class="report-card">
-          <div class="report-card-title">Pedidos por semana</div>
-          <div style="display:flex;align-items:flex-end;gap:8px;height:100px;padding-top:10px;">
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <div style="width:100%;background:var(--caramel-pale);border-radius:4px 4px 0 0;" id="w1-bar"></div>
-              <span style="font-size:0.65rem;color:var(--muted);">Sem 1</span>
-            </div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <div style="width:100%;background:var(--caramel-pale);border-radius:4px 4px 0 0;" id="w2-bar"></div>
-              <span style="font-size:0.65rem;color:var(--muted);">Sem 2</span>
-            </div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <div style="width:100%;background:#C8783A;border-radius:4px 4px 0 0;" id="w3-bar"></div>
-              <span style="font-size:0.65rem;color:var(--muted);">Sem 3</span>
-            </div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <div style="width:100%;background:var(--caramel-pale);border-radius:4px 4px 0 0;" id="w4-bar"></div>
-              <span style="font-size:0.65rem;color:var(--muted);">Sem 4</span>
-            </div>
-          </div>
+          <div id="sabores-bars"><div class="spinner"></div></div>
         </div>
         <div class="report-card" style="grid-column:1/-1;">
           <div class="report-card-title">Histórico por cliente</div>
           <table class="client-table">
-            <thead><tr><th>Cliente</th><th>Telefone</th><th>Pedidos</th><th>Sabor favorito</th><th>Total gasto</th></tr></thead>
-            <tbody>
-              <tr><td>Ana Lima</td><td style="color:var(--muted)">(48) 99123-4567</td><td>8</td><td>🫙 Nutella</td><td style="font-weight:500">R$ 312,00</td></tr>
-              <tr><td>Carlos Souza</td><td style="color:var(--muted)">(48) 98765-4321</td><td>6</td><td>🖤 Oreo</td><td style="font-weight:500">R$ 228,00</td></tr>
-              <tr><td>Maria Costa</td><td style="color:var(--muted)">(48) 99234-5678</td><td>5</td><td>❤️ Red Velvet</td><td style="font-weight:500">R$ 162,00</td></tr>
-              <tr><td>João Pereira</td><td style="color:var(--muted)">(48) 98876-5432</td><td>4</td><td>🫙 Nutella</td><td style="font-weight:500">R$ 144,00</td></tr>
-              <tr><td>Lucia Mendes</td><td style="color:var(--muted)">(48) 99345-6789</td><td>2</td><td>❤️ Red Velvet</td><td style="font-weight:500">R$ 76,00</td></tr>
-            </tbody>
+            <thead><tr><th>Cliente</th><th>Telefone</th><th>Pedidos</th><th>Total gasto</th></tr></thead>
+            <tbody id="clientes-tbody"><tr><td colspan="4" style="color:var(--muted);text-align:center;padding:1rem;">Carregando...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -251,28 +188,19 @@
       <div style="display:flex;flex-direction:column;gap:10px;">
         <div class="order-card" style="display:flex;align-items:center;gap:1rem;">
           <span style="font-size:2rem;">🫙</span>
-          <div style="flex:1">
-            <div style="font-weight:500;">Cookie Nutella</div>
-            <div style="font-size:0.8rem;color:var(--muted);">Cookie recheado com creme de avelã</div>
-          </div>
+          <div style="flex:1"><div style="font-weight:500;">Cookie Nutella</div><div style="font-size:0.8rem;color:var(--muted);">Cookie recheado com creme de avelã</div></div>
           <div style="font-weight:500;color:var(--tiffany-dark);">R$ 6,50</div>
           <span style="background:var(--green-bg);color:var(--green);font-size:0.72rem;padding:3px 10px;border-radius:20px;">Ativo</span>
         </div>
         <div class="order-card" style="display:flex;align-items:center;gap:1rem;">
           <span style="font-size:2rem;">❤️</span>
-          <div style="flex:1">
-            <div style="font-weight:500;">Cookie Red Velvet</div>
-            <div style="font-size:0.8rem;color:var(--muted);">Massa aveludada com gotas de chocolate branco</div>
-          </div>
+          <div style="flex:1"><div style="font-weight:500;">Cookie Red Velvet</div><div style="font-size:0.8rem;color:var(--muted);">Massa aveludada com gotas de chocolate branco</div></div>
           <div style="font-weight:500;color:var(--tiffany-dark);">R$ 6,50</div>
           <span style="background:var(--green-bg);color:var(--green);font-size:0.72rem;padding:3px 10px;border-radius:20px;">Ativo</span>
         </div>
         <div class="order-card" style="display:flex;align-items:center;gap:1rem;">
           <span style="font-size:2rem;">🖤</span>
-          <div style="flex:1">
-            <div style="font-weight:500;">Cookie Oreo</div>
-            <div style="font-size:0.8rem;color:var(--muted);">Massa de chocolate com pedaços de Oreo</div>
-          </div>
+          <div style="flex:1"><div style="font-weight:500;">Cookie Oreo</div><div style="font-size:0.8rem;color:var(--muted);">Massa de chocolate com pedaços de Oreo</div></div>
           <div style="font-weight:500;color:var(--tiffany-dark);">R$ 6,50</div>
           <span style="background:var(--green-bg);color:var(--green);font-size:0.72rem;padding:3px 10px;border-radius:20px;">Ativo</span>
         </div>
@@ -285,92 +213,170 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const orders = [
-  { id:1, client:'Ana Lima', phone:'(48) 99123-4567', item:'4x Cookie Nutella', total:'R$ 26,00', totalNum:26.00, time:'14:32', status:'waiting', address:'Rua das Flores 123, Campeche', paid:false },
-  { id:2, client:'Carlos Souza', phone:'(48) 98765-4321', item:'2x Red Velvet · 2x Oreo', total:'R$ 26,00', totalNum:26.00, time:'13:15', status:'accepted', address:'Av. Pequeno Príncipe 456, Armação', paid:false },
-  { id:3, client:'Maria Costa', phone:'(48) 99234-5678', item:'6x Cookie Oreo', total:'R$ 39,00', totalNum:39.00, time:'12:40', status:'preparing', address:'Rua da Lagoa 789, Ribeirão da Ilha', paid:true },
-  { id:4, client:'João Pereira', phone:'(48) 98876-5432', item:'3x Cookie Nutella', total:'R$ 19,50', totalNum:19.50, time:'11:20', status:'delivery', address:'Rua dos Açores 321, Pântano do Sul', paid:true },
-  { id:5, client:'Lucia Mendes', phone:'(48) 99345-6789', item:'2x Red Velvet', total:'R$ 13,00', totalNum:13.00, time:'10:05', status:'done', address:'Rua da Praia 111, Solidão', paid:true },
-];
+const SUPABASE_URL = 'https://jhnwtizmihecidadhubv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_g1GinN-To8dOvXEzqnAy6A_33x-9yA9';
+const SENHA = 'doceriaju2025';
 
+// ── LOGIN ──────────────────────────────────────────
+function doLogin() {
+  const val = document.getElementById('login-input').value;
+  if (val === SENHA) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-layout').style.display = 'flex';
+    sessionStorage.setItem('ju-admin', '1');
+    carregarPedidos();
+    carregarRelatorios();
+  } else {
+    document.getElementById('login-error').classList.add('show');
+    document.getElementById('login-input').value = '';
+    document.getElementById('login-input').focus();
+  }
+}
+if (sessionStorage.getItem('ju-admin') === '1') {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-layout').style.display = 'flex';
+  carregarPedidos();
+  carregarRelatorios();
+  setInterval(carregarPedidos, 30000); // auto-atualiza a cada 30s
+}
+
+// ── API ────────────────────────────────────────────
+async function supaFetch(path, method='GET', body=null) {
+  const opts = {
+    method,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method==='POST' ? 'return=representation' : ''
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, opts);
+  if (!res.ok) throw new Error(await res.text());
+  return method === 'PATCH' ? null : res.json();
+}
+
+// ── PEDIDOS ────────────────────────────────────────
 const statusMap = {
-  waiting:  { label:'Aguardando', badge:'badge-wait',     next:'accepted',  nextLabel:'✓ Aceitar pedido',   nextClass:'btn-accept' },
-  accepted: { label:'Aceito',     badge:'badge-accepted', next:'preparing', nextLabel:'🍪 Iniciar preparo', nextClass:'btn-prep' },
-  preparing:{ label:'Em preparo', badge:'badge-prep',     next:'delivery',  nextLabel:'🛵 Enviar entrega',  nextClass:'btn-deliver' },
-  delivery: { label:'Em entrega', badge:'badge-delivery', next:'done',      nextLabel:'✓ Entregue',         nextClass:'btn-done' },
-  done:     { label:'Entregue',   badge:'badge-done',     next:null,        nextLabel:null,                 nextClass:null },
+  waiting:  { label:'Aguardando',  badge:'badge-wait',     next:'accepted',  nextLabel:'✓ Aceitar pedido',   nextClass:'btn-accept' },
+  accepted: { label:'Aceito',      badge:'badge-accepted', next:'preparing', nextLabel:'🍪 Iniciar preparo', nextClass:'btn-prep' },
+  preparing:{ label:'Em preparo',  badge:'badge-prep',     next:'delivery',  nextLabel:'🛵 Enviar entrega',  nextClass:'btn-deliver' },
+  delivery: { label:'Em entrega',  badge:'badge-delivery', next:'done',      nextLabel:'✓ Entregue',         nextClass:'btn-done' },
+  done:     { label:'Entregue ✓',  badge:'badge-done',     next:null }
 };
 
-function renderOrders() {
+let todosOsPedidos = [];
+
+async function carregarPedidos() {
+  try {
+    const hoje = new Date().toISOString().split('T')[0];
+    const data = await supaFetch('pedidos?criado_em=gte.' + hoje + 'T00:00:00&order=criado_em.desc');
+    todosOsPedidos = data;
+    renderPedidos(data);
+    atualizarMetricas(data);
+  } catch(e) {
+    document.getElementById('orders-container').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><p>Erro ao carregar pedidos. Verifique a conexão.</p></div>';
+  }
+}
+
+function atualizarMetricas(pedidos) {
+  const abertos = pedidos.filter(p => p.status !== 'done').length;
+  const receita = pedidos.filter(p => p.pago).reduce((s,p) => s + parseFloat(p.total), 0);
+  const cookies = pedidos.reduce((s,p) => s + p.itens.reduce((a,i) => a + i.quantidade, 0), 0);
+  const novos = pedidos.filter(p => p.status === 'waiting').length;
+
+  document.getElementById('m-total').textContent = pedidos.length;
+  document.getElementById('m-open').textContent = abertos;
+  document.getElementById('m-receita').textContent = 'R$ ' + receita.toFixed(2).replace('.',',');
+  document.getElementById('m-cookies').textContent = cookies;
+
+  const mNew = document.getElementById('m-new');
+  if (novos > 0) { mNew.style.display='inline-block'; mNew.textContent = novos + ' novo' + (novos>1?'s':'') + '!'; }
+  else { mNew.style.display='none'; }
+}
+
+function renderPedidos(pedidos) {
   const container = document.getElementById('orders-container');
-  container.innerHTML = orders.map(o => {
-    const s = statusMap[o.status];
+  if (pedidos.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">🍪</div><p>Nenhum pedido hoje ainda.</p></div>';
+    return;
+  }
+  container.innerHTML = pedidos.map(o => {
+    const s = statusMap[o.status] || statusMap.waiting;
+    const hora = new Date(o.criado_em).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    const itensStr = o.itens.map(i => i.emoji + ' ' + i.quantidade + 'x ' + i.sabor).join(' · ');
+    const totalFmt = 'R$ ' + parseFloat(o.total).toFixed(2).replace('.',',');
     return `<div class="order-card" id="order-${o.id}">
       <div class="order-top">
         <div>
-          <div class="order-client">${o.client}</div>
-          <div class="order-detail">${o.item} · <strong>${o.total}</strong></div>
-          <div class="order-detail" style="margin-top:2px;">📍 ${o.address}</div>
-          <div class="order-detail" style="margin-top:2px;">📱 ${o.phone}</div>
+          <div class="order-client">${o.cliente_nome}</div>
+          <div class="order-detail">${itensStr}</div>
+          <div class="order-detail" style="margin-top:2px;">💰 <strong>${totalFmt}</strong></div>
+          <div class="order-detail" style="margin-top:2px;">📍 ${o.cliente_endereco}</div>
+          <div class="order-detail" style="margin-top:2px;">📱 ${o.cliente_telefone}</div>
+          ${o.observacoes ? `<div class="order-detail" style="margin-top:2px;">📝 ${o.observacoes}</div>` : ''}
         </div>
-        <div style="text-align:right;">
+        <div style="text-align:right;flex-shrink:0;margin-left:1rem;">
           <span class="badge ${s.badge}">${s.label}</span>
-          <div class="order-time" style="margin-top:4px;">${o.time}</div>
+          <div class="order-time" style="margin-top:4px;">${hora}</div>
           <div style="margin-top:6px;">
-            <span class="badge" style="${o.paid ? 'background:#E8F5EE;color:#1A6B3C;' : 'background:#FAE8E8;color:#8B1A1A;'}">${o.paid ? '✓ Pago' : '⏳ Aguardando pagamento'}</span>
+            <span class="badge" style="${o.pago ? 'background:#E8F5EE;color:#1A6B3C;' : 'background:#FAE8E8;color:#8B1A1A;'}">${o.pago ? '✓ Pago' : '⏳ Pendente'}</span>
           </div>
+          <div style="margin-top:4px;font-size:0.7rem;color:var(--muted);">${o.tipo_entrega === 'sul' ? '🏝️ Sul da Ilha' : '📍 Outro bairro'}</div>
         </div>
       </div>
       <div class="order-actions">
-        ${s.next ? `<button class="action-btn ${s.nextClass}" onclick="advanceOrder(${o.id})">${s.nextLabel}</button>` : ''}
-        ${o.status==='waiting' ? `<button class="action-btn btn-reject" onclick="rejectOrder(${o.id})">✕ Recusar</button>` : ''}
-        <button class="action-btn" style="background:#E7F7EF;color:#1A6B3C;border-color:#A5D5B5;font-weight:500;" onclick="whatsapp(${o.id})">💬 Enviar cobrança</button>
-        ${o.paid ? '' : `<button class="action-btn" style="background:#E8F5EE;color:#1A6B3C;border-color:#A5D5B5;" onclick="markPaid(${o.id})">✓ Marcar como pago</button>`}
+        ${s.next ? `<button class="action-btn ${s.nextClass}" onclick="avancarStatus(${o.id},'${s.next}')">${s.nextLabel}</button>` : ''}
+        ${o.status==='waiting' ? `<button class="action-btn btn-reject" onclick="recusarPedido(${o.id})">✕ Recusar</button>` : ''}
+        <button class="action-btn btn-wpp" onclick="enviarWhatsapp(${o.id})">💬 Enviar cobrança</button>
+        ${!o.pago ? `<button class="action-btn btn-paid" onclick="marcarPago(${o.id})">✓ Marcar como pago</button>` : ''}
       </div>
     </div>`;
   }).join('');
 }
 
-function advanceOrder(id) {
-  const o = orders.find(x => x.id===id);
-  if (!o || !statusMap[o.status].next) return;
-  const msgs = { accepted:'✓ Pedido aceito!', preparing:'🍪 Em preparo!', delivery:'🛵 Entrega iniciada!', done:'✅ Entregue!' };
-  o.status = statusMap[o.status].next;
-  renderOrders();
-  showToast(msgs[o.status]);
+async function avancarStatus(id, novoStatus) {
+  try {
+    await supaFetch('pedidos?id=eq.' + id, 'PATCH', { status: novoStatus });
+    showToast('✓ Status atualizado!');
+    await carregarPedidos();
+  } catch(e) { showToast('Erro ao atualizar status.'); }
 }
 
-function rejectOrder(id) {
+async function recusarPedido(id) {
   if (!confirm('Recusar este pedido?')) return;
-  const idx = orders.findIndex(x => x.id===id);
-  orders.splice(idx, 1);
-  renderOrders();
-  showToast('✕ Pedido recusado.');
+  try {
+    await supaFetch('pedidos?id=eq.' + id, 'PATCH', { status: 'done' });
+    showToast('✕ Pedido recusado.');
+    await carregarPedidos();
+  } catch(e) { showToast('Erro ao recusar pedido.'); }
 }
 
-function markPaid(id) {
-  const o = orders.find(x => x.id===id);
-  if (!o) return;
-  o.paid = true;
-  renderOrders();
-  showToast('✓ Pedido marcado como pago!');
+async function marcarPago(id) {
+  try {
+    await supaFetch('pedidos?id=eq.' + id, 'PATCH', { pago: true });
+    showToast('✓ Marcado como pago!');
+    await carregarPedidos();
+  } catch(e) { showToast('Erro ao atualizar.'); }
 }
 
-function whatsapp(id) {
-  const o = orders.find(x => x.id===id);
+function enviarWhatsapp(id) {
+  const o = todosOsPedidos.find(x => x.id === id);
   if (!o) return;
-  const num = o.phone.replace(/\D/g,'');
+  const num = o.cliente_telefone.replace(/\D/g,'');
   const br = num.startsWith('55') ? num : '55' + num;
-
+  const itensStr = o.itens.map(i => i.emoji + ' ' + i.quantidade + 'x ' + i.sabor).join('\n');
+  const total = 'R$ ' + parseFloat(o.total).toFixed(2).replace('.',',');
   const msg =
-`Olá, ${o.client}! 🍪
+`Olá, ${o.cliente_nome}! 🍪
 
 Recebemos seu pedido da *Doceria da Ju Artesanais*:
 
 📦 *Itens:*
-${o.item}
+${itensStr}
 
-💰 *Total: ${o.total}*
+💰 *Total: ${total}*
 
 Para confirmar seu pedido, envie o pagamento pelo link abaixo (Pix ou cartão via Mercado Pago):
 
@@ -378,11 +384,59 @@ Para confirmar seu pedido, envie o pagamento pelo link abaixo (Pix ou cartão vi
 
 Assim que confirmarmos o pagamento, seus cookies vão pro forno! 🧁
 
-Qualquer dúvida é só chamar aqui. 💕`;
+Qualquer dúvida é só chamar aqui. 💕
+— Doceria da Ju Artesanais`;
 
-  const url = 'https://wa.me/' + br + '?text=' + encodeURIComponent(msg);
-  window.open(url, '_blank');
-  showToast('💬 Abrindo WhatsApp para ' + o.client);
+  window.open('https://wa.me/' + br + '?text=' + encodeURIComponent(msg), '_blank');
+  showToast('💬 Abrindo WhatsApp para ' + o.cliente_nome);
+}
+
+// ── RELATÓRIOS ─────────────────────────────────────
+async function carregarRelatorios() {
+  try {
+    const data = await supaFetch('pedidos?select=*&order=criado_em.desc');
+
+    const receita = data.filter(p => p.pago).reduce((s,p) => s + parseFloat(p.total), 0);
+    const clientes = [...new Set(data.map(p => p.cliente_telefone))].length;
+    const ticket = data.length ? receita / data.filter(p=>p.pago).length || 0 : 0;
+
+    document.getElementById('r-receita').textContent = 'R$ ' + receita.toFixed(2).replace('.',',');
+    document.getElementById('r-pedidos').textContent = data.length;
+    document.getElementById('r-clientes').textContent = clientes;
+    document.getElementById('r-ticket').textContent = 'R$ ' + (isNaN(ticket)?'0,00':ticket.toFixed(2).replace('.',','));
+
+    // Sabores
+    const contagem = { 'Nutella': 0, 'Red Velvet': 0, 'Oreo': 0 };
+    data.forEach(p => p.itens.forEach(i => { if (contagem[i.sabor] !== undefined) contagem[i.sabor] += i.quantidade; }));
+    const max = Math.max(...Object.values(contagem), 1);
+    const cores = { 'Nutella': '#F2A7C3', 'Red Velvet': '#D4759C', 'Oreo': '#4A2410' };
+    document.getElementById('sabores-bars').innerHTML = Object.entries(contagem).map(([s,q]) =>
+      `<div class="bar-row"><span class="bar-label">${s}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(q/max*100)}%;background:${cores[s]};"></div></div><span class="bar-val">${q}</span></div>`
+    ).join('');
+
+    // Clientes
+    const porCliente = {};
+    data.forEach(p => {
+      const k = p.cliente_telefone;
+      if (!porCliente[k]) porCliente[k] = { nome: p.cliente_nome, tel: p.cliente_telefone, pedidos: 0, total: 0 };
+      porCliente[k].pedidos++;
+      if (p.pago) porCliente[k].total += parseFloat(p.total);
+    });
+    const sorted = Object.values(porCliente).sort((a,b) => b.total - a.total);
+    document.getElementById('clientes-tbody').innerHTML = sorted.length ? sorted.map(c =>
+      `<tr><td>${c.nome}</td><td style="color:var(--muted)">${c.tel}</td><td>${c.pedidos}</td><td style="font-weight:500">R$ ${c.total.toFixed(2).replace('.',',')}</td></tr>`
+    ).join('') : '<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:1rem;">Nenhum pedido ainda.</td></tr>';
+
+  } catch(e) { console.error(e); }
+}
+
+// ── UI HELPERS ─────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  if (id === 'relatorios') carregarRelatorios();
 }
 
 function showToast(msg) {
@@ -390,23 +444,6 @@ function showToast(msg) {
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
-
-function showPage(id, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  el.classList.add('active');
-}
-
-// Weekly chart heights
-setTimeout(() => {
-  document.getElementById('w1-bar').style.height = '55px';
-  document.getElementById('w2-bar').style.height = '70px';
-  document.getElementById('w3-bar').style.height = '90px';
-  document.getElementById('w4-bar').style.height = '45px';
-}, 100);
-
-renderOrders();
 </script>
 </body>
 </html>
