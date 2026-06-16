@@ -368,13 +368,22 @@
     <!-- PEDIDOS -->
     <div id="page-pedidos" class="page active">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;gap:8px;flex-wrap:wrap;">
-        <h1 class="page-title" style="margin:0;">Pedidos de hoje</h1>
+        <h1 class="page-title" style="margin:0;" id="pedidos-titulo">Pedidos de hoje</h1>
         <div style="display:flex;gap:8px;">
           <button onclick="abrirModalPedido()" style="background:var(--pink);color:white;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:0.85rem;font-family:'DM Sans',sans-serif;font-weight:500;">+ Novo pedido</button>
           <button onclick="carregarPedidos()" style="background:var(--tiffany-pale);color:var(--tiffany-dark);border:1px solid var(--tiffany);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.82rem;font-family:'DM Sans',sans-serif;">↻ Atualizar</button>
         </div>
       </div>
-      <div class="metrics">
+
+      <div style="margin-bottom:1.25rem;">
+        <div class="autocomplete-wrap" style="max-width:360px;">
+          <input type="text" id="ped-busca-cliente" class="form-input" placeholder="🔍 Buscar pedidos por cliente..." autocomplete="off" oninput="buscarClientePedidos(this.value)"/>
+          <div class="autocomplete-list" id="ped-autocomplete-list"></div>
+        </div>
+        <button id="ped-limpar-filtro" onclick="limparFiltroClientePedidos()" style="display:none;margin-top:8px;background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:0.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✕ Limpar filtro e voltar para hoje</button>
+      </div>
+
+      <div class="metrics" id="pedidos-metrics">
         <div class="metric"><div class="metric-val" id="m-total">—</div><div class="metric-lbl">Pedidos hoje</div><div class="metric-new" id="m-new" style="display:none;"></div></div>
         <div class="metric"><div class="metric-val" id="m-open">—</div><div class="metric-lbl">Em aberto</div></div>
         <div class="metric"><div class="metric-val" id="m-receita">—</div><div class="metric-lbl">Recebido hoje</div></div>
@@ -525,9 +534,10 @@ function doLogin() {
     document.getElementById('login-input').focus();
   }
 }
-function iniciar() {
+async function iniciar() {
   carregarPedidos();
   carregarCardapio();
+  if (!todosClientes.length) todosClientes = await supaFetch('clientes?order=nome.asc').catch(()=>[]);
   setInterval(carregarPedidos, 30000);
 }
 if (sessionStorage.getItem('ju-admin')==='1') {
@@ -556,7 +566,10 @@ const statusMap = {
 let todosOsPedidos = [];
 let todosPagamentos = [];
 
+let filtroClienteTel = null; // quando preenchido, mostra histórico completo desse cliente
+
 async function carregarPedidos() {
+  if (filtroClienteTel) return carregarPedidosPorCliente(filtroClienteTel);
   try {
     const hoje = new Date().toISOString().split('T')[0];
     const [pedidos, pags] = await Promise.all([
@@ -567,9 +580,55 @@ async function carregarPedidos() {
     todosPagamentos = pags;
     renderPedidos(pedidos, pags);
     atualizarMetricas(pedidos, pags);
+    document.getElementById('pedidos-metrics').style.display = 'grid';
   } catch(e) {
     document.getElementById('orders-container').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p>Erro ao carregar.</p></div>';
   }
+}
+
+async function carregarPedidosPorCliente(tel) {
+  try {
+    const [pedidos, pags] = await Promise.all([
+      supaFetch('pedidos?cliente_telefone=eq.'+encodeURIComponent(tel)+'&order=criado_em.desc'),
+      supaFetch('pagamentos?select=*&order=criado_em.desc')
+    ]);
+    todosOsPedidos = pedidos;
+    todosPagamentos = pags;
+    renderPedidos(pedidos, pags);
+    document.getElementById('pedidos-metrics').style.display = 'none';
+  } catch(e) {
+    document.getElementById('orders-container').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p>Erro ao carregar.</p></div>';
+  }
+}
+
+function buscarClientePedidos(val) {
+  const list = document.getElementById('ped-autocomplete-list');
+  if (val.length < 2) { list.classList.remove('show'); return; }
+  const filtrados = (todosClientes.length ? todosClientes : []).filter(c => c.nome.toLowerCase().includes(val.toLowerCase())).slice(0,6);
+  if (!filtrados.length) { list.classList.remove('show'); return; }
+  list.innerHTML = filtrados.map(c =>
+    `<div class="autocomplete-item" onclick="selecionarClientePedidos('${c.telefone}','${c.nome.replace(/'/g,"\\'")}')">
+      <div class="ac-name">${c.nome}</div>
+      <div class="ac-tel">${c.telefone}</div>
+    </div>`).join('');
+  list.classList.add('show');
+}
+
+async function selecionarClientePedidos(tel, nome) {
+  document.getElementById('ped-busca-cliente').value = nome;
+  document.getElementById('ped-autocomplete-list').classList.remove('show');
+  document.getElementById('ped-limpar-filtro').style.display = 'inline-block';
+  document.getElementById('pedidos-titulo').textContent = 'Pedidos de ' + nome;
+  filtroClienteTel = tel;
+  await carregarPedidosPorCliente(tel);
+}
+
+function limparFiltroClientePedidos() {
+  document.getElementById('ped-busca-cliente').value = '';
+  document.getElementById('ped-limpar-filtro').style.display = 'none';
+  document.getElementById('pedidos-titulo').textContent = 'Pedidos de hoje';
+  filtroClienteTel = null;
+  carregarPedidos();
 }
 
 function pagamentosDoPedido(pedidoId) {
@@ -635,6 +694,7 @@ function renderPedidos(pedidos, pags) {
         <button class="action-btn btn-wpp" onclick="enviarWhatsapp(${o.id})">💬 WhatsApp</button>
         <button class="action-btn btn-pay" onclick="abrirModalPagamento(${o.id})">💰 Registrar pagamento</button>
         <button class="action-btn" style="background:var(--purple-bg);color:var(--purple);border-color:#CEBEF0;" onclick="abrirModalEdicaoPedido(${o.id})">✏️ Editar pedido</button>
+        <button class="action-btn" style="background:var(--tiffany-pale);color:var(--tiffany-dark);border-color:var(--tiffany);" onclick="abrirModalRepetirPedido(${o.id})">🔁 Repetir pedido</button>
       </div>
     </div>`;
   }).join('');
@@ -768,6 +828,50 @@ async function abrirModalEdicaoPedido(pedidoId) {
 
   renderProdutosModal();
   atualizarResumoModal();
+}
+
+async function abrirModalRepetirPedido(pedidoId) {
+  const pedido = todosOsPedidos.find(x => x.id === pedidoId);
+  if (!pedido) return;
+  modoEdicaoId = null; // é um pedido NOVO, não edição
+  qtysModal = {};
+  precosModal = {};
+
+  document.getElementById('modal-pedido-titulo').textContent = '🔁 Repetir pedido — ' + pedido.cliente_nome;
+  document.getElementById('btn-salvar-pedido').textContent = 'Lançar novo pedido';
+  document.getElementById('np-busca-group').style.display = 'none';
+  document.getElementById('np-nome').value = pedido.cliente_nome;
+  document.getElementById('np-nome').readOnly = true;
+  document.getElementById('np-tel').value = pedido.cliente_telefone;
+  document.getElementById('np-tel').readOnly = true;
+  document.getElementById('np-end').value = pedido.cliente_endereco;
+  document.getElementById('np-obs').value = pedido.observacoes || '';
+  document.getElementById('np-status').value = 'waiting'; // novo pedido sempre começa aguardando
+  document.getElementById('np-entrega').value = pedido.tipo_entrega;
+
+  abrirModal('modal-pedido');
+  await garantirProdutosModal();
+
+  pedido.itens.forEach(item => {
+    const existe = produtosModal.find(p => p.nome === item.sabor);
+    if (!existe) {
+      produtosModal.push({ id: 'old_'+item.sabor.replace(/\s/g,''), nome: item.sabor, emoji: item.emoji, preco: item.preco_unit, ativo: false, _legado: true });
+    }
+  });
+
+  produtosModal.forEach(p => qtysModal[p.id] = 0);
+  pedido.itens.forEach(item => {
+    const prod = produtosModal.find(p => p.nome === item.sabor);
+    if (prod) {
+      qtysModal[prod.id] = item.quantidade;
+      // Usa o preço ATUAL do cardápio, não o preço congelado do pedido antigo
+      // (assim se o preço mudou desde então, o novo pedido já reflete o valor certo)
+    }
+  });
+
+  renderProdutosModal();
+  atualizarResumoModal();
+  showToast('🔁 Pedido pré-preenchido! Confira e lance.');
 }
 
 function renderProdutosModal() {
