@@ -110,7 +110,12 @@
   .modal-product:last-child { border-bottom:none; }
   .modal-product-info { flex:1; font-size:0.88rem; }
   .modal-product-name { font-weight:500; }
-  .modal-product-price { font-size:0.75rem; color:var(--muted); }
+  .modal-product-price-row { display:flex; align-items:center; gap:6px; margin-top:2px; }
+  .modal-product-price { font-size:0.75rem; color:var(--muted); cursor:pointer; border-bottom:1px dashed var(--pink-border); padding-bottom:1px; }
+  .modal-product-price:hover { color:var(--pink-dark); border-bottom-color:var(--pink); }
+  .modal-product-price-input { width:65px; padding:2px 6px; border:1.5px solid var(--pink); border-radius:6px; font-size:0.75rem; font-family:'DM Sans',sans-serif; color:var(--text); outline:none; display:none; }
+  .modal-product-price-edit-icon { font-size:0.7rem; color:var(--pink-dark); cursor:pointer; }
+  .modal-product-price-tag { font-size:0.65rem; background:var(--pink-pale); color:var(--pink-dark); padding:1px 6px; border-radius:8px; display:none; }
   .modal-qty-ctrl { display:flex; align-items:center; gap:8px; }
   .modal-qty-btn { width:26px; height:26px; border-radius:50%; background:var(--pink-pale); border:1px solid var(--pink-border); font-size:1rem; cursor:pointer; color:var(--pink-dark); display:flex; align-items:center; justify-content:center; }
   .modal-qty-btn:hover { background:var(--pink); color:white; }
@@ -238,9 +243,10 @@
 <div class="modal-overlay" id="modal-pedido">
   <div class="modal">
     <button class="modal-close" onclick="fecharModal('modal-pedido')">✕</button>
-    <div class="modal-title">🍪 Novo pedido manual</div>
+    <div class="modal-title" id="modal-pedido-titulo">🍪 Novo pedido manual</div>
+    <input type="hidden" id="np-edit-id" value=""/>
 
-    <div class="form-group">
+    <div class="form-group" id="np-busca-group">
       <label class="form-label">Buscar cliente pelo nome</label>
       <div class="autocomplete-wrap">
         <input class="form-input" type="text" id="np-busca" placeholder="Digite o nome..." autocomplete="off" oninput="buscarCliente(this.value)"/>
@@ -293,7 +299,7 @@
       </select>
     </div>
 
-    <button onclick="salvarPedidoManual()" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">Lançar pedido</button>
+    <button onclick="salvarModalPedido()" id="btn-salvar-pedido" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">Lançar pedido</button>
   </div>
 </div>
 
@@ -628,6 +634,7 @@ function renderPedidos(pedidos, pags) {
         ${o.status==='waiting'?`<button class="action-btn btn-reject" onclick="recusarPedido(${o.id})">✕ Recusar</button>`:''}
         <button class="action-btn btn-wpp" onclick="enviarWhatsapp(${o.id})">💬 WhatsApp</button>
         <button class="action-btn btn-pay" onclick="abrirModalPagamento(${o.id})">💰 Registrar pagamento</button>
+        <button class="action-btn" style="background:var(--purple-bg);color:var(--purple);border-color:#CEBEF0;" onclick="abrirModalEdicaoPedido(${o.id})">✏️ Editar pedido</button>
       </div>
     </div>`;
   }).join('');
@@ -680,30 +687,87 @@ async function salvarPagamento() {
   } catch(e) { showToast('Erro ao registrar pagamento.'); }
 }
 
-// ── MODAL NOVO PEDIDO ──────────────────────
+// ── MODAL NOVO PEDIDO / EDITAR PEDIDO ──────
 let produtosModal = [];
 let qtysModal = {};
+let precosModal = {};
 let todosClientes = [];
+let modoEdicaoId = null; // null = novo pedido; senão = id do pedido sendo editado
 
-async function abrirModalPedido() {
-  qtysModal = {};
-  document.getElementById('np-busca').value='';
-  document.getElementById('np-nome').value='';
-  document.getElementById('np-tel').value='';
-  document.getElementById('np-end').value='';
-  document.getElementById('np-obs').value='';
-  document.getElementById('np-status').value='waiting';
-  document.getElementById('np-resumo').style.display='none';
-  document.getElementById('autocomplete-list').classList.remove('show');
-  abrirModal('modal-pedido');
+async function garantirProdutosModal() {
   if (!produtosModal.length) {
-    produtosModal = await supaFetch('produtos?ativo=eq.true&order=id.asc');
+    produtosModal = await supaFetch('produtos?order=id.asc'); // inclui inativos para permitir editar pedidos antigos
   }
   if (!todosClientes.length) {
     todosClientes = await supaFetch('clientes?order=nome.asc');
   }
+}
+
+async function abrirModalPedido() {
+  modoEdicaoId = null;
+  qtysModal = {};
+  precosModal = {};
+  document.getElementById('modal-pedido-titulo').textContent = '🍪 Novo pedido manual';
+  document.getElementById('btn-salvar-pedido').textContent = 'Lançar pedido';
+  document.getElementById('np-busca-group').style.display = 'block';
+  document.getElementById('np-busca').value='';
+  document.getElementById('np-nome').value='';
+  document.getElementById('np-nome').readOnly = false;
+  document.getElementById('np-tel').value='';
+  document.getElementById('np-tel').readOnly = false;
+  document.getElementById('np-end').value='';
+  document.getElementById('np-obs').value='';
+  document.getElementById('np-status').value='waiting';
+  document.getElementById('np-entrega').value='sul';
+  document.getElementById('np-resumo').style.display='none';
+  document.getElementById('autocomplete-list').classList.remove('show');
+  abrirModal('modal-pedido');
+  await garantirProdutosModal();
   produtosModal.forEach(p => qtysModal[p.id]=0);
   renderProdutosModal();
+}
+
+async function abrirModalEdicaoPedido(pedidoId) {
+  const pedido = todosOsPedidos.find(x => x.id === pedidoId);
+  if (!pedido) return;
+  modoEdicaoId = pedidoId;
+  qtysModal = {};
+  precosModal = {};
+
+  document.getElementById('modal-pedido-titulo').textContent = '✏️ Editar pedido #' + pedidoId;
+  document.getElementById('btn-salvar-pedido').textContent = 'Salvar alterações';
+  document.getElementById('np-busca-group').style.display = 'none';
+  document.getElementById('np-nome').value = pedido.cliente_nome;
+  document.getElementById('np-nome').readOnly = true;
+  document.getElementById('np-tel').value = pedido.cliente_telefone;
+  document.getElementById('np-tel').readOnly = true;
+  document.getElementById('np-end').value = pedido.cliente_endereco;
+  document.getElementById('np-obs').value = pedido.observacoes || '';
+  document.getElementById('np-status').value = pedido.status;
+  document.getElementById('np-entrega').value = pedido.tipo_entrega;
+
+  abrirModal('modal-pedido');
+  await garantirProdutosModal();
+
+  // Garante que produtos do pedido que não estão mais no cardápio (ex: removidos) também apareçam
+  pedido.itens.forEach(item => {
+    const existe = produtosModal.find(p => p.nome === item.sabor);
+    if (!existe) {
+      produtosModal.push({ id: 'old_'+item.sabor.replace(/\s/g,''), nome: item.sabor, emoji: item.emoji, preco: item.preco_unit, ativo: false, _legado: true });
+    }
+  });
+
+  produtosModal.forEach(p => qtysModal[p.id] = 0);
+  pedido.itens.forEach(item => {
+    const prod = produtosModal.find(p => p.nome === item.sabor);
+    if (prod) {
+      qtysModal[prod.id] = item.quantidade;
+      if (parseFloat(item.preco_unit) !== parseFloat(prod.preco)) precosModal[prod.id] = parseFloat(item.preco_unit);
+    }
+  });
+
+  renderProdutosModal();
+  atualizarResumoModal();
 }
 
 function renderProdutosModal() {
@@ -711,15 +775,57 @@ function renderProdutosModal() {
     <div class="modal-product">
       <span style="font-size:1.5rem;">${p.emoji}</span>
       <div class="modal-product-info">
-        <div class="modal-product-name">${p.nome}</div>
-        <div class="modal-product-price">R$ ${parseFloat(p.preco).toFixed(2).replace('.',',')}</div>
+        <div class="modal-product-name">${p.nome}${p._legado?' <span style="color:var(--muted);font-size:0.7rem;">(removido do cardápio)</span>':''}${p.ativo===false&&!p._legado?' <span style="color:var(--muted);font-size:0.7rem;">(inativo)</span>':''}</div>
+        <div class="modal-product-price-row">
+          <span class="modal-product-price" id="mprice-display-${p.id}" onclick="editarPrecoModal('${p.id}')">R$ ${parseFloat(p.preco).toFixed(2).replace('.',',')} ✏️</span>
+          <input class="modal-product-price-input" type="number" step="0.01" min="0" id="mprice-input-${p.id}" value="${parseFloat(p.preco).toFixed(2)}" onblur="salvarPrecoModal('${p.id}')" onkeydown="if(event.key==='Enter') salvarPrecoModal('${p.id}')"/>
+          <span class="modal-product-price-tag" id="mprice-tag-${p.id}" style="${precosModal[p.id]!==undefined?'display:inline-block;':''}">preço ajustado</span>
+        </div>
       </div>
       <div class="modal-qty-ctrl">
-        <button class="modal-qty-btn" onclick="changeQtyModal(${p.id},-1)">−</button>
-        <input class="modal-qty-num" type="number" min="0" id="mqty-${p.id}" value="0" oninput="setQtyModal(${p.id},this.value)" onblur="fixQtyModal(${p.id})" onfocus="this.select()"/>
-        <button class="modal-qty-btn" onclick="changeQtyModal(${p.id},1)">+</button>
+        <button class="modal-qty-btn" onclick="changeQtyModal('${p.id}',-1)">−</button>
+        <input class="modal-qty-num" type="number" min="0" id="mqty-${p.id}" value="${qtysModal[p.id]||0}" oninput="setQtyModal('${p.id}',this.value)" onblur="fixQtyModal('${p.id}')" onfocus="this.select()"/>
+        <button class="modal-qty-btn" onclick="changeQtyModal('${p.id}',1)">+</button>
       </div>
     </div>`).join('');
+
+  // Aplica preços ajustados existentes (modo edição) no display
+  Object.keys(precosModal).forEach(id => {
+    const el = document.getElementById('mprice-display-'+id);
+    if (el) el.textContent = 'R$ ' + precosModal[id].toFixed(2).replace('.',',') + ' ✏️';
+  });
+}
+
+function editarPrecoModal(id) {
+  document.getElementById('mprice-display-'+id).style.display = 'none';
+  const input = document.getElementById('mprice-input-'+id);
+  input.style.display = 'inline-block';
+  input.focus();
+  input.select();
+}
+
+function salvarPrecoModal(id) {
+  const input = document.getElementById('mprice-input-'+id);
+  let val = parseFloat(input.value);
+  const p = produtosModal.find(x => x.id===id);
+  if (isNaN(val) || val <= 0) val = parseFloat(p.preco);
+
+  precosModal[id] = val;
+  input.style.display = 'none';
+  document.getElementById('mprice-display-'+id).style.display = 'inline';
+  document.getElementById('mprice-display-'+id).textContent = 'R$ ' + val.toFixed(2).replace('.',',') + ' ✏️';
+
+  const tag = document.getElementById('mprice-tag-'+id);
+  if (val !== parseFloat(p.preco)) tag.style.display = 'inline-block';
+  else { tag.style.display = 'none'; delete precosModal[id]; }
+
+  atualizarResumoModal();
+}
+
+function precoEfetivo(id) {
+  if (precosModal[id] !== undefined) return precosModal[id];
+  const p = produtosModal.find(x => x.id===id);
+  return parseFloat(p.preco);
 }
 
 function changeQtyModal(id, delta) {
@@ -743,8 +849,8 @@ function fixQtyModal(id) {
 function atualizarResumoModal() {
   const itens = produtosModal.filter(p => (qtysModal[p.id]||0)>0);
   if (!itens.length) { document.getElementById('np-resumo').style.display='none'; return; }
-  const total = itens.reduce((s,p) => s+(qtysModal[p.id]*parseFloat(p.preco)),0);
-  document.getElementById('np-resumo-itens').innerHTML = itens.map(p => `<div>${qtysModal[p.id]}x ${p.nome} = R$ ${(qtysModal[p.id]*parseFloat(p.preco)).toFixed(2).replace('.',',')}</div>`).join('');
+  const total = itens.reduce((s,p) => s+(qtysModal[p.id]*precoEfetivo(p.id)),0);
+  document.getElementById('np-resumo-itens').innerHTML = itens.map(p => `<div>${qtysModal[p.id]}x ${p.nome} = R$ ${(qtysModal[p.id]*precoEfetivo(p.id)).toFixed(2).replace('.',',')}${precosModal[p.id]!==undefined?' <span style="color:var(--pink-dark);font-size:0.72rem;">(preço ajustado)</span>':''}</div>`).join('');
   document.getElementById('np-total').textContent = 'R$ '+total.toFixed(2).replace('.',',');
   document.getElementById('np-resumo').style.display='block';
 }
@@ -771,6 +877,11 @@ function selecionarCliente(id) {
   document.getElementById('autocomplete-list').classList.remove('show');
 }
 
+function salvarModalPedido() {
+  if (modoEdicaoId) return salvarEdicaoPedido();
+  return salvarPedidoManual();
+}
+
 async function salvarPedidoManual() {
   const nome = document.getElementById('np-nome').value.trim();
   const tel = document.getElementById('np-tel').value.trim();
@@ -779,7 +890,7 @@ async function salvarPedidoManual() {
   const entrega = document.getElementById('np-entrega').value;
   const status = document.getElementById('np-status').value;
   const itens = produtosModal.filter(p => (qtysModal[p.id]||0)>0)
-    .map(p => ({ sabor:p.nome, emoji:p.emoji, quantidade:qtysModal[p.id], preco_unit:parseFloat(p.preco) }));
+    .map(p => ({ sabor:p.nome, emoji:p.emoji, quantidade:qtysModal[p.id], preco_unit:precoEfetivo(p.id) }));
   if (!nome||!tel||!end) { alert('Preencha nome, telefone e endereço!'); return; }
   if (!itens.length) { alert('Adicione pelo menos um produto!'); return; }
   const total = itens.reduce((s,i) => s+(i.quantidade*i.preco_unit),0);
@@ -790,6 +901,27 @@ async function salvarPedidoManual() {
     showToast('✓ Pedido lançado com sucesso!');
     await carregarPedidos();
   } catch(e) { showToast('Erro ao lançar pedido.'); }
+}
+
+async function salvarEdicaoPedido() {
+  const end = document.getElementById('np-end').value.trim();
+  const obs = document.getElementById('np-obs').value.trim();
+  const entrega = document.getElementById('np-entrega').value;
+  const status = document.getElementById('np-status').value;
+  const itens = produtosModal.filter(p => (qtysModal[p.id]||0)>0)
+    .map(p => ({ sabor:p.nome, emoji:p.emoji, quantidade:qtysModal[p.id], preco_unit:precoEfetivo(p.id) }));
+  if (!end) { alert('Preencha o endereço!'); return; }
+  if (!itens.length) { alert('O pedido precisa ter pelo menos um produto!'); return; }
+  const total = itens.reduce((s,i) => s+(i.quantidade*i.preco_unit),0);
+  try {
+    await supaFetch('pedidos?id=eq.'+modoEdicaoId, 'PATCH', {
+      cliente_endereco: end, observacoes: obs, itens, total, tipo_entrega: entrega, status
+    });
+    fecharModal('modal-pedido');
+    showToast('✓ Pedido atualizado com sucesso!');
+    modoEdicaoId = null;
+    await carregarPedidos();
+  } catch(e) { showToast('Erro ao salvar alterações.'); }
 }
 
 async function salvarOuAtualizarCliente(nome, tel, end) {
