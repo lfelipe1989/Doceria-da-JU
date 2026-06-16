@@ -315,7 +315,9 @@ async function salvarOuAtualizarCliente(nome, tel, end) {
     } else {
       await supaFetch('clientes', 'POST', { nome, telefone: tel, endereco: end });
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error('Erro ao salvar cliente:', e.message);
+  }
 }
 
 const statusConfig = {
