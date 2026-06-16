@@ -8,97 +8,89 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
   :root {
-    --pink:        #F2A7C3;
-    --pink-dark:   #D4759C;
-    --pink-pale:   #FDF0F6;
-    --pink-border: rgba(242,167,195,0.5);
-    --tiffany:     #5BC8C0;
-    --tiffany-dark:#3AADA5;
-    --tiffany-pale:#EAF8F7;
-    --brown:       #4A2410;
-    --cream:       #FFF9FB;
-    --text:        #3A1A10;
-    --muted:       #9A6070;
-    --border:      rgba(74,36,16,0.10);
-    --radius:      16px;
+    --pink:#F2A7C3; --pink-dark:#D4759C; --pink-pale:#FDF0F6; --pink-border:rgba(242,167,195,0.5);
+    --tiffany:#5BC8C0; --tiffany-dark:#3AADA5; --tiffany-pale:#EAF8F7;
+    --brown:#4A2410; --cream:#FFF9FB; --text:#3A1A10; --muted:#9A6070; --border:rgba(74,36,16,0.10);
+    --radius:16px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--text); min-height:100vh; }
 
-  header { background: white; border-bottom: 2px solid var(--pink-border); padding: 1.5rem 1rem 1.25rem; text-align: center; }
-  header img.logo { width: 110px; height: 110px; object-fit: contain; display: block; margin: 0 auto 0.25rem; }
-  .logo-sub { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
+  header { background:white; border-bottom:2px solid var(--pink-border); padding:1.5rem 1rem 1.25rem; text-align:center; }
+  header img.logo { width:110px; height:110px; object-fit:contain; display:block; margin:0 auto 0.25rem; }
+  .logo-sub { font-size:0.7rem; color:var(--muted); letter-spacing:0.12em; text-transform:uppercase; margin-top:2px; }
 
-  main { max-width: 480px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
-  .section-label { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem; }
+  main { max-width:480px; margin:0 auto; padding:1.5rem 1rem 4rem; }
+  .section-label { font-size:0.7rem; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:0.75rem; }
 
-  .products { display: flex; flex-direction: column; gap: 10px; margin-bottom: 2rem; }
-  .product { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; transition: all 0.2s; }
-  .product.selected { border-color: var(--pink); background: var(--pink-pale); box-shadow: 0 0 0 3px rgba(242,167,195,0.18); }
-  .product-emoji { font-size: 2rem; flex-shrink: 0; }
-  .product-info { flex: 1; }
-  .product-name { font-weight: 500; font-size: 1rem; }
-  .product-desc { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
-  .product-price { font-weight: 500; color: var(--tiffany-dark); font-size: 0.9rem; margin-top: 3px; }
+  .products { display:flex; flex-direction:column; gap:10px; margin-bottom:2rem; }
+  .product { background:white; border:1.5px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; transition:all 0.2s; }
+  .product.selected { border-color:var(--pink); background:var(--pink-pale); box-shadow:0 0 0 3px rgba(242,167,195,0.18); }
+  .product-emoji { font-size:2rem; flex-shrink:0; }
+  .product-info { flex:1; }
+  .product-name { font-weight:500; font-size:1rem; }
+  .product-desc { font-size:0.8rem; color:var(--muted); margin-top:2px; }
+  .product-price { font-weight:500; color:var(--tiffany-dark); font-size:0.9rem; margin-top:3px; }
 
-  .qty-ctrl { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .qty-btn { width: 30px; height: 30px; border-radius: 50%; background: var(--pink-pale); border: 1.5px solid var(--pink-border); font-size: 1.1rem; cursor: pointer; color: var(--pink-dark); display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
-  .qty-btn:hover { background: var(--pink); color: white; }
-  .qty-num { font-size: 1rem; font-weight: 500; min-width: 18px; text-align: center; }
+  .qty-ctrl { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .qty-btn { width:30px; height:30px; border-radius:50%; background:var(--pink-pale); border:1.5px solid var(--pink-border); font-size:1.1rem; cursor:pointer; color:var(--pink-dark); display:flex; align-items:center; justify-content:center; transition:all 0.15s; flex-shrink:0; }
+  .qty-btn:hover { background:var(--pink); color:white; }
+  .qty-num { font-size:1rem; font-weight:500; min-width:18px; text-align:center; }
 
-  .form-group { margin-bottom: 1rem; }
-  label { font-size: 0.8rem; font-weight: 500; color: var(--muted); display: block; margin-bottom: 0.4rem; }
-  input, textarea { width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; background: white; color: var(--text); transition: border-color 0.2s; outline: none; }
-  input:focus, textarea:focus { border-color: var(--pink); }
-  textarea { resize: none; }
+  .form-group { margin-bottom:1rem; }
+  label { font-size:0.8rem; font-weight:500; color:var(--muted); display:block; margin-bottom:0.4rem; }
+  input, textarea { width:100%; padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:0.95rem; background:white; color:var(--text); transition:border-color 0.2s; outline:none; }
+  input:focus, textarea:focus { border-color:var(--pink); }
+  textarea { resize:none; }
 
-  .delivery-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
-  .delivery-opt { border: 1.5px solid var(--border); border-radius: 10px; padding: 0.75rem; cursor: pointer; text-align: center; background: white; transition: all 0.2s; }
-  .delivery-opt:hover { border-color: var(--tiffany); }
-  .delivery-opt.selected { border-color: var(--tiffany); background: var(--tiffany-pale); }
-  .delivery-opt .d-icon { font-size: 1.4rem; display: block; margin-bottom: 4px; }
-  .delivery-opt .d-label { font-size: 0.8rem; font-weight: 500; }
-  .delivery-opt .d-sub { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+  .delivery-options { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:1rem; }
+  .delivery-opt { border:1.5px solid var(--border); border-radius:10px; padding:0.75rem; cursor:pointer; text-align:center; background:white; transition:all 0.2s; }
+  .delivery-opt:hover { border-color:var(--tiffany); }
+  .delivery-opt.selected { border-color:var(--tiffany); background:var(--tiffany-pale); }
+  .delivery-opt .d-icon { font-size:1.4rem; display:block; margin-bottom:4px; }
+  .delivery-opt .d-label { font-size:0.8rem; font-weight:500; }
+  .delivery-opt .d-sub { font-size:0.7rem; color:var(--muted); margin-top:2px; }
 
-  .info-box { background: #EAF8F7; border: 1px solid #5BC8C0; border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.8rem; color: #2A7A76; margin-bottom: 1rem; display: none; }
-  .info-box.show { display: block; }
+  .info-box { background:#EAF8F7; border:1px solid #5BC8C0; border-radius:10px; padding:0.75rem 1rem; font-size:0.8rem; color:#2A7A76; margin-bottom:1rem; display:none; }
+  .info-box.show { display:block; }
 
-  .summary { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: none; }
-  .summary.show { display: block; }
-  .summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; padding: 4px 0; color: var(--text); }
-  .summary-row.total { font-weight: 500; font-size: 1rem; border-top: 1px solid var(--border); margin-top: 6px; padding-top: 10px; }
+  .summary { background:white; border:1.5px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; margin-bottom:1.5rem; display:none; }
+  .summary.show { display:block; }
+  .summary-row { display:flex; justify-content:space-between; align-items:center; font-size:0.88rem; padding:4px 0; color:var(--text); }
+  .summary-row.total { font-weight:500; font-size:1rem; border-top:1px solid var(--border); margin-top:6px; padding-top:10px; }
 
-  .btn-order { width: 100%; background: var(--tiffany); color: white; border: none; border-radius: var(--radius); padding: 1rem; font-family: 'Playfair Display', serif; font-size: 1.1rem; font-style: italic; cursor: pointer; transition: background 0.2s; }
-  .btn-order:hover { background: var(--tiffany-dark); }
-  .btn-order:disabled { opacity: 0.6; cursor: default; }
+  .btn-order { width:100%; background:var(--tiffany); color:white; border:none; border-radius:var(--radius); padding:1rem; font-family:'Playfair Display',serif; font-size:1.1rem; font-style:italic; cursor:pointer; transition:background 0.2s; }
+  .btn-order:hover { background:var(--tiffany-dark); }
+  .btn-order:disabled { opacity:0.6; cursor:default; }
 
-  #screen-tracking { display: none; animation: fadeIn 0.3s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  #screen-tracking { display:none; animation:fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 
-  .track-header { text-align: center; padding: 1.5rem 0 1rem; }
-  .track-icon img { width: 70px; height: 70px; object-fit: contain; }
-  .track-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--brown); margin-top: 0.5rem; }
-  .track-sub { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+  .track-header { text-align:center; padding:1.5rem 0 1rem; }
+  .track-icon img { width:70px; height:70px; object-fit:contain; }
+  .track-title { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--brown); margin-top:0.5rem; }
+  .track-sub { font-size:0.85rem; color:var(--muted); margin-top:4px; }
 
-  .track-status { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem; }
-  .status-badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; background: var(--tiffany-pale); color: var(--tiffany-dark); margin-bottom: 1rem; }
-  .timeline { padding-left: 1.5rem; }
-  .tl-step { position: relative; padding-bottom: 1.25rem; }
-  .tl-step:last-child { padding-bottom: 0; }
-  .tl-step::before { content: ''; position: absolute; left: -1.25rem; top: 14px; width: 1px; height: calc(100% - 6px); background: var(--border); }
-  .tl-step:last-child::before { display: none; }
-  .tl-dot { position: absolute; left: -1.625rem; top: 3px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); background: white; transition: all 0.3s; }
-  .tl-dot.done { background: var(--tiffany); border-color: var(--tiffany); }
-  .tl-dot.active { background: white; border-color: var(--pink); box-shadow: 0 0 0 3px rgba(242,167,195,0.3); }
-  .tl-text { font-size: 0.9rem; font-weight: 500; }
-  .tl-sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .track-status { background:white; border:1.5px solid var(--border); border-radius:var(--radius); padding:1.25rem; margin-bottom:1.5rem; }
+  .status-badge { display:inline-block; padding:4px 14px; border-radius:20px; font-size:0.8rem; font-weight:500; background:var(--tiffany-pale); color:var(--tiffany-dark); margin-bottom:1rem; }
+  .timeline { padding-left:1.5rem; }
+  .tl-step { position:relative; padding-bottom:1.25rem; }
+  .tl-step:last-child { padding-bottom:0; }
+  .tl-step::before { content:''; position:absolute; left:-1.25rem; top:14px; width:1px; height:calc(100% - 6px); background:var(--border); }
+  .tl-step:last-child::before { display:none; }
+  .tl-dot { position:absolute; left:-1.625rem; top:3px; width:14px; height:14px; border-radius:50%; border:2px solid var(--border); background:white; transition:all 0.3s; }
+  .tl-dot.done { background:var(--tiffany); border-color:var(--tiffany); }
+  .tl-dot.active { background:white; border-color:var(--pink); box-shadow:0 0 0 3px rgba(242,167,195,0.3); }
+  .tl-text { font-size:0.9rem; font-weight:500; }
+  .tl-sub { font-size:0.78rem; color:var(--muted); margin-top:2px; }
 
-  .order-detail { background: var(--pink-pale); border: 1px solid var(--pink-border); border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--brown); margin-bottom: 1rem; line-height: 1.7; }
-  .new-order-link { text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--muted); cursor: pointer; text-decoration: underline; }
+  .order-detail { background:var(--pink-pale); border:1px solid var(--pink-border); border-radius:10px; padding:0.75rem 1rem; font-size:0.85rem; color:var(--brown); margin-bottom:1rem; line-height:1.7; }
+  .new-order-link { text-align:center; margin-top:1rem; font-size:0.85rem; color:var(--muted); cursor:pointer; text-decoration:underline; }
 
-  .loading { text-align:center; padding: 2rem; color: var(--muted); font-size: 0.9rem; }
-  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--pink-border); border-top-color: var(--pink); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-screen { text-align:center; padding:4rem 1rem; color:var(--muted); }
+  .spinner { display:inline-block; width:24px; height:24px; border:2px solid var(--pink-border); border-top-color:var(--pink); border-radius:50%; animation:spin 0.8s linear infinite; }
+  .btn-spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.4); border-top-color:white; border-radius:50%; animation:spin 0.8s linear infinite; vertical-align:middle; margin-right:6px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -110,137 +102,74 @@
 
 <div id="screen-order">
 <main>
-  <div style="margin-bottom:2rem;">
-    <p class="section-label">Escolha os sabores</p>
-    <div class="products">
-      <div class="product" id="prod-nutella">
-        <span class="product-emoji">🫙</span>
-        <div class="product-info">
-          <div class="product-name">Nutella</div>
-          <div class="product-desc">Cookie recheado com creme de avelã</div>
-          <div class="product-price">R$ 6,50 cada</div>
-        </div>
-        <div class="qty-ctrl">
-          <button class="qty-btn" onclick="changeQty('nutella',-1)">−</button>
-          <span class="qty-num" id="qty-nutella">0</span>
-          <button class="qty-btn" onclick="changeQty('nutella',1)">+</button>
-        </div>
-      </div>
-      <div class="product" id="prod-redvelvet">
-        <span class="product-emoji">❤️</span>
-        <div class="product-info">
-          <div class="product-name">Red Velvet</div>
-          <div class="product-desc">Massa aveludada com gotas de chocolate branco</div>
-          <div class="product-price">R$ 6,50 cada</div>
-        </div>
-        <div class="qty-ctrl">
-          <button class="qty-btn" onclick="changeQty('redvelvet',-1)">−</button>
-          <span class="qty-num" id="qty-redvelvet">0</span>
-          <button class="qty-btn" onclick="changeQty('redvelvet',1)">+</button>
-        </div>
-      </div>
-      <div class="product" id="prod-oreo">
-        <span class="product-emoji">🖤</span>
-        <div class="product-info">
-          <div class="product-name">Oreo</div>
-          <div class="product-desc">Massa de chocolate com pedaços de Oreo</div>
-          <div class="product-price">R$ 6,50 cada</div>
-        </div>
-        <div class="qty-ctrl">
-          <button class="qty-btn" onclick="changeQty('oreo',-1)">−</button>
-          <span class="qty-num" id="qty-oreo">0</span>
-          <button class="qty-btn" onclick="changeQty('oreo',1)">+</button>
-        </div>
-      </div>
-    </div>
+
+  <div id="loading-produtos" class="loading-screen">
+    <div class="spinner"></div>
+    <p style="margin-top:1rem;">Carregando cardápio...</p>
   </div>
 
-  <div style="margin-bottom:2rem;">
-    <p class="section-label">Entrega</p>
-    <div class="delivery-options">
-      <div class="delivery-opt selected" id="del-sul" onclick="selectDelivery('sul')">
-        <span class="d-icon">🏝️</span>
-        <div class="d-label">Sul da Ilha</div>
-        <div class="d-sub">Entrega grátis</div>
+  <div id="cardapio-content" style="display:none;">
+    <div style="margin-bottom:2rem;">
+      <p class="section-label">Escolha os sabores</p>
+      <div class="products" id="products-list"></div>
+    </div>
+
+    <div style="margin-bottom:2rem;">
+      <p class="section-label">Entrega</p>
+      <div class="delivery-options">
+        <div class="delivery-opt selected" id="del-sul" onclick="selectDelivery('sul')">
+          <span class="d-icon">🏝️</span>
+          <div class="d-label">Sul da Ilha</div>
+          <div class="d-sub">Entrega grátis</div>
+        </div>
+        <div class="delivery-opt" id="del-outro" onclick="selectDelivery('outro')">
+          <span class="d-icon">📍</span>
+          <div class="d-label">Outro bairro</div>
+          <div class="d-sub">A combinar</div>
+        </div>
       </div>
-      <div class="delivery-opt" id="del-outro" onclick="selectDelivery('outro')">
-        <span class="d-icon">📍</span>
-        <div class="d-label">Outro bairro</div>
-        <div class="d-sub">A combinar</div>
+      <div class="info-box" id="info-outro">
+        📋 Para entregas fora do Sul da Ilha, o pedido mínimo e o frete serão combinados via WhatsApp após o envio.
       </div>
     </div>
-    <div class="info-box" id="info-outro">
-      📋 Para entregas fora do Sul da Ilha, o pedido mínimo e o frete serão combinados via WhatsApp após o envio.
-    </div>
-  </div>
 
-  <div style="margin-bottom:2rem;">
-    <p class="section-label">Seus dados</p>
-    <div class="form-group">
-      <label>Nome completo</label>
-      <input type="text" id="f-name" placeholder="Ex: Juliana Mendes"/>
+    <div style="margin-bottom:2rem;">
+      <p class="section-label">Seus dados</p>
+      <div class="form-group"><label>Nome completo</label><input type="text" id="f-name" placeholder="Ex: Juliana Mendes"/></div>
+      <div class="form-group"><label>WhatsApp</label><input type="tel" id="f-phone" placeholder="(48) 99999-0000"/></div>
+      <div class="form-group"><label>Endereço de entrega</label><input type="text" id="f-address" placeholder="Rua, número, bairro"/></div>
+      <div class="form-group"><label>Observações (opcional)</label><textarea id="f-obs" rows="2" placeholder="Ex: embalagem presenteável, sem recheio extra..."></textarea></div>
     </div>
-    <div class="form-group">
-      <label>WhatsApp</label>
-      <input type="tel" id="f-phone" placeholder="(48) 99999-0000"/>
-    </div>
-    <div class="form-group">
-      <label>Endereço de entrega</label>
-      <input type="text" id="f-address" placeholder="Rua, número, bairro"/>
-    </div>
-    <div class="form-group">
-      <label>Observações (opcional)</label>
-      <textarea id="f-obs" rows="2" placeholder="Ex: embalagem presenteável, sem recheio extra..."></textarea>
-    </div>
-  </div>
 
-  <div class="summary" id="summary">
-    <p style="font-size:0.8rem; font-weight:500; color:var(--muted); margin-bottom:8px;">Resumo do pedido</p>
-    <div id="sum-items"></div>
-    <div class="summary-row"><span>Entrega</span><span id="sum-frete">Grátis</span></div>
-    <div class="summary-row total"><span>Total</span><span id="sum-total">-</span></div>
-  </div>
+    <div class="summary" id="summary">
+      <p style="font-size:0.8rem;font-weight:500;color:var(--muted);margin-bottom:8px;">Resumo do pedido</p>
+      <div id="sum-items"></div>
+      <div class="summary-row"><span>Entrega</span><span id="sum-frete">Grátis</span></div>
+      <div class="summary-row total"><span>Total</span><span id="sum-total">-</span></div>
+    </div>
 
-  <button class="btn-order" id="btn-order" onclick="submitOrder()">Fazer pedido 🍪</button>
+    <button class="btn-order" id="btn-order" onclick="submitOrder()">Fazer pedido 🍪</button>
+  </div>
 </main>
 </div>
 
-<div id="screen-tracking">
+<div id="screen-tracking" style="display:none;">
 <main>
   <div class="track-header">
     <div class="track-icon"><img src="logo.jpg" alt="logo"/></div>
     <div class="track-title">Pedido enviado!</div>
     <div class="track-sub">Aguardando confirmação da Ju 🍪</div>
   </div>
-
   <div class="order-detail" id="order-detail-box"></div>
-
   <div class="track-status">
     <div class="status-badge" id="status-badge">Aguardando confirmação</div>
     <div class="timeline">
-      <div class="tl-step">
-        <div class="tl-dot done" id="tl-1"></div>
-        <div class="tl-text">Pedido recebido</div>
-        <div class="tl-sub">Sua solicitação chegou!</div>
-      </div>
-      <div class="tl-step">
-        <div class="tl-dot" id="tl-2"></div>
-        <div class="tl-text">Pedido confirmado</div>
-        <div class="tl-sub">A Ju aceitou e vai preparar</div>
-      </div>
-      <div class="tl-step">
-        <div class="tl-dot" id="tl-3"></div>
-        <div class="tl-text">Em preparo 🧁</div>
-        <div class="tl-sub">Seus cookies estão no forno</div>
-      </div>
-      <div class="tl-step">
-        <div class="tl-dot" id="tl-4"></div>
-        <div class="tl-text">Saiu para entrega 🛵</div>
-        <div class="tl-sub">A caminho de você!</div>
-      </div>
+      <div class="tl-step"><div class="tl-dot done" id="tl-1"></div><div class="tl-text">Pedido recebido</div><div class="tl-sub">Sua solicitação chegou!</div></div>
+      <div class="tl-step"><div class="tl-dot" id="tl-2"></div><div class="tl-text">Pedido confirmado</div><div class="tl-sub">A Ju aceitou e vai preparar</div></div>
+      <div class="tl-step"><div class="tl-dot" id="tl-3"></div><div class="tl-text">Em preparo 🧁</div><div class="tl-sub">Seus cookies estão no forno</div></div>
+      <div class="tl-step"><div class="tl-dot" id="tl-4"></div><div class="tl-text">Saiu para entrega 🛵</div><div class="tl-sub">A caminho de você!</div></div>
     </div>
   </div>
-
   <p class="new-order-link" onclick="resetAll()">← Fazer novo pedido</p>
 </main>
 </div>
@@ -249,33 +178,68 @@
 const SUPABASE_URL = 'https://jhnwtizmihecidadhubv.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_g1GinN-To8dOvXEzqnAy6A_33x-9yA9';
 
-const PRICE = 6.50;
-const products = {
-  nutella:   { name: 'Nutella',    emoji: '🫙' },
-  redvelvet: { name: 'Red Velvet', emoji: '❤️' },
-  oreo:      { name: 'Oreo',       emoji: '🖤' }
-};
-const qtys = { nutella: 0, redvelvet: 0, oreo: 0 };
+let produtos = [];
+let qtys = {};
 let delivery = 'sul';
 let pedidoId = null;
 let pollingInterval = null;
 
-function changeQty(key, delta) {
-  qtys[key] = Math.max(0, qtys[key] + delta);
-  document.getElementById('qty-' + key).textContent = qtys[key];
-  document.getElementById('prod-' + key).classList.toggle('selected', qtys[key] > 0);
+async function supaFetch(path, method='GET', body=null) {
+  const opts = { method, headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': method==='POST'?'return=representation':'' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, opts);
+  if (!res.ok) throw new Error(await res.text());
+  return method==='PATCH' ? null : res.json();
+}
+
+async function carregarProdutos() {
+  try {
+    produtos = await supaFetch('produtos?ativo=eq.true&order=id.asc');
+    qtys = {};
+    produtos.forEach(p => qtys[p.id] = 0);
+    renderProdutos();
+    document.getElementById('loading-produtos').style.display = 'none';
+    document.getElementById('cardapio-content').style.display = 'block';
+  } catch(e) {
+    document.getElementById('loading-produtos').innerHTML = '<p>Erro ao carregar cardápio. Recarregue a página.</p>';
+  }
+}
+
+function renderProdutos() {
+  document.getElementById('products-list').innerHTML = produtos.map(p => `
+    <div class="product" id="prod-${p.id}">
+      <span class="product-emoji">${p.emoji}</span>
+      <div class="product-info">
+        <div class="product-name">${p.nome}</div>
+        <div class="product-desc">${p.descricao}</div>
+        <div class="product-price">R$ ${parseFloat(p.preco).toFixed(2).replace('.',',')} cada</div>
+      </div>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="changeQty(${p.id},-1)">−</button>
+        <span class="qty-num" id="qty-${p.id}">0</span>
+        <button class="qty-btn" onclick="changeQty(${p.id},1)">+</button>
+      </div>
+    </div>`).join('');
+}
+
+function changeQty(id, delta) {
+  qtys[id] = Math.max(0, (qtys[id]||0) + delta);
+  document.getElementById('qty-' + id).textContent = qtys[id];
+  document.getElementById('prod-' + id).classList.toggle('selected', qtys[id] > 0);
   updateSummary();
 }
 
-function totalQty() { return qtys.nutella + qtys.redvelvet + qtys.oreo; }
-function totalValue() { return totalQty() * PRICE; }
+function totalQty() { return Object.values(qtys).reduce((a,b) => a+b, 0); }
+function totalValue() {
+  return produtos.reduce((s,p) => s + (qtys[p.id]||0) * parseFloat(p.preco), 0);
+}
 
 function updateSummary() {
   if (totalQty() === 0) { document.getElementById('summary').classList.remove('show'); return; }
-  const lines = Object.entries(qtys).filter(([k,q]) => q > 0)
-    .map(([k,q]) => `<div class="summary-row"><span>${q}x Cookie ${products[k].name}</span><span>R$ ${(q*PRICE).toFixed(2).replace('.',',')}</span></div>`).join('');
+  const lines = produtos.filter(p => (qtys[p.id]||0) > 0)
+    .map(p => `<div class="summary-row"><span>${qtys[p.id]}x Cookie ${p.nome}</span><span>R$ ${(qtys[p.id]*parseFloat(p.preco)).toFixed(2).replace('.',',')}</span></div>`).join('');
   document.getElementById('sum-items').innerHTML = lines;
-  document.getElementById('sum-frete').textContent = delivery === 'sul' ? 'Grátis' : 'A combinar';
+  document.getElementById('sum-frete').textContent = delivery==='sul' ? 'Grátis' : 'A combinar';
   document.getElementById('sum-total').textContent = 'R$ ' + totalValue().toFixed(2).replace('.',',') + (delivery==='outro' ? ' + frete' : '');
   document.getElementById('summary').classList.add('show');
 }
@@ -293,58 +257,33 @@ async function submitOrder() {
   const phone = document.getElementById('f-phone').value.trim();
   const address = document.getElementById('f-address').value.trim();
   const obs = document.getElementById('f-obs').value.trim();
-
   if (totalQty() === 0) { alert('Por favor adicione pelo menos um cookie!'); return; }
   if (!name || !phone || !address) { alert('Por favor preencha seu nome, WhatsApp e endereço!'); return; }
 
   const btn = document.getElementById('btn-order');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Enviando...';
+  btn.innerHTML = '<span class="btn-spinner"></span> Enviando...';
 
-  const itens = Object.entries(qtys).filter(([k,q]) => q > 0)
-    .map(([k,q]) => ({ sabor: products[k].name, emoji: products[k].emoji, quantidade: q }));
-
-  const payload = {
-    cliente_nome: name,
-    cliente_telefone: phone,
-    cliente_endereco: address,
-    observacoes: obs,
-    itens: itens,
-    total: totalValue(),
-    tipo_entrega: delivery,
-    status: 'waiting',
-    pago: false
-  };
+  const itens = produtos.filter(p => (qtys[p.id]||0) > 0)
+    .map(p => ({ sabor: p.nome, emoji: p.emoji, quantidade: qtys[p.id], preco_unit: parseFloat(p.preco) }));
 
   try {
-    const res = await fetch(SUPABASE_URL + '/rest/v1/pedidos', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify(payload)
+    const res = await supaFetch('pedidos', 'POST', {
+      cliente_nome: name, cliente_telefone: phone,
+      cliente_endereco: address, observacoes: obs,
+      itens, total: totalValue(), tipo_entrega: delivery,
+      status: 'waiting', pago: false
     });
+    pedidoId = res[0].id;
 
-    if (!res.ok) throw new Error('Erro ao salvar pedido');
-    const data = await res.json();
-    pedidoId = data[0].id;
-
-    // Mostrar tela de tracking
     const itemLines = itens.map(i => i.emoji + ' ' + i.quantidade + 'x ' + i.sabor).join('<br>');
     document.getElementById('order-detail-box').innerHTML =
-      '<strong>' + itemLines + '</strong><br><br>' +
-      '👤 ' + name + '<br>📍 ' + address +
+      '<strong>' + itemLines + '</strong><br><br>👤 ' + name + '<br>📍 ' + address +
       '<br>💰 Total: R$ ' + totalValue().toFixed(2).replace('.',',');
 
     document.getElementById('screen-order').style.display = 'none';
     document.getElementById('screen-tracking').style.display = 'block';
-
-    // Polling para atualizar status em tempo real
     iniciarPolling();
-
   } catch(e) {
     alert('Erro ao enviar pedido. Tente novamente.');
     btn.disabled = false;
@@ -353,19 +292,19 @@ async function submitOrder() {
 }
 
 const statusConfig = {
-  waiting:   { label: 'Aguardando confirmação', step: 0 },
-  accepted:  { label: 'Pedido confirmado ✓',    step: 1 },
-  preparing: { label: 'Em preparo 🧁',           step: 2 },
-  delivery:  { label: 'Saiu para entrega 🛵',    step: 3 },
-  done:      { label: 'Entregue! 🎉',            step: 4 }
+  waiting:   { label:'Aguardando confirmação', step:0 },
+  accepted:  { label:'Pedido confirmado ✓',    step:1 },
+  preparing: { label:'Em preparo 🧁',           step:2 },
+  delivery:  { label:'Saiu para entrega 🛵',    step:3 },
+  done:      { label:'Entregue! 🎉',            step:4 }
 };
 
 function atualizarTimeline(status) {
   const cfg = statusConfig[status] || statusConfig.waiting;
   document.getElementById('status-badge').textContent = cfg.label;
-  for (let i = 1; i <= 4; i++) {
-    const dot = document.getElementById('tl-' + i);
-    dot.className = 'tl-dot' + (i <= cfg.step ? ' done' : i === cfg.step + 1 ? ' active' : '');
+  for (let i=1; i<=4; i++) {
+    const dot = document.getElementById('tl-'+i);
+    dot.className = 'tl-dot' + (i<=cfg.step?' done':i===cfg.step+1?' active':'');
   }
 }
 
@@ -373,18 +312,14 @@ async function iniciarPolling() {
   if (!pedidoId) return;
   pollingInterval = setInterval(async () => {
     try {
-      const res = await fetch(SUPABASE_URL + '/rest/v1/pedidos?id=eq.' + pedidoId + '&select=status', {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-      });
-      const data = await res.json();
-      if (data && data[0]) atualizarTimeline(data[0].status);
-      if (data[0].status === 'done') clearInterval(pollingInterval);
+      const data = await supaFetch('pedidos?id=eq.'+pedidoId+'&select=status');
+      if (data && data[0]) { atualizarTimeline(data[0].status); if (data[0].status==='done') clearInterval(pollingInterval); }
     } catch(e) {}
-  }, 10000); // verifica a cada 10 segundos
+  }, 10000);
 }
 
 function resetAll() {
-  Object.keys(qtys).forEach(k => { qtys[k]=0; document.getElementById('qty-'+k).textContent=0; document.getElementById('prod-'+k).classList.remove('selected'); });
+  produtos.forEach(p => { qtys[p.id]=0; const el=document.getElementById('qty-'+p.id); if(el) el.textContent=0; const card=document.getElementById('prod-'+p.id); if(card) card.classList.remove('selected'); });
   delivery='sul'; pedidoId=null;
   if (pollingInterval) clearInterval(pollingInterval);
   document.getElementById('screen-order').style.display='block';
@@ -394,9 +329,11 @@ function resetAll() {
   document.getElementById('del-sul').classList.add('selected');
   document.getElementById('del-outro').classList.remove('selected');
   document.getElementById('info-outro').classList.remove('show');
-  document.getElementById('btn-order').disabled = false;
-  document.getElementById('btn-order').innerHTML = 'Fazer pedido 🍪';
+  document.getElementById('btn-order').disabled=false;
+  document.getElementById('btn-order').innerHTML='Fazer pedido 🍪';
 }
+
+carregarProdutos();
 </script>
 </body>
 </html>
