@@ -62,7 +62,6 @@
   .order-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:0.75rem; }
   .order-client { font-weight:500; font-size:0.95rem; }
   .order-detail { font-size:0.8rem; color:var(--muted); margin-top:3px; }
-  .order-time { font-size:0.75rem; color:var(--muted); }
   .badge { display:inline-block; font-size:0.72rem; font-weight:500; padding:3px 10px; border-radius:20px; }
   .badge-wait { background:#FEF3E2; color:#8B5E00; }
   .badge-accepted { background:var(--blue-bg); color:var(--blue); }
@@ -80,11 +79,21 @@
   .btn-wpp { background:#E7F7EF; color:#1A6B3C; border-color:#A5D5B5; font-weight:500; }
   .btn-paid { background:var(--green-bg); color:var(--green); border-color:#A5D5B5; }
 
-  /* EMPTY / LOADING */
   .empty { text-align:center; padding:3rem 1rem; color:var(--muted); }
   .empty-icon { font-size:3rem; margin-bottom:0.75rem; }
   .spinner { display:inline-block; width:20px; height:20px; border:2px solid var(--pink-border); border-top-color:var(--pink); border-radius:50%; animation:spin 0.8s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* FILTRO PERÍODO */
+  .periodo-bar { display:flex; gap:8px; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center; }
+  .periodo-btn { padding:6px 14px; border-radius:20px; border:1px solid var(--pink-border); background:white; color:var(--muted); font-size:0.8rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s; }
+  .periodo-btn:hover { border-color:var(--pink); color:var(--text); }
+  .periodo-btn.active { background:var(--pink); color:white; border-color:var(--pink); font-weight:500; }
+  .periodo-custom { display:none; gap:8px; align-items:center; flex-wrap:wrap; }
+  .periodo-custom.show { display:flex; }
+  .periodo-custom input { padding:6px 10px; border:1px solid var(--pink-border); border-radius:8px; font-size:0.8rem; font-family:'DM Sans',sans-serif; color:var(--text); outline:none; }
+  .periodo-custom input:focus { border-color:var(--pink); }
+  .periodo-custom button { padding:6px 14px; background:var(--tiffany); color:white; border:none; border-radius:8px; font-size:0.8rem; cursor:pointer; font-family:'DM Sans',sans-serif; }
 
   /* REPORTS */
   .report-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
@@ -93,12 +102,27 @@
   .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
   .bar-label { font-size:0.8rem; width:80px; color:var(--text); }
   .bar-track { flex:1; background:#F5EFE6; border-radius:4px; height:18px; overflow:hidden; }
-  .bar-fill { height:100%; border-radius:4px; }
+  .bar-fill { height:100%; border-radius:4px; transition:width 0.4s ease; }
   .bar-val { font-size:0.78rem; font-weight:500; color:var(--muted); width:30px; text-align:right; }
   .client-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
   .client-table th { text-align:left; padding:6px 0; color:var(--muted); font-weight:500; border-bottom:1px solid var(--border); font-size:0.75rem; }
   .client-table td { padding:8px 0; border-bottom:1px solid var(--border); }
   .client-table tr:last-child td { border-bottom:none; }
+
+  /* CARDÁPIO EDIT */
+  .product-edit-card { background:white; border-radius:var(--radius); border:1px solid var(--pink-border); padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; margin-bottom:10px; }
+  .product-edit-card .emoji { font-size:2rem; flex-shrink:0; }
+  .product-edit-info { flex:1; }
+  .product-edit-name { font-weight:500; font-size:0.95rem; }
+  .product-edit-desc { font-size:0.78rem; color:var(--muted); margin-top:2px; }
+  .price-edit-row { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .price-display { font-weight:500; color:var(--tiffany-dark); font-size:1rem; min-width:70px; text-align:right; }
+  .price-input { width:90px; padding:6px 10px; border:1.5px solid var(--pink-border); border-radius:8px; font-size:0.9rem; font-family:'DM Sans',sans-serif; color:var(--text); outline:none; display:none; }
+  .price-input:focus { border-color:var(--pink); }
+  .btn-edit { padding:5px 12px; border-radius:8px; border:1px solid var(--pink-border); background:var(--pink-pale); color:var(--pink-dark); font-size:0.75rem; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .btn-save { padding:5px 12px; border-radius:8px; border:none; background:var(--tiffany); color:white; font-size:0.75rem; cursor:pointer; font-family:'DM Sans',sans-serif; display:none; }
+  .btn-cancel { padding:5px 12px; border-radius:8px; border:1px solid var(--border); background:white; color:var(--muted); font-size:0.75rem; cursor:pointer; font-family:'DM Sans',sans-serif; display:none; }
+  .ativo-badge { font-size:0.72rem; padding:3px 10px; border-radius:20px; background:var(--green-bg); color:var(--green); flex-shrink:0; }
 
   .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:var(--brown); color:var(--pink); padding:0.75rem 1.25rem; border-radius:10px; font-size:0.85rem; box-shadow:0 4px 20px rgba(0,0,0,0.2); transform:translateY(100px); opacity:0; transition:all 0.3s; z-index:1000; }
   .toast.show { transform:translateY(0); opacity:1; }
@@ -161,22 +185,44 @@
     <!-- RELATÓRIOS -->
     <div id="page-relatorios" class="page">
       <h1 class="page-title">Relatórios</h1>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem;">
-        <div class="metric"><div class="metric-val" id="r-receita">—</div><div class="metric-lbl">Receita total</div></div>
+
+      <!-- Filtro período -->
+      <div class="periodo-bar">
+        <button class="periodo-btn active" onclick="selecionarPeriodo('hoje',this)">Hoje</button>
+        <button class="periodo-btn" onclick="selecionarPeriodo('semana',this)">Esta semana</button>
+        <button class="periodo-btn" onclick="selecionarPeriodo('mes',this)">Este mês</button>
+        <button class="periodo-btn" onclick="selecionarPeriodo('tudo',this)">Tudo</button>
+        <button class="periodo-btn" onclick="selecionarPeriodo('custom',this)">📅 Personalizado</button>
+      </div>
+      <div class="periodo-custom" id="periodo-custom">
+        <span style="font-size:0.8rem;color:var(--muted);">De</span>
+        <input type="date" id="dt-inicio"/>
+        <span style="font-size:0.8rem;color:var(--muted);">até</span>
+        <input type="date" id="dt-fim"/>
+        <button onclick="aplicarCustom()">Filtrar</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem;margin-top:1rem;">
+        <div class="metric"><div class="metric-val" id="r-receita">—</div><div class="metric-lbl">Receita (pagas)</div></div>
         <div class="metric"><div class="metric-val" id="r-pedidos">—</div><div class="metric-lbl">Total pedidos</div></div>
         <div class="metric"><div class="metric-val" id="r-clientes">—</div><div class="metric-lbl">Clientes únicos</div></div>
         <div class="metric"><div class="metric-val" id="r-ticket">—</div><div class="metric-lbl">Ticket médio</div></div>
       </div>
+
       <div class="report-grid">
         <div class="report-card">
           <div class="report-card-title">Sabores mais vendidos</div>
           <div id="sabores-bars"><div class="spinner"></div></div>
         </div>
+        <div class="report-card">
+          <div class="report-card-title">Resumo de entregas</div>
+          <div id="entregas-resumo"></div>
+        </div>
         <div class="report-card" style="grid-column:1/-1;">
           <div class="report-card-title">Histórico por cliente</div>
           <table class="client-table">
-            <thead><tr><th>Cliente</th><th>Telefone</th><th>Pedidos</th><th>Total gasto</th></tr></thead>
-            <tbody id="clientes-tbody"><tr><td colspan="4" style="color:var(--muted);text-align:center;padding:1rem;">Carregando...</td></tr></tbody>
+            <thead><tr><th>Cliente</th><th>Telefone</th><th>Pedidos</th><th>Cookies</th><th>Total gasto</th></tr></thead>
+            <tbody id="clientes-tbody"><tr><td colspan="5" style="color:var(--muted);text-align:center;padding:1rem;">Carregando...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -185,26 +231,8 @@
     <!-- CARDÁPIO -->
     <div id="page-cardapio" class="page">
       <h1 class="page-title">Cardápio</h1>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <div class="order-card" style="display:flex;align-items:center;gap:1rem;">
-          <span style="font-size:2rem;">🫙</span>
-          <div style="flex:1"><div style="font-weight:500;">Cookie Nutella</div><div style="font-size:0.8rem;color:var(--muted);">Cookie recheado com creme de avelã</div></div>
-          <div style="font-weight:500;color:var(--tiffany-dark);">R$ 6,50</div>
-          <span style="background:var(--green-bg);color:var(--green);font-size:0.72rem;padding:3px 10px;border-radius:20px;">Ativo</span>
-        </div>
-        <div class="order-card" style="display:flex;align-items:center;gap:1rem;">
-          <span style="font-size:2rem;">❤️</span>
-          <div style="flex:1"><div style="font-weight:500;">Cookie Red Velvet</div><div style="font-size:0.8rem;color:var(--muted);">Massa aveludada com gotas de chocolate branco</div></div>
-          <div style="font-weight:500;color:var(--tiffany-dark);">R$ 6,50</div>
-          <span style="background:var(--green-bg);color:var(--green);font-size:0.72rem;padding:3px 10px;border-radius:20px;">Ativo</span>
-        </div>
-        <div class="order-card" style="display:flex;align-items:center;gap:1rem;">
-          <span style="font-size:2rem;">🖤</span>
-          <div style="flex:1"><div style="font-weight:500;">Cookie Oreo</div><div style="font-size:0.8rem;color:var(--muted);">Massa de chocolate com pedaços de Oreo</div></div>
-          <div style="font-weight:500;color:var(--tiffany-dark);">R$ 6,50</div>
-          <span style="background:var(--green-bg);color:var(--green);font-size:0.72rem;padding:3px 10px;border-radius:20px;">Ativo</span>
-        </div>
-      </div>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.25rem;">Clique em ✏️ Editar para alterar o preço de um produto. O novo valor reflete imediatamente no site dos clientes.</p>
+      <div id="cardapio-lista"><div class="empty"><div class="spinner"></div></div></div>
     </div>
 
   </main>
@@ -224,90 +252,77 @@ function doLogin() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-layout').style.display = 'flex';
     sessionStorage.setItem('ju-admin', '1');
-    carregarPedidos();
-    carregarRelatorios();
+    iniciar();
   } else {
     document.getElementById('login-error').classList.add('show');
     document.getElementById('login-input').value = '';
     document.getElementById('login-input').focus();
   }
 }
+function iniciar() {
+  carregarPedidos();
+  carregarCardapio();
+  setInterval(carregarPedidos, 30000);
+}
 if (sessionStorage.getItem('ju-admin') === '1') {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('main-layout').style.display = 'flex';
-  carregarPedidos();
-  carregarRelatorios();
-  setInterval(carregarPedidos, 30000); // auto-atualiza a cada 30s
+  iniciar();
 }
 
 // ── API ────────────────────────────────────────────
 async function supaFetch(path, method='GET', body=null) {
-  const opts = {
-    method,
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': method==='POST' ? 'return=representation' : ''
-    }
-  };
+  const opts = { method, headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': method==='POST'?'return=representation':'' } };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, opts);
   if (!res.ok) throw new Error(await res.text());
-  return method === 'PATCH' ? null : res.json();
+  return method==='PATCH' ? null : res.json();
 }
 
 // ── PEDIDOS ────────────────────────────────────────
 const statusMap = {
-  waiting:  { label:'Aguardando',  badge:'badge-wait',     next:'accepted',  nextLabel:'✓ Aceitar pedido',   nextClass:'btn-accept' },
-  accepted: { label:'Aceito',      badge:'badge-accepted', next:'preparing', nextLabel:'🍪 Iniciar preparo', nextClass:'btn-prep' },
-  preparing:{ label:'Em preparo',  badge:'badge-prep',     next:'delivery',  nextLabel:'🛵 Enviar entrega',  nextClass:'btn-deliver' },
-  delivery: { label:'Em entrega',  badge:'badge-delivery', next:'done',      nextLabel:'✓ Entregue',         nextClass:'btn-done' },
-  done:     { label:'Entregue ✓',  badge:'badge-done',     next:null }
+  waiting:  { label:'Aguardando', badge:'badge-wait',     next:'accepted',  nextLabel:'✓ Aceitar pedido',   nextClass:'btn-accept' },
+  accepted: { label:'Aceito',     badge:'badge-accepted', next:'preparing', nextLabel:'🍪 Iniciar preparo', nextClass:'btn-prep' },
+  preparing:{ label:'Em preparo', badge:'badge-prep',     next:'delivery',  nextLabel:'🛵 Enviar entrega',  nextClass:'btn-deliver' },
+  delivery: { label:'Em entrega', badge:'badge-delivery', next:'done',      nextLabel:'✓ Entregue',         nextClass:'btn-done' },
+  done:     { label:'Entregue ✓', badge:'badge-done',     next:null }
 };
-
 let todosOsPedidos = [];
 
 async function carregarPedidos() {
   try {
     const hoje = new Date().toISOString().split('T')[0];
-    const data = await supaFetch('pedidos?criado_em=gte.' + hoje + 'T00:00:00&order=criado_em.desc');
+    const data = await supaFetch('pedidos?criado_em=gte.'+hoje+'T00:00:00&order=criado_em.desc');
     todosOsPedidos = data;
     renderPedidos(data);
     atualizarMetricas(data);
   } catch(e) {
-    document.getElementById('orders-container').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><p>Erro ao carregar pedidos. Verifique a conexão.</p></div>';
+    document.getElementById('orders-container').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><p>Erro ao carregar. Verifique a conexão.</p></div>';
   }
 }
 
 function atualizarMetricas(pedidos) {
   const abertos = pedidos.filter(p => p.status !== 'done').length;
-  const receita = pedidos.filter(p => p.pago).reduce((s,p) => s + parseFloat(p.total), 0);
-  const cookies = pedidos.reduce((s,p) => s + p.itens.reduce((a,i) => a + i.quantidade, 0), 0);
+  const receita = pedidos.filter(p => p.pago).reduce((s,p) => s+parseFloat(p.total), 0);
+  const cookies = pedidos.reduce((s,p) => s+p.itens.reduce((a,i) => a+i.quantidade, 0), 0);
   const novos = pedidos.filter(p => p.status === 'waiting').length;
-
   document.getElementById('m-total').textContent = pedidos.length;
   document.getElementById('m-open').textContent = abertos;
-  document.getElementById('m-receita').textContent = 'R$ ' + receita.toFixed(2).replace('.',',');
+  document.getElementById('m-receita').textContent = 'R$ '+receita.toFixed(2).replace('.',',');
   document.getElementById('m-cookies').textContent = cookies;
-
   const mNew = document.getElementById('m-new');
-  if (novos > 0) { mNew.style.display='inline-block'; mNew.textContent = novos + ' novo' + (novos>1?'s':'') + '!'; }
-  else { mNew.style.display='none'; }
+  if (novos > 0) { mNew.style.display='inline-block'; mNew.textContent=novos+' novo'+(novos>1?'s':'')+'!'; } else { mNew.style.display='none'; }
 }
 
 function renderPedidos(pedidos) {
-  const container = document.getElementById('orders-container');
-  if (pedidos.length === 0) {
-    container.innerHTML = '<div class="empty"><div class="empty-icon">🍪</div><p>Nenhum pedido hoje ainda.</p></div>';
-    return;
-  }
-  container.innerHTML = pedidos.map(o => {
+  const c = document.getElementById('orders-container');
+  if (!pedidos.length) { c.innerHTML='<div class="empty"><div class="empty-icon">🍪</div><p>Nenhum pedido hoje ainda.</p></div>'; return; }
+  c.innerHTML = pedidos.map(o => {
     const s = statusMap[o.status] || statusMap.waiting;
-    const hora = new Date(o.criado_em).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
-    const itensStr = o.itens.map(i => i.emoji + ' ' + i.quantidade + 'x ' + i.sabor).join(' · ');
-    const totalFmt = 'R$ ' + parseFloat(o.total).toFixed(2).replace('.',',');
-    return `<div class="order-card" id="order-${o.id}">
+    const hora = new Date(o.criado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const itensStr = o.itens.map(i => i.emoji+' '+i.quantidade+'x '+i.sabor).join(' · ');
+    const totalFmt = 'R$ '+parseFloat(o.total).toFixed(2).replace('.',',');
+    return `<div class="order-card">
       <div class="order-top">
         <div>
           <div class="order-client">${o.cliente_nome}</div>
@@ -315,119 +330,199 @@ function renderPedidos(pedidos) {
           <div class="order-detail" style="margin-top:2px;">💰 <strong>${totalFmt}</strong></div>
           <div class="order-detail" style="margin-top:2px;">📍 ${o.cliente_endereco}</div>
           <div class="order-detail" style="margin-top:2px;">📱 ${o.cliente_telefone}</div>
-          ${o.observacoes ? `<div class="order-detail" style="margin-top:2px;">📝 ${o.observacoes}</div>` : ''}
+          ${o.observacoes?`<div class="order-detail" style="margin-top:2px;">📝 ${o.observacoes}</div>`:''}
         </div>
         <div style="text-align:right;flex-shrink:0;margin-left:1rem;">
           <span class="badge ${s.badge}">${s.label}</span>
-          <div class="order-time" style="margin-top:4px;">${hora}</div>
-          <div style="margin-top:6px;">
-            <span class="badge" style="${o.pago ? 'background:#E8F5EE;color:#1A6B3C;' : 'background:#FAE8E8;color:#8B1A1A;'}">${o.pago ? '✓ Pago' : '⏳ Pendente'}</span>
-          </div>
-          <div style="margin-top:4px;font-size:0.7rem;color:var(--muted);">${o.tipo_entrega === 'sul' ? '🏝️ Sul da Ilha' : '📍 Outro bairro'}</div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:4px;">${hora}</div>
+          <div style="margin-top:6px;"><span class="badge" style="${o.pago?'background:#E8F5EE;color:#1A6B3C;':'background:#FAE8E8;color:#8B1A1A;'}">${o.pago?'✓ Pago':'⏳ Pendente'}</span></div>
+          <div style="margin-top:4px;font-size:0.7rem;color:var(--muted);">${o.tipo_entrega==='sul'?'🏝️ Sul da Ilha':'📍 Outro bairro'}</div>
         </div>
       </div>
       <div class="order-actions">
-        ${s.next ? `<button class="action-btn ${s.nextClass}" onclick="avancarStatus(${o.id},'${s.next}')">${s.nextLabel}</button>` : ''}
-        ${o.status==='waiting' ? `<button class="action-btn btn-reject" onclick="recusarPedido(${o.id})">✕ Recusar</button>` : ''}
+        ${s.next?`<button class="action-btn ${s.nextClass}" onclick="avancarStatus(${o.id},'${s.next}')">${s.nextLabel}</button>`:''}
+        ${o.status==='waiting'?`<button class="action-btn btn-reject" onclick="recusarPedido(${o.id})">✕ Recusar</button>`:''}
         <button class="action-btn btn-wpp" onclick="enviarWhatsapp(${o.id})">💬 Enviar cobrança</button>
-        ${!o.pago ? `<button class="action-btn btn-paid" onclick="marcarPago(${o.id})">✓ Marcar como pago</button>` : ''}
+        ${!o.pago?`<button class="action-btn btn-paid" onclick="marcarPago(${o.id})">✓ Marcar como pago</button>`:''}
       </div>
     </div>`;
   }).join('');
 }
 
 async function avancarStatus(id, novoStatus) {
-  try {
-    await supaFetch('pedidos?id=eq.' + id, 'PATCH', { status: novoStatus });
-    showToast('✓ Status atualizado!');
-    await carregarPedidos();
-  } catch(e) { showToast('Erro ao atualizar status.'); }
+  try { await supaFetch('pedidos?id=eq.'+id,'PATCH',{status:novoStatus}); showToast('✓ Status atualizado!'); await carregarPedidos(); }
+  catch(e) { showToast('Erro ao atualizar status.'); }
 }
-
 async function recusarPedido(id) {
   if (!confirm('Recusar este pedido?')) return;
-  try {
-    await supaFetch('pedidos?id=eq.' + id, 'PATCH', { status: 'done' });
-    showToast('✕ Pedido recusado.');
-    await carregarPedidos();
-  } catch(e) { showToast('Erro ao recusar pedido.'); }
+  try { await supaFetch('pedidos?id=eq.'+id,'PATCH',{status:'done'}); showToast('✕ Pedido recusado.'); await carregarPedidos(); }
+  catch(e) { showToast('Erro ao recusar.'); }
 }
-
 async function marcarPago(id) {
-  try {
-    await supaFetch('pedidos?id=eq.' + id, 'PATCH', { pago: true });
-    showToast('✓ Marcado como pago!');
-    await carregarPedidos();
-  } catch(e) { showToast('Erro ao atualizar.'); }
+  try { await supaFetch('pedidos?id=eq.'+id,'PATCH',{pago:true}); showToast('✓ Marcado como pago!'); await carregarPedidos(); }
+  catch(e) { showToast('Erro ao atualizar.'); }
 }
-
 function enviarWhatsapp(id) {
-  const o = todosOsPedidos.find(x => x.id === id);
+  const o = todosOsPedidos.find(x => x.id===id);
   if (!o) return;
   const num = o.cliente_telefone.replace(/\D/g,'');
-  const br = num.startsWith('55') ? num : '55' + num;
-  const itensStr = o.itens.map(i => i.emoji + ' ' + i.quantidade + 'x ' + i.sabor).join('\n');
-  const total = 'R$ ' + parseFloat(o.total).toFixed(2).replace('.',',');
-  const msg =
-`Olá, ${o.cliente_nome}! 🍪
-
-Recebemos seu pedido da *Doceria da Ju Artesanais*:
-
-📦 *Itens:*
-${itensStr}
-
-💰 *Total: ${total}*
-
-Para confirmar seu pedido, envie o pagamento pelo link abaixo (Pix ou cartão via Mercado Pago):
-
-👉 [COLE AQUI O LINK DO MERCADO PAGO]
-
-Assim que confirmarmos o pagamento, seus cookies vão pro forno! 🧁
-
-Qualquer dúvida é só chamar aqui. 💕
-— Doceria da Ju Artesanais`;
-
-  window.open('https://wa.me/' + br + '?text=' + encodeURIComponent(msg), '_blank');
-  showToast('💬 Abrindo WhatsApp para ' + o.cliente_nome);
+  const br = num.startsWith('55') ? num : '55'+num;
+  const itensStr = o.itens.map(i => i.emoji+' '+i.quantidade+'x '+i.sabor).join('\n');
+  const total = 'R$ '+parseFloat(o.total).toFixed(2).replace('.',',');
+  const msg = `Olá, ${o.cliente_nome}! 🍪\n\nRecebemos seu pedido da *Doceria da Ju Artesanais*:\n\n📦 *Itens:*\n${itensStr}\n\n💰 *Total: ${total}*\n\nPara confirmar seu pedido, envie o pagamento pelo link abaixo (Pix ou cartão via Mercado Pago):\n\n👉 [COLE AQUI O LINK DO MERCADO PAGO]\n\nAssim que confirmarmos o pagamento, seus cookies vão pro forno! 🧁\n\nQualquer dúvida é só chamar aqui. 💕\n— Doceria da Ju Artesanais`;
+  window.open('https://wa.me/'+br+'?text='+encodeURIComponent(msg),'_blank');
+  showToast('💬 Abrindo WhatsApp para '+o.cliente_nome);
 }
 
-// ── RELATÓRIOS ─────────────────────────────────────
+// ── RELATÓRIOS COM PERÍODO ──────────────────────────
+let periodoAtual = 'hoje';
+let dtInicio = null, dtFim = null;
+
+function selecionarPeriodo(periodo, el) {
+  periodoAtual = periodo;
+  document.querySelectorAll('.periodo-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const custom = document.getElementById('periodo-custom');
+  if (periodo === 'custom') { custom.classList.add('show'); return; }
+  custom.classList.remove('show');
+  carregarRelatorios();
+}
+
+function aplicarCustom() {
+  dtInicio = document.getElementById('dt-inicio').value;
+  dtFim = document.getElementById('dt-fim').value;
+  if (!dtInicio || !dtFim) { alert('Selecione as duas datas!'); return; }
+  carregarRelatorios();
+}
+
+function getRangeQuery() {
+  const hoje = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+  if (periodoAtual === 'hoje') {
+    return `criado_em=gte.${fmt(hoje)}T00:00:00`;
+  } else if (periodoAtual === 'semana') {
+    const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - hoje.getDay());
+    return `criado_em=gte.${fmt(inicio)}T00:00:00`;
+  } else if (periodoAtual === 'mes') {
+    const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    return `criado_em=gte.${fmt(inicio)}T00:00:00`;
+  } else if (periodoAtual === 'custom' && dtInicio && dtFim) {
+    return `criado_em=gte.${dtInicio}T00:00:00&criado_em=lte.${dtFim}T23:59:59`;
+  }
+  return ''; // tudo
+}
+
 async function carregarRelatorios() {
   try {
-    const data = await supaFetch('pedidos?select=*&order=criado_em.desc');
+    const range = getRangeQuery();
+    const query = range ? 'pedidos?'+range+'&order=criado_em.desc' : 'pedidos?order=criado_em.desc';
+    const data = await supaFetch(query);
 
-    const receita = data.filter(p => p.pago).reduce((s,p) => s + parseFloat(p.total), 0);
+    const pagas = data.filter(p => p.pago);
+    const receita = pagas.reduce((s,p) => s+parseFloat(p.total), 0);
     const clientes = [...new Set(data.map(p => p.cliente_telefone))].length;
-    const ticket = data.length ? receita / data.filter(p=>p.pago).length || 0 : 0;
+    const ticket = pagas.length ? receita/pagas.length : 0;
 
-    document.getElementById('r-receita').textContent = 'R$ ' + receita.toFixed(2).replace('.',',');
+    document.getElementById('r-receita').textContent = 'R$ '+receita.toFixed(2).replace('.',',');
     document.getElementById('r-pedidos').textContent = data.length;
     document.getElementById('r-clientes').textContent = clientes;
-    document.getElementById('r-ticket').textContent = 'R$ ' + (isNaN(ticket)?'0,00':ticket.toFixed(2).replace('.',','));
+    document.getElementById('r-ticket').textContent = 'R$ '+(isNaN(ticket)?'0,00':ticket.toFixed(2).replace('.',','));
 
     // Sabores
-    const contagem = { 'Nutella': 0, 'Red Velvet': 0, 'Oreo': 0 };
-    data.forEach(p => p.itens.forEach(i => { if (contagem[i.sabor] !== undefined) contagem[i.sabor] += i.quantidade; }));
+    const contagem = {};
+    data.forEach(p => p.itens.forEach(i => { contagem[i.sabor] = (contagem[i.sabor]||0)+i.quantidade; }));
     const max = Math.max(...Object.values(contagem), 1);
-    const cores = { 'Nutella': '#F2A7C3', 'Red Velvet': '#D4759C', 'Oreo': '#4A2410' };
-    document.getElementById('sabores-bars').innerHTML = Object.entries(contagem).map(([s,q]) =>
-      `<div class="bar-row"><span class="bar-label">${s}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(q/max*100)}%;background:${cores[s]};"></div></div><span class="bar-val">${q}</span></div>`
-    ).join('');
+    const cores = { 'Nutella':'#F2A7C3', 'Red Velvet':'#D4759C', 'Oreo':'#4A2410' };
+    const sorted = Object.entries(contagem).sort((a,b) => b[1]-a[1]);
+    document.getElementById('sabores-bars').innerHTML = sorted.length ?
+      sorted.map(([s,q]) => `<div class="bar-row"><span class="bar-label">${s}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(q/max*100)}%;background:${cores[s]||'#F2A7C3'};"></div></div><span class="bar-val">${q}</span></div>`).join('') :
+      '<p style="color:var(--muted);font-size:0.85rem;">Sem vendas no período.</p>';
+
+    // Entregas
+    const sul = data.filter(p => p.tipo_entrega==='sul').length;
+    const outro = data.filter(p => p.tipo_entrega==='outro').length;
+    document.getElementById('entregas-resumo').innerHTML = `
+      <div class="bar-row"><span class="bar-label">🏝️ Sul Ilha</span><div class="bar-track"><div class="bar-fill" style="width:${data.length?Math.round(sul/data.length*100):0}%;background:var(--tiffany);"></div></div><span class="bar-val">${sul}</span></div>
+      <div class="bar-row"><span class="bar-label">📍 Outro</span><div class="bar-track"><div class="bar-fill" style="width:${data.length?Math.round(outro/data.length*100):0}%;background:var(--pink);"></div></div><span class="bar-val">${outro}</span></div>`;
 
     // Clientes
     const porCliente = {};
     data.forEach(p => {
       const k = p.cliente_telefone;
-      if (!porCliente[k]) porCliente[k] = { nome: p.cliente_nome, tel: p.cliente_telefone, pedidos: 0, total: 0 };
+      if (!porCliente[k]) porCliente[k] = { nome:p.cliente_nome, tel:p.cliente_telefone, pedidos:0, cookies:0, total:0 };
       porCliente[k].pedidos++;
+      porCliente[k].cookies += p.itens.reduce((a,i) => a+i.quantidade, 0);
       if (p.pago) porCliente[k].total += parseFloat(p.total);
     });
-    const sorted = Object.values(porCliente).sort((a,b) => b.total - a.total);
-    document.getElementById('clientes-tbody').innerHTML = sorted.length ? sorted.map(c =>
-      `<tr><td>${c.nome}</td><td style="color:var(--muted)">${c.tel}</td><td>${c.pedidos}</td><td style="font-weight:500">R$ ${c.total.toFixed(2).replace('.',',')}</td></tr>`
-    ).join('') : '<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:1rem;">Nenhum pedido ainda.</td></tr>';
+    const sortedC = Object.values(porCliente).sort((a,b) => b.total-a.total);
+    document.getElementById('clientes-tbody').innerHTML = sortedC.length ?
+      sortedC.map(c => `<tr><td>${c.nome}</td><td style="color:var(--muted)">${c.tel}</td><td>${c.pedidos}</td><td>${c.cookies}</td><td style="font-weight:500">R$ ${c.total.toFixed(2).replace('.',',')}</td></tr>`).join('') :
+      '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:1rem;">Nenhum pedido no período.</td></tr>';
 
-  } catch(e) { console.error(e); }
+  } catch(e) { console.error(e); showToast('Erro ao carregar relatórios.'); }
+}
+
+// ── CARDÁPIO ───────────────────────────────────────
+let produtosAdmin = [];
+
+async function carregarCardapio() {
+  try {
+    produtosAdmin = await supaFetch('produtos?order=id.asc');
+    renderCardapio();
+  } catch(e) { showToast('Erro ao carregar cardápio.'); }
+}
+
+function renderCardapio() {
+  document.getElementById('cardapio-lista').innerHTML = produtosAdmin.map(p => `
+    <div class="product-edit-card">
+      <span class="emoji">${p.emoji}</span>
+      <div class="product-edit-info">
+        <div class="product-edit-name">${p.nome}</div>
+        <div class="product-edit-desc">${p.descricao}</div>
+      </div>
+      <div class="price-edit-row">
+        <span class="price-display" id="price-display-${p.id}">R$ ${parseFloat(p.preco).toFixed(2).replace('.',',')}</span>
+        <input class="price-input" type="number" step="0.01" min="0" id="price-input-${p.id}" value="${parseFloat(p.preco).toFixed(2)}" onkeydown="if(event.key==='Enter') salvarPreco(${p.id})"/>
+        <button class="btn-edit" id="btn-edit-${p.id}" onclick="editarPreco(${p.id})">✏️ Editar</button>
+        <button class="btn-save" id="btn-save-${p.id}" onclick="salvarPreco(${p.id})">✓ Salvar</button>
+        <button class="btn-cancel" id="btn-cancel-${p.id}" onclick="cancelarEdicao(${p.id})">✕</button>
+      </div>
+      <span class="ativo-badge">${p.ativo?'Ativo':'Inativo'}</span>
+    </div>`).join('');
+}
+
+function editarPreco(id) {
+  document.getElementById('price-display-'+id).style.display = 'none';
+  document.getElementById('price-input-'+id).style.display = 'block';
+  document.getElementById('btn-edit-'+id).style.display = 'none';
+  document.getElementById('btn-save-'+id).style.display = 'inline-block';
+  document.getElementById('btn-cancel-'+id).style.display = 'inline-block';
+  document.getElementById('price-input-'+id).focus();
+}
+
+function cancelarEdicao(id) {
+  const p = produtosAdmin.find(x => x.id===id);
+  document.getElementById('price-input-'+id).value = parseFloat(p.preco).toFixed(2);
+  document.getElementById('price-display-'+id).style.display = 'inline';
+  document.getElementById('price-input-'+id).style.display = 'none';
+  document.getElementById('btn-edit-'+id).style.display = 'inline-block';
+  document.getElementById('btn-save-'+id).style.display = 'none';
+  document.getElementById('btn-cancel-'+id).style.display = 'none';
+}
+
+async function salvarPreco(id) {
+  const val = parseFloat(document.getElementById('price-input-'+id).value);
+  if (isNaN(val) || val <= 0) { alert('Digite um preço válido!'); return; }
+  try {
+    await supaFetch('produtos?id=eq.'+id, 'PATCH', { preco: val });
+    const p = produtosAdmin.find(x => x.id===id);
+    p.preco = val;
+    document.getElementById('price-display-'+id).textContent = 'R$ '+val.toFixed(2).replace('.',',');
+    cancelarEdicao(id);
+    showToast('✓ Preço de '+p.nome+' atualizado para R$ '+val.toFixed(2).replace('.',',')+'!');
+  } catch(e) { showToast('Erro ao salvar preço.'); }
 }
 
 // ── UI HELPERS ─────────────────────────────────────
@@ -436,7 +531,8 @@ function showPage(id, el) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   el.classList.add('active');
-  if (id === 'relatorios') carregarRelatorios();
+  if (id==='relatorios') carregarRelatorios();
+  if (id==='cardapio') carregarCardapio();
 }
 
 function showToast(msg) {
