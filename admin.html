@@ -87,6 +87,29 @@
   .modal-overlay { position:fixed; inset:0; background:rgba(74,36,16,0.4); z-index:500; display:none; align-items:center; justify-content:center; padding:1rem; }
   .modal-overlay.show { display:flex; }
   .modal { background:white; border-radius:20px; padding:1.75rem; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+  .modal.modal-wide { max-width:760px; }
+
+  /* PERFIL DO CLIENTE */
+  .perfil-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.25rem; }
+  .perfil-nome { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--brown); }
+  .perfil-tel { font-size:0.85rem; color:var(--muted); margin-top:2px; }
+  .perfil-tags { margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; }
+  .perfil-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:1.25rem; }
+  .perfil-mini-metric { background:var(--pink-pale); border-radius:10px; padding:0.75rem; text-align:center; }
+  .perfil-mini-val { font-size:1.15rem; font-weight:500; color:var(--brown); }
+  .perfil-mini-lbl { font-size:0.68rem; color:var(--muted); margin-top:2px; }
+  .perfil-tabs { display:flex; gap:6px; margin-bottom:1rem; border-bottom:1px solid var(--border); }
+  .perfil-tab { padding:8px 14px; font-size:0.83rem; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; font-family:'DM Sans',sans-serif; }
+  .perfil-tab.active { color:var(--pink-dark); border-bottom-color:var(--pink); font-weight:500; }
+  .perfil-tabcontent { display:none; }
+  .perfil-tabcontent.active { display:block; }
+  .perfil-pedido-item { background:var(--cream); border:1px solid var(--border); border-radius:10px; padding:0.7rem 0.9rem; margin-bottom:8px; }
+  .perfil-pedido-top { display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:3px; }
+  .perfil-pedido-itens { font-size:0.78rem; color:var(--muted); }
+  .perfil-dow-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:0.82rem; }
+  .perfil-dow-label { width:90px; color:var(--muted); flex-shrink:0; }
+  .perfil-pag-row { display:flex; justify-content:space-between; font-size:0.82rem; padding:6px 0; border-bottom:1px solid var(--border); }
+  .perfil-pag-row:last-child { border-bottom:none; }
   .modal-title { font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--brown); margin-bottom:1.25rem; }
   .modal-close { float:right; background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--muted); margin-top:-4px; }
   .form-group { margin-bottom:0.9rem; }
@@ -344,6 +367,14 @@
     </div>
     <button class="btn-wpp-extrato" onclick="enviarExtratoWhatsapp()">💬 Enviar pelo WhatsApp</button>
     <button class="btn-copiar" onclick="copiarExtrato()">📋 Copiar texto</button>
+  </div>
+</div>
+
+<!-- MODAL PERFIL DO CLIENTE -->
+<div class="modal-overlay" id="modal-perfil">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="fecharModal('modal-perfil')">✕</button>
+    <div id="perfil-conteudo"><div class="empty"><div class="spinner"></div></div></div>
   </div>
 </div>
 
@@ -1374,12 +1405,15 @@ function renderClientes(lista) {
     const num = c.telefone.replace(/\D/g,'');
     const br = num.startsWith('55') ? num : '55'+num;
     return `<tr class="${c._abaixoMedia?'abaixo-media':''}">
-      <td>${c.nome}</td>
+      <td><a href="#" onclick="abrirPerfilCliente('${c.telefone}');return false;" style="color:var(--text);font-weight:500;text-decoration:none;border-bottom:1px dashed var(--pink-border);">${c.nome}</a></td>
       <td style="color:var(--muted)">${c.telefone}</td>
       <td>${c._media.toFixed(1)}/sem</td>
       <td>${c._ultimos7} cookies</td>
       <td>${statusHtml}</td>
-      <td>${c._abaixoMedia ? `<button class="action-btn btn-wpp" onclick="contatarClienteBaixo('${br}','${c.nome.replace(/'/g,"\\'")}')">💬 Contatar</button>` : ''}</td>
+      <td style="display:flex;gap:6px;">
+        <button class="action-btn btn-pay" onclick="abrirPerfilCliente('${c.telefone}')">👁️ Ver perfil</button>
+        ${c._abaixoMedia ? `<button class="action-btn btn-wpp" onclick="contatarClienteBaixo('${br}','${c.nome.replace(/'/g,"\\'")}')">💬 Contatar</button>` : ''}
+      </td>
     </tr>`;
   }).join('');
 }
@@ -1387,6 +1421,147 @@ function renderClientes(lista) {
 function contatarClienteBaixo(numWpp, nome) {
   const msg = `Olá, ${nome}! 🍪\n\nFaz um tempinho que você não pede nossos cookies artesanais e tava com saudade de te atender! 💕\n\nQue tal aproveitar e fazer um pedido essa semana? Temos Nutella, Red Velvet e Oreo fresquinhos esperando por você!\n\n— Doceria da Ju Artesanais`;
   window.open('https://wa.me/'+numWpp+'?text='+encodeURIComponent(msg), '_blank');
+}
+
+// ── PERFIL COMPLETO DO CLIENTE ──────────────
+let perfilClienteAtual = null;
+
+async function abrirPerfilCliente(tel) {
+  abrirModal('modal-perfil');
+  document.getElementById('perfil-conteudo').innerHTML = '<div class="empty"><div class="spinner"></div></div>';
+
+  if (!todosPedidosCache.length) todosPedidosCache = await supaFetch('pedidos?order=criado_em.asc');
+  const cliente = clientesCache.find(c => c.telefone === tel) || todosPedidosCache.filter(p=>p.cliente_telefone===tel).map(p=>({nome:p.cliente_nome,telefone:p.cliente_telefone}))[0];
+  if (!cliente) { document.getElementById('perfil-conteudo').innerHTML = '<p>Cliente não encontrado.</p>'; return; }
+
+  const pedidosCliente = todosPedidosCache.filter(p => p.cliente_telefone === tel).sort((a,b) => new Date(b.criado_em) - new Date(a.criado_em));
+  const idsPedidos = pedidosCliente.map(p => p.id);
+  const pags = idsPedidos.length ? await supaFetch('pagamentos?pedido_id=in.('+idsPedidos.join(',')+')&order=criado_em.desc') : [];
+
+  perfilClienteAtual = { cliente, pedidosCliente, pags };
+
+  // ── Métricas gerais ──
+  const totalPedidos = pedidosCliente.length;
+  const totalCookies = pedidosCliente.reduce((s,p) => s + p.itens.reduce((a,i)=>a+i.quantidade,0), 0);
+  const totalGasto = pedidosCliente.reduce((s,p) => s + parseFloat(p.total), 0);
+  const totalPago = pags.reduce((s,p) => s + parseFloat(p.valor), 0);
+  const emAberto = totalGasto - totalPago;
+  const ticketMedio = totalPedidos ? totalGasto / totalPedidos : 0;
+  const mediaSemanal = calcularMediaSemanalCliente(tel);
+  const ultimos7 = cookiesUltimos7Dias(tel);
+  const primeiroPedido = pedidosCliente.length ? new Date(pedidosCliente[pedidosCliente.length-1].criado_em) : null;
+  const ultimoPedido = pedidosCliente.length ? new Date(pedidosCliente[0].criado_em) : null;
+  const diasComoCliente = primeiroPedido ? Math.max(1, Math.ceil((new Date()-primeiroPedido)/(24*60*60*1000))) : 0;
+
+  // ── Sabor favorito ──
+  const contagemSabores = {};
+  pedidosCliente.forEach(p => p.itens.forEach(i => { contagemSabores[i.sabor] = (contagemSabores[i.sabor]||0) + i.quantidade; }));
+  const saboresOrdenados = Object.entries(contagemSabores).sort((a,b) => b[1]-a[1]);
+  const saborFavorito = saboresOrdenados.length ? saboresOrdenados[0][0] : '—';
+  const maxSabor = Math.max(...Object.values(contagemSabores), 1);
+  const coresSabor = {'Nutella':'#F2A7C3','Red Velvet':'#D4759C','Oreo':'#4A2410'};
+
+  // ── Dia da semana favorito ──
+  const diasSemana = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const contagemDow = [0,0,0,0,0,0,0];
+  pedidosCliente.forEach(p => { contagemDow[new Date(p.criado_em).getDay()]++; });
+  const maxDow = Math.max(...contagemDow, 1);
+  const diaFavoritoIdx = contagemDow.indexOf(Math.max(...contagemDow));
+  const diaFavorito = pedidosCliente.length ? diasSemana[diaFavoritoIdx] : '—';
+
+  // ── Tipo de entrega preferido ──
+  const sulCount = pedidosCliente.filter(p => p.tipo_entrega==='sul').length;
+  const outroCount = pedidosCliente.filter(p => p.tipo_entrega==='outro').length;
+
+  // ── Meios de pagamento usados ──
+  const meiosPagamento = {};
+  pags.forEach(p => { meiosPagamento[p.meio] = (meiosPagamento[p.meio]||0) + parseFloat(p.valor); });
+
+  const tendencia = (ultimos7 - mediaSemanal) > 0.5 ? '📈 Acima da média' : (ultimos7 - mediaSemanal) < -0.5 ? '📉 Abaixo da média' : '➡️ Na média';
+
+  document.getElementById('perfil-conteudo').innerHTML = `
+    <div class="perfil-header">
+      <div>
+        <div class="perfil-nome">${cliente.nome}</div>
+        <div class="perfil-tel">${cliente.telefone}${cliente.endereco?' · '+cliente.endereco:''}</div>
+        <div class="perfil-tags">
+          <span class="status-tag ${emAberto>0.01?'status-abaixo':'status-acima'}">${emAberto>0.01?'⏳ R$ '+emAberto.toFixed(2).replace('.',',')+' em aberto':'✅ Sem pendências'}</span>
+          <span class="status-tag status-neutro">${tendencia}</span>
+          <span class="status-tag status-neutro">Cliente há ${diasComoCliente} dias</span>
+        </div>
+      </div>
+      <button class="btn-limpar-filtro" onclick="fecharModal('modal-perfil')">✕ Fechar</button>
+    </div>
+
+    <div class="perfil-metrics">
+      <div class="perfil-mini-metric"><div class="perfil-mini-val">${totalPedidos}</div><div class="perfil-mini-lbl">Pedidos totais</div></div>
+      <div class="perfil-mini-metric"><div class="perfil-mini-val">${totalCookies}</div><div class="perfil-mini-lbl">Cookies totais</div></div>
+      <div class="perfil-mini-metric"><div class="perfil-mini-val">R$ ${totalGasto.toFixed(2).replace('.',',')}</div><div class="perfil-mini-lbl">Total gasto</div></div>
+      <div class="perfil-mini-metric"><div class="perfil-mini-val">R$ ${ticketMedio.toFixed(2).replace('.',',')}</div><div class="perfil-mini-lbl">Ticket médio</div></div>
+    </div>
+
+    <div class="perfil-tabs">
+      <div class="perfil-tab active" onclick="trocarTabPerfil('pedidos',this)">📋 Pedidos</div>
+      <div class="perfil-tab" onclick="trocarTabPerfil('pagamentos',this)">💰 Pagamentos</div>
+      <div class="perfil-tab" onclick="trocarTabPerfil('sabores',this)">🍪 Sabores</div>
+      <div class="perfil-tab" onclick="trocarTabPerfil('habitos',this)">📊 Hábitos</div>
+    </div>
+
+    <div class="perfil-tabcontent active" id="perfil-tab-pedidos">
+      ${pedidosCliente.length ? pedidosCliente.map(p => {
+        const itensStr = p.itens.map(i => i.emoji+' '+i.quantidade+'x '+i.sabor).join(', ');
+        const data = new Date(p.criado_em).toLocaleDateString('pt-BR');
+        const pagPedido = pags.filter(pg => pg.pedido_id === p.id).reduce((s,pg)=>s+parseFloat(pg.valor),0);
+        const statusLabel = statusMap[p.status]?.label || p.status;
+        const restante = parseFloat(p.total) - pagPedido;
+        return `<div class="perfil-pedido-item">
+          <div class="perfil-pedido-top">
+            <span>📅 ${data} · <span class="badge ${statusMap[p.status]?.badge||''}">${statusLabel}</span></span>
+            <span style="font-weight:500;">R$ ${parseFloat(p.total).toFixed(2).replace('.',',')}</span>
+          </div>
+          <div class="perfil-pedido-itens">${itensStr}</div>
+          <div style="font-size:0.75rem;margin-top:3px;color:${restante>0.01?'var(--red)':'var(--green)'};">${restante>0.01?'⏳ Em aberto: R$ '+restante.toFixed(2).replace('.',','):'✓ Pago'}</div>
+        </div>`;
+      }).join('') : '<p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1.5rem;">Nenhum pedido ainda.</p>'}
+    </div>
+
+    <div class="perfil-tabcontent" id="perfil-tab-pagamentos">
+      ${pags.length ? pags.map(p => `
+        <div class="perfil-pag-row">
+          <span>${new Date(p.criado_em).toLocaleDateString('pt-BR')} · <span class="pagamento-meio">${p.meio}</span> ${p.observacao?'· '+p.observacao:''}</span>
+          <span style="font-weight:500;">R$ ${parseFloat(p.valor).toFixed(2).replace('.',',')}</span>
+        </div>`).join('') : '<p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1.5rem;">Nenhum pagamento registrado ainda.</p>'}
+      ${Object.keys(meiosPagamento).length ? `<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
+        <div class="report-card-title">Resumo por meio de pagamento</div>
+        ${Object.entries(meiosPagamento).sort((a,b)=>b[1]-a[1]).map(([m,v]) => `<div class="bar-row"><span class="bar-label" style="width:140px;">${m}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/totalPago*100)}%;background:var(--tiffany);"></div></div><span class="bar-val" style="width:70px;">R$ ${v.toFixed(2).replace('.',',')}</span></div>`).join('')}
+      </div>` : ''}
+    </div>
+
+    <div class="perfil-tabcontent" id="perfil-tab-sabores">
+      <div class="report-card-title">Sabores favoritos (${saborFavorito} é o preferido)</div>
+      ${saboresOrdenados.length ? saboresOrdenados.map(([s,q]) => `<div class="bar-row"><span class="bar-label">${s}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(q/maxSabor*100)}%;background:${coresSabor[s]||'#F2A7C3'};"></div></div><span class="bar-val">${q}</span></div>`).join('') : '<p style="color:var(--muted);font-size:0.85rem;">Sem dados ainda.</p>'}
+    </div>
+
+    <div class="perfil-tabcontent" id="perfil-tab-habitos">
+      <div class="report-card-title">Pedidos por dia da semana ${diaFavorito!=='—'?'('+diaFavorito+' é o preferido)':''}</div>
+      ${diasSemana.map((d,i) => `<div class="perfil-dow-row"><span class="perfil-dow-label">${d}</span><div class="historico-bar-track"><div class="historico-bar-fill" style="width:${Math.round(contagemDow[i]/maxDow*100)}%;"></div></div><span style="width:30px;text-align:right;color:var(--muted);">${contagemDow[i]}</span></div>`).join('')}
+      <div class="report-card-title" style="margin-top:1.25rem;">Preferência de entrega</div>
+      <div class="bar-row"><span class="bar-label">🏝️ Sul Ilha</span><div class="bar-track"><div class="bar-fill" style="width:${totalPedidos?Math.round(sulCount/totalPedidos*100):0}%;background:var(--tiffany);"></div></div><span class="bar-val">${sulCount}</span></div>
+      <div class="bar-row"><span class="bar-label">📍 Outro</span><div class="bar-track"><div class="bar-fill" style="width:${totalPedidos?Math.round(outroCount/totalPedidos*100):0}%;background:var(--pink);"></div></div><span class="bar-val">${outroCount}</span></div>
+      <div style="margin-top:1.25rem;font-size:0.82rem;color:var(--muted);">
+        Primeiro pedido: <strong>${primeiroPedido?primeiroPedido.toLocaleDateString('pt-BR'):'—'}</strong> ·
+        Último pedido: <strong>${ultimoPedido?ultimoPedido.toLocaleDateString('pt-BR'):'—'}</strong> ·
+        Média semanal: <strong>${mediaSemanal.toFixed(1)} cookies</strong>
+      </div>
+    </div>
+  `;
+}
+
+function trocarTabPerfil(tab, el) {
+  document.querySelectorAll('.perfil-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.perfil-tabcontent').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('perfil-tab-'+tab).classList.add('active');
 }
 
 function filtrarClientes(val) {
