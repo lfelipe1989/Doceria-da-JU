@@ -114,7 +114,9 @@
   .modal-qty-ctrl { display:flex; align-items:center; gap:8px; }
   .modal-qty-btn { width:26px; height:26px; border-radius:50%; background:var(--pink-pale); border:1px solid var(--pink-border); font-size:1rem; cursor:pointer; color:var(--pink-dark); display:flex; align-items:center; justify-content:center; }
   .modal-qty-btn:hover { background:var(--pink); color:white; }
-  .modal-qty-num { font-size:0.9rem; font-weight:500; min-width:16px; text-align:center; }
+  .modal-qty-num { font-size:0.9rem; font-weight:500; min-width:30px; max-width:42px; text-align:center; border:none; background:transparent; color:var(--text); font-family:'DM Sans',sans-serif; padding:2px 0; -moz-appearance:textfield; }
+  .modal-qty-num::-webkit-outer-spin-button, .modal-qty-num::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+  .modal-qty-num:focus { outline:none; background:var(--pink-pale); border-radius:6px; }
 
   /* PAGAMENTOS NO CARD */
   .pagamentos-list { margin-top:8px; border-top:1px solid var(--border); padding-top:8px; }
@@ -675,7 +677,7 @@ function renderProdutosModal() {
       </div>
       <div class="modal-qty-ctrl">
         <button class="modal-qty-btn" onclick="changeQtyModal(${p.id},-1)">−</button>
-        <span class="modal-qty-num" id="mqty-${p.id}">0</span>
+        <input class="modal-qty-num" type="number" min="0" id="mqty-${p.id}" value="0" oninput="setQtyModal(${p.id},this.value)" onblur="fixQtyModal(${p.id})" onfocus="this.select()"/>
         <button class="modal-qty-btn" onclick="changeQtyModal(${p.id},1)">+</button>
       </div>
     </div>`).join('');
@@ -683,8 +685,20 @@ function renderProdutosModal() {
 
 function changeQtyModal(id, delta) {
   qtysModal[id] = Math.max(0,(qtysModal[id]||0)+delta);
-  document.getElementById('mqty-'+id).textContent = qtysModal[id];
+  document.getElementById('mqty-'+id).value = qtysModal[id];
   atualizarResumoModal();
+}
+
+function setQtyModal(id, val) {
+  let n = parseInt(val);
+  if (isNaN(n) || n < 0) n = 0;
+  qtysModal[id] = n;
+  atualizarResumoModal();
+}
+
+function fixQtyModal(id) {
+  if (!qtysModal[id]) qtysModal[id] = 0;
+  document.getElementById('mqty-'+id).value = qtysModal[id];
 }
 
 function atualizarResumoModal() {
