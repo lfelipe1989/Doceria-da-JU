@@ -1464,7 +1464,10 @@ async function abrirPerfilCliente(tel) {
   // ── Dia da semana favorito ──
   const diasSemana = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const contagemDow = [0,0,0,0,0,0,0];
-  pedidosCliente.forEach(p => { contagemDow[new Date(p.criado_em).getDay()]++; });
+  pedidosCliente.forEach(p => {
+    const dow = new Date(p.criado_em).getDay();
+    contagemDow[dow] += p.itens.reduce((a,i) => a+i.quantidade, 0);
+  });
   const maxDow = Math.max(...contagemDow, 1);
   const diaFavoritoIdx = contagemDow.indexOf(Math.max(...contagemDow));
   const diaFavorito = pedidosCliente.length ? diasSemana[diaFavoritoIdx] : '—';
@@ -1543,8 +1546,8 @@ async function abrirPerfilCliente(tel) {
     </div>
 
     <div class="perfil-tabcontent" id="perfil-tab-habitos">
-      <div class="report-card-title">Pedidos por dia da semana ${diaFavorito!=='—'?'('+diaFavorito+' é o preferido)':''}</div>
-      ${diasSemana.map((d,i) => `<div class="perfil-dow-row"><span class="perfil-dow-label">${d}</span><div class="historico-bar-track"><div class="historico-bar-fill" style="width:${Math.round(contagemDow[i]/maxDow*100)}%;"></div></div><span style="width:30px;text-align:right;color:var(--muted);">${contagemDow[i]}</span></div>`).join('')}
+      <div class="report-card-title">Cookies pedidos por dia da semana ${diaFavorito!=='—'?'('+diaFavorito+' é o dia que mais compra)':''}</div>
+      ${diasSemana.map((d,i) => `<div class="perfil-dow-row"><span class="perfil-dow-label">${d}</span><div class="historico-bar-track"><div class="historico-bar-fill" style="width:${Math.round(contagemDow[i]/maxDow*100)}%;"></div></div><span style="width:60px;text-align:right;color:var(--muted);">${contagemDow[i]} cookies</span></div>`).join('')}
       <div class="report-card-title" style="margin-top:1.25rem;">Preferência de entrega</div>
       <div class="bar-row"><span class="bar-label">🏝️ Sul Ilha</span><div class="bar-track"><div class="bar-fill" style="width:${totalPedidos?Math.round(sulCount/totalPedidos*100):0}%;background:var(--tiffany);"></div></div><span class="bar-val">${sulCount}</span></div>
       <div class="bar-row"><span class="bar-label">📍 Outro</span><div class="bar-track"><div class="bar-fill" style="width:${totalPedidos?Math.round(outroCount/totalPedidos*100):0}%;background:var(--pink);"></div></div><span class="bar-val">${outroCount}</span></div>
