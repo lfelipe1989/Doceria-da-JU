@@ -336,6 +336,16 @@
       <label class="form-label">Endereço de entrega</label>
       <input class="form-input" type="text" id="np-end" placeholder="Rua, número, bairro"/>
     </div>
+    <div class="form-group" style="display:flex;gap:10px;">
+      <div style="flex:1;">
+        <label class="form-label">Data do pedido</label>
+        <input class="form-input" type="date" id="np-data"/>
+      </div>
+      <div style="flex:1;">
+        <label class="form-label">Horário</label>
+        <input class="form-input" type="time" id="np-hora"/>
+      </div>
+    </div>
     <div class="form-group">
       <label class="form-label">Tipo de entrega</label>
       <select class="form-input" id="np-entrega">
@@ -879,12 +889,27 @@ async function abrirModalPedido() {
   document.getElementById('np-obs').value='';
   document.getElementById('np-status').value='waiting';
   document.getElementById('np-entrega').value='sul';
+  preencherDataHoraAgora();
   document.getElementById('np-resumo').style.display='none';
   document.getElementById('autocomplete-list').classList.remove('show');
   abrirModal('modal-pedido');
   await garantirProdutosModal();
   produtosModal.forEach(p => qtysModal[p.id]=0);
   renderProdutosModal();
+}
+
+function preencherDataHoraAgora() {
+  const agora = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('np-data').value = `${agora.getFullYear()}-${pad(agora.getMonth()+1)}-${pad(agora.getDate())}`;
+  document.getElementById('np-hora').value = `${pad(agora.getHours())}:${pad(agora.getMinutes())}`;
+}
+
+function preencherDataHoraDe(criadoEm) {
+  const d = new Date(criadoEm);
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('np-data').value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  document.getElementById('np-hora').value = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 async function abrirModalEdicaoPedido(pedidoId) {
@@ -905,6 +930,7 @@ async function abrirModalEdicaoPedido(pedidoId) {
   document.getElementById('np-obs').value = pedido.observacoes || '';
   document.getElementById('np-status').value = pedido.status;
   document.getElementById('np-entrega').value = pedido.tipo_entrega;
+  preencherDataHoraDe(pedido.criado_em);
 
   abrirModal('modal-pedido');
   await garantirProdutosModal();
@@ -948,6 +974,7 @@ async function abrirModalRepetirPedido(pedidoId) {
   document.getElementById('np-obs').value = pedido.observacoes || '';
   document.getElementById('np-status').value = 'waiting'; // novo pedido sempre começa aguardando
   document.getElementById('np-entrega').value = pedido.tipo_entrega;
+  preencherDataHoraAgora();
 
   abrirModal('modal-pedido');
   await garantirProdutosModal();
@@ -1093,13 +1120,17 @@ async function salvarPedidoManual() {
   const obs = document.getElementById('np-obs').value.trim();
   const entrega = document.getElementById('np-entrega').value;
   const status = document.getElementById('np-status').value;
+  const dataStr = document.getElementById('np-data').value;
+  const horaStr = document.getElementById('np-hora').value || '12:00';
   const itens = produtosModal.filter(p => (qtysModal[p.id]||0)>0)
     .map(p => ({ sabor:p.nome, emoji:p.emoji, quantidade:qtysModal[p.id], preco_unit:precoEfetivo(p.id) }));
   if (!nome||!tel||!end) { alert('Preencha nome, telefone e endereço!'); return; }
+  if (!dataStr) { alert('Selecione a data do pedido!'); return; }
   if (!itens.length) { alert('Adicione pelo menos um produto!'); return; }
   const total = itens.reduce((s,i) => s+(i.quantidade*i.preco_unit),0);
+  const criadoEm = dataStr + 'T' + horaStr + ':00';
   try {
-    await supaFetch('pedidos','POST',{ cliente_nome:nome, cliente_telefone:tel, cliente_endereco:end, observacoes:obs, itens, total, tipo_entrega:entrega, status, pago:false });
+    await supaFetch('pedidos','POST',{ cliente_nome:nome, cliente_telefone:tel, cliente_endereco:end, observacoes:obs, itens, total, tipo_entrega:entrega, status, pago:false, criado_em:criadoEm });
     await salvarOuAtualizarCliente(nome, tel, end);
     fecharModal('modal-pedido');
     showToast('✓ Pedido lançado com sucesso!');
@@ -1112,14 +1143,18 @@ async function salvarEdicaoPedido() {
   const obs = document.getElementById('np-obs').value.trim();
   const entrega = document.getElementById('np-entrega').value;
   const status = document.getElementById('np-status').value;
+  const dataStr = document.getElementById('np-data').value;
+  const horaStr = document.getElementById('np-hora').value || '12:00';
   const itens = produtosModal.filter(p => (qtysModal[p.id]||0)>0)
     .map(p => ({ sabor:p.nome, emoji:p.emoji, quantidade:qtysModal[p.id], preco_unit:precoEfetivo(p.id) }));
   if (!end) { alert('Preencha o endereço!'); return; }
+  if (!dataStr) { alert('Selecione a data do pedido!'); return; }
   if (!itens.length) { alert('O pedido precisa ter pelo menos um produto!'); return; }
   const total = itens.reduce((s,i) => s+(i.quantidade*i.preco_unit),0);
+  const criadoEm = dataStr + 'T' + horaStr + ':00';
   try {
     await supaFetch('pedidos?id=eq.'+modoEdicaoId, 'PATCH', {
-      cliente_endereco: end, observacoes: obs, itens, total, tipo_entrega: entrega, status
+      cliente_endereco: end, observacoes: obs, itens, total, tipo_entrega: entrega, status, criado_em: criadoEm
     });
     fecharModal('modal-pedido');
     showToast('✓ Pedido atualizado com sucesso!');
