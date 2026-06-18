@@ -1182,7 +1182,7 @@ async function selecionarClienteRelatorio(tel, nome) {
   document.getElementById('rel-autocomplete-list').classList.remove('show');
   document.getElementById('rel-geral-content').style.display = 'none';
 
-  if (!todosPedidosCache.length) todosPedidosCache = await supaFetch('pedidos?order=criado_em.asc');
+  todosPedidosCache = await supaFetch('pedidos?order=criado_em.asc');
   const pedidosCliente = todosPedidosCache.filter(p => p.cliente_telefone === tel);
   const totalCookies = pedidosCliente.reduce((s,p) => s + p.itens.reduce((a,i)=>a+i.quantidade,0), 0);
   const totalGasto = pedidosCliente.reduce((s,p) => s + parseFloat(p.total), 0);
@@ -1363,7 +1363,7 @@ let clientesCache=[];
 async function carregarClientes() {
   try {
     clientesCache = await supaFetch('clientes?order=nome.asc');
-    if (!todosPedidosCache.length) todosPedidosCache = await supaFetch('pedidos?order=criado_em.asc');
+    todosPedidosCache = await supaFetch('pedidos?order=criado_em.asc'); // sempre busca dados frescos
 
     // Calcula média semanal e últimos 7 dias para cada cliente
     clientesCache.forEach(c => {
@@ -1430,7 +1430,7 @@ async function abrirPerfilCliente(tel) {
   abrirModal('modal-perfil');
   document.getElementById('perfil-conteudo').innerHTML = '<div class="empty"><div class="spinner"></div></div>';
 
-  if (!todosPedidosCache.length) todosPedidosCache = await supaFetch('pedidos?order=criado_em.asc');
+  todosPedidosCache = await supaFetch('pedidos?order=criado_em.asc');
   const cliente = clientesCache.find(c => c.telefone === tel) || todosPedidosCache.filter(p=>p.cliente_telefone===tel).map(p=>({nome:p.cliente_nome,telefone:p.cliente_telefone}))[0];
   if (!cliente) { document.getElementById('perfil-conteudo').innerHTML = '<p>Cliente não encontrado.</p>'; return; }
 
