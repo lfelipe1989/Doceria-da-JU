@@ -262,14 +262,9 @@
     .periodo-bar { gap:6px; }
     .periodo-btn { padding:6px 10px; font-size:0.75rem; }
 
-    /* Tabelas: vira scroll horizontal em vez de cortar */
-    .client-table, .contas-table {
-      display:block; overflow-x:auto; white-space:nowrap;
-      -webkit-overflow-scrolling:touch;
-    }
-    .client-table thead, .contas-table thead { display:table; width:100%; table-layout:fixed; }
-    .client-table tbody, .contas-table tbody { display:block; }
-    .client-table tr, .contas-table tr { display:table; width:100%; table-layout:fixed; }
+    /* Tabelas: container com scroll horizontal, mantendo a tabela intacta por dentro */
+    .report-card { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .client-table, .contas-table { min-width:600px; }
 
     .order-card { padding:0.85rem 1rem; }
     .order-top { flex-direction:column; gap:0.5rem; }
