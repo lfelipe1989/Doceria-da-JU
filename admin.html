@@ -1547,7 +1547,7 @@ function renderClientes(lista) {
       <td>${statusHtml}</td>
       <td style="display:flex;gap:6px;">
         <button class="action-btn btn-pay" onclick="abrirPerfilCliente('${c.telefone}')">👁️ Ver perfil</button>
-        <button class="action-btn" style="background:var(--purple-bg);color:var(--purple);border-color:#CEBEF0;" onclick="abrirEditarCliente('${c.telefone}')">✏️ Editar</button>
+        <button class="action-btn" style="background:var(--purple-bg);color:var(--purple);border-color:#CEBEF0;" onclick="abrirEditarCliente(${c.id})">✏️ Editar</button>
         ${c._abaixoMedia ? `<button class="action-btn btn-wpp" onclick="contatarClienteBaixo('${br}','${c.nome.replace(/'/g,"\\'")}')">💬 Contatar</button>` : ''}
       </td>
     </tr>`;
@@ -1559,9 +1559,17 @@ function contatarClienteBaixo(numWpp, nome) {
   window.open('https://wa.me/'+numWpp+'?text='+encodeURIComponent(msg), '_blank');
 }
 
-function abrirEditarCliente(tel) {
-  const c = clientesCache.find(x => x.telefone === tel);
-  if (!c) return;
+async function abrirEditarCliente(id) {
+  // Busca no cache primeiro, se não achar vai ao banco
+  let c = clientesCache.find(x => x.id == id);
+  if (!c) {
+    try {
+      const res = await supaFetch('clientes?id=eq.'+id);
+      c = res && res[0];
+    } catch(e) {}
+  }
+  if (!c) { showToast('Cliente não encontrado.'); return; }
+
   document.getElementById('ec-id').value = c.id;
   document.getElementById('ec-nome').value = c.nome || '';
   document.getElementById('ec-tel').value = c.telefone || '';
