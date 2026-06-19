@@ -414,6 +414,31 @@
 
 <!-- MODAL EXTRATO -->
 <div class="modal-overlay" id="modal-extrato">
+
+<!-- MODAL EDITAR CLIENTE -->
+<div class="modal-overlay" id="modal-editar-cliente">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-editar-cliente')">✕</button>
+    <div class="modal-title">✏️ Editar cliente</div>
+    <input type="hidden" id="ec-id"/>
+    <div class="form-group">
+      <label class="form-label">Nome completo</label>
+      <input class="form-input" type="text" id="ec-nome" placeholder="Nome do cliente"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">WhatsApp</label>
+      <input class="form-input" type="tel" id="ec-tel" placeholder="(48) 99999-0000"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Endereço</label>
+      <input class="form-input" type="text" id="ec-end" placeholder="Rua, número, bairro"/>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:0.5rem;">
+      <button onclick="fecharModal('modal-editar-cliente')" style="flex:1;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
+      <button onclick="salvarEdicaoCliente()" style="flex:2;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">✓ Salvar alterações</button>
+    </div>
+  </div>
+</div>
   <div class="modal">
     <button class="modal-close" onclick="fecharModal('modal-extrato')">✕</button>
     <div class="modal-title">📋 Extrato em aberto</div>
@@ -1522,6 +1547,7 @@ function renderClientes(lista) {
       <td>${statusHtml}</td>
       <td style="display:flex;gap:6px;">
         <button class="action-btn btn-pay" onclick="abrirPerfilCliente('${c.telefone}')">👁️ Ver perfil</button>
+        <button class="action-btn" style="background:var(--purple-bg);color:var(--purple);border-color:#CEBEF0;" onclick="abrirEditarCliente('${c.telefone}')">✏️ Editar</button>
         ${c._abaixoMedia ? `<button class="action-btn btn-wpp" onclick="contatarClienteBaixo('${br}','${c.nome.replace(/'/g,"\\'")}')">💬 Contatar</button>` : ''}
       </td>
     </tr>`;
@@ -1531,6 +1557,48 @@ function renderClientes(lista) {
 function contatarClienteBaixo(numWpp, nome) {
   const msg = `Olá, ${nome}! 🍪\n\nFaz um tempinho que você não pede nossos cookies artesanais e tava com saudade de te atender! 💕\n\nQue tal aproveitar e fazer um pedido essa semana? Temos Nutella, Red Velvet e Oreo fresquinhos esperando por você!\n\n— Doceria da Ju Artesanais`;
   window.open('https://wa.me/'+numWpp+'?text='+encodeURIComponent(msg), '_blank');
+}
+
+function abrirEditarCliente(tel) {
+  const c = clientesCache.find(x => x.telefone === tel);
+  if (!c) return;
+  document.getElementById('ec-id').value = c.id;
+  document.getElementById('ec-nome').value = c.nome || '';
+  document.getElementById('ec-tel').value = c.telefone || '';
+  document.getElementById('ec-end').value = c.endereco || '';
+  abrirModal('modal-editar-cliente');
+}
+
+async function salvarEdicaoCliente() {
+  const id = document.getElementById('ec-id').value;
+  const nome = document.getElementById('ec-nome').value.trim();
+  const tel = document.getElementById('ec-tel').value.trim();
+  const end = document.getElementById('ec-end').value.trim();
+
+  if (!nome || !tel) { alert('Nome e telefone são obrigatórios!'); return; }
+
+  try {
+    await supaFetch('clientes?id=eq.'+id, 'PATCH', { nome, telefone: tel, endereco: end });
+
+    // Atualiza também os pedidos existentes com o telefone antigo para manter consistência
+    const clienteAntigo = clientesCache.find(x => x.id == id);
+    if (clienteAntigo && clienteAntigo.telefone !== tel) {
+      await supaFetch('pedidos?cliente_telefone=eq.'+encodeURIComponent(clienteAntigo.telefone), 'PATCH', {
+        cliente_nome: nome, cliente_telefone: tel, cliente_endereco: end
+      });
+    } else if (clienteAntigo) {
+      // Atualiza nome e endereço mesmo que o telefone não mudou
+      await supaFetch('pedidos?cliente_telefone=eq.'+encodeURIComponent(tel), 'PATCH', {
+        cliente_nome: nome, cliente_endereco: end
+      });
+    }
+
+    fecharModal('modal-editar-cliente');
+    showToast('✓ Cliente atualizado com sucesso!');
+    await carregarClientes(); // recarrega a lista com dados frescos
+  } catch(e) {
+    showToast('Erro ao salvar. Verifique se o telefone já está cadastrado.');
+  }
 }
 
 // ── PERFIL COMPLETO DO CLIENTE ──────────────
