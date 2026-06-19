@@ -414,6 +414,19 @@
 
 <!-- MODAL EXTRATO -->
 <div class="modal-overlay" id="modal-extrato">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-extrato')">✕</button>
+    <div class="modal-title">📋 Extrato em aberto</div>
+    <div id="extrato-cliente-info" style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;"></div>
+    <div id="extrato-pedidos-lista"></div>
+    <div class="extrato-total-row">
+      <span style="font-weight:500;font-size:0.95rem;">Total em aberto</span>
+      <span style="font-weight:500;font-size:1.1rem;color:var(--red);" id="extrato-total-aberto">—</span>
+    </div>
+    <button class="btn-wpp-extrato" onclick="enviarExtratoWhatsapp()">💬 Enviar pelo WhatsApp</button>
+    <button class="btn-copiar" onclick="copiarExtrato()">📋 Copiar texto</button>
+  </div>
+</div>
 
 <!-- MODAL EDITAR CLIENTE -->
 <div class="modal-overlay" id="modal-editar-cliente">
@@ -437,19 +450,6 @@
       <button onclick="fecharModal('modal-editar-cliente')" style="flex:1;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
       <button onclick="salvarEdicaoCliente()" style="flex:2;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">✓ Salvar alterações</button>
     </div>
-  </div>
-</div>
-  <div class="modal">
-    <button class="modal-close" onclick="fecharModal('modal-extrato')">✕</button>
-    <div class="modal-title">📋 Extrato em aberto</div>
-    <div id="extrato-cliente-info" style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;"></div>
-    <div id="extrato-pedidos-lista"></div>
-    <div class="extrato-total-row">
-      <span style="font-weight:500;font-size:0.95rem;">Total em aberto</span>
-      <span style="font-weight:500;font-size:1.1rem;color:var(--red);" id="extrato-total-aberto">—</span>
-    </div>
-    <button class="btn-wpp-extrato" onclick="enviarExtratoWhatsapp()">💬 Enviar pelo WhatsApp</button>
-    <button class="btn-copiar" onclick="copiarExtrato()">📋 Copiar texto</button>
   </div>
 </div>
 
