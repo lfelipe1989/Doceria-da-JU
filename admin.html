@@ -769,7 +769,7 @@ function renderPedidos(pedidos, pags) {
   if (!pedidos.length) { c.innerHTML='<div class="empty"><div class="empty-icon">🍪</div><p>Nenhum pedido hoje ainda.</p></div>'; return; }
   c.innerHTML = pedidos.map(o => {
     const s = statusMap[o.status]||statusMap.waiting;
-    const hora = new Date(o.criado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const hora = new Date(o.criado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'});
     const itensStr = o.itens.map(i => i.emoji+' '+i.quantidade+'x '+i.sabor).join(' · ');
     const totalFmt = 'R$ '+parseFloat(o.total).toFixed(2).replace('.',',');
     const pagsPedido = pagamentosDoPedido(o.id);
@@ -778,7 +778,7 @@ function renderPedidos(pedidos, pags) {
     const statusPag = totalPago <= 0 ? 'Sem pagamento' : restante <= 0 ? '✓ Pago' : 'Parcial: R$ '+totalPago.toFixed(2).replace('.',',');
     const corPag = totalPago <= 0 ? 'background:#FAE8E8;color:#8B1A1A;' : restante <= 0 ? 'background:#E8F5EE;color:#1A6B3C;' : 'background:#FEF3E2;color:#8B5E00;';
     const pagsHtml = pagsPedido.length ? '<div class="pagamentos-list">'+pagsPedido.map(p =>
-      `<div class="pagamento-item"><span>${new Date(p.criado_em).toLocaleDateString('pt-BR')} · ${p.observacao||''}</span><div style="display:flex;align-items:center;gap:6px;"><span class="pagamento-meio">${p.meio}</span><span style="font-weight:500;">R$ ${parseFloat(p.valor).toFixed(2).replace('.',',')}</span></div></div>`
+      `<div class="pagamento-item"><span>${new Date(p.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'})} · ${p.observacao||''}</span><div style="display:flex;align-items:center;gap:6px;"><span class="pagamento-meio">${p.meio}</span><span style="font-weight:500;">R$ ${parseFloat(p.valor).toFixed(2).replace('.',',')}</span></div></div>`
     ).join('')+'</div>' : '';
     return `<div class="order-card">
       <div class="order-top">
@@ -900,16 +900,18 @@ async function abrirModalPedido() {
 
 function preencherDataHoraAgora() {
   const agora = new Date();
+  const brt = new Date(agora.toLocaleString('en-US', {timeZone:'America/Sao_Paulo'}));
   const pad = n => String(n).padStart(2,'0');
-  document.getElementById('np-data').value = `${agora.getFullYear()}-${pad(agora.getMonth()+1)}-${pad(agora.getDate())}`;
-  document.getElementById('np-hora').value = `${pad(agora.getHours())}:${pad(agora.getMinutes())}`;
+  document.getElementById('np-data').value = `${brt.getFullYear()}-${pad(brt.getMonth()+1)}-${pad(brt.getDate())}`;
+  document.getElementById('np-hora').value = `${pad(brt.getHours())}:${pad(brt.getMinutes())}`;
 }
 
 function preencherDataHoraDe(criadoEm) {
   const d = new Date(criadoEm);
+  const brt = new Date(d.toLocaleString('en-US', {timeZone:'America/Sao_Paulo'}));
   const pad = n => String(n).padStart(2,'0');
-  document.getElementById('np-data').value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  document.getElementById('np-hora').value = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  document.getElementById('np-data').value = `${brt.getFullYear()}-${pad(brt.getMonth()+1)}-${pad(brt.getDate())}`;
+  document.getElementById('np-hora').value = `${pad(brt.getHours())}:${pad(brt.getMinutes())}`;
 }
 
 async function abrirModalEdicaoPedido(pedidoId) {
@@ -1128,7 +1130,7 @@ async function salvarPedidoManual() {
   if (!dataStr) { alert('Selecione a data do pedido!'); return; }
   if (!itens.length) { alert('Adicione pelo menos um produto!'); return; }
   const total = itens.reduce((s,i) => s+(i.quantidade*i.preco_unit),0);
-  const criadoEm = dataStr + 'T' + horaStr + ':00';
+  const criadoEm = dataStr + 'T' + horaStr + ':00-03:00'; // horário de Brasília (BRT = UTC-3)
   try {
     await supaFetch('pedidos','POST',{ cliente_nome:nome, cliente_telefone:tel, cliente_endereco:end, observacoes:obs, itens, total, tipo_entrega:entrega, status, pago:false, criado_em:criadoEm });
     await salvarOuAtualizarCliente(nome, tel, end);
@@ -1151,7 +1153,7 @@ async function salvarEdicaoPedido() {
   if (!dataStr) { alert('Selecione a data do pedido!'); return; }
   if (!itens.length) { alert('O pedido precisa ter pelo menos um produto!'); return; }
   const total = itens.reduce((s,i) => s+(i.quantidade*i.preco_unit),0);
-  const criadoEm = dataStr + 'T' + horaStr + ':00';
+  const criadoEm = dataStr + 'T' + horaStr + ':00-03:00'; // horário de Brasília (BRT = UTC-3)
   try {
     await supaFetch('pedidos?id=eq.'+modoEdicaoId, 'PATCH', {
       cliente_endereco: end, observacoes: obs, itens, total, tipo_entrega: entrega, status, criado_em: criadoEm
@@ -1201,15 +1203,18 @@ function aplicarCustom(secao) {
 
 function getRangeQuery(secao) {
   const p = periodos[secao];
-  const hoje = new Date();
+  // Usa a data atual no fuso de Brasília
+  const agora = new Date();
+  const brt = new Date(agora.toLocaleString('en-US', {timeZone:'America/Sao_Paulo'}));
   const pad = n => String(n).padStart(2,'0');
   const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  if (p==='hoje') return `criado_em=gte.${fmt(hoje)}T00:00:00`;
-  if (p==='semana') { const i=new Date(hoje); i.setDate(hoje.getDate()-hoje.getDay()); return `criado_em=gte.${fmt(i)}T00:00:00`; }
-  if (p==='mes') { const i=new Date(hoje.getFullYear(),hoje.getMonth(),1); return `criado_em=gte.${fmt(i)}T00:00:00`; }
-  if (p==='custom'&&customDatas[secao].ini) return `criado_em=gte.${customDatas[secao].ini}T00:00:00&criado_em=lte.${customDatas[secao].fim}T23:59:59`;
+  if (p==='hoje') return `criado_em=gte.${fmt(brt)}T00:00:00-03:00`;
+  if (p==='semana') { const i=new Date(brt); i.setDate(brt.getDate()-brt.getDay()); return `criado_em=gte.${fmt(i)}T00:00:00-03:00`; }
+  if (p==='mes') { const i=new Date(brt.getFullYear(),brt.getMonth(),1); return `criado_em=gte.${fmt(i)}T00:00:00-03:00`; }
+  if (p==='custom'&&customDatas[secao].ini) return `criado_em=gte.${customDatas[secao].ini}T00:00:00-03:00&criado_em=lte.${customDatas[secao].fim}T23:59:59-03:00`;
   return '';
 }
+
 
 async function carregarRelatorios() {
   try {
@@ -1402,7 +1407,7 @@ function abrirExtrato(tel) {
   const pedidosAbertos = c.pedidos.filter(p => (parseFloat(p.total) - p.totalPago) > 0.01);
 
   document.getElementById('extrato-pedidos-lista').innerHTML = pedidosAbertos.map(p => {
-    const data = new Date(p.criado_em).toLocaleDateString('pt-BR');
+    const data = new Date(p.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
     const itens = p.itens.map(i => i.emoji+' '+i.quantidade+'x '+i.sabor).join(', ');
     const resto = parseFloat(p.total) - p.totalPago;
     const pagStr = p.pagamentos.length
@@ -1433,7 +1438,7 @@ function gerarTextoExtrato() {
   txt += `📋 *Extrato em aberto — ${c.nome}*\n`;
   txt += `━━━━━━━━━━━━━━━━━━━━\n\n`;
   pedidosAbertos.forEach((p, idx) => {
-    const data = new Date(p.criado_em).toLocaleDateString('pt-BR');
+    const data = new Date(p.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
     const itens = p.itens.map(i => i.quantidade+'x '+i.sabor).join(', ');
     const resto = parseFloat(p.total) - p.totalPago;
     txt += `*Pedido ${idx+1}* — ${data}\n`;
@@ -1618,7 +1623,7 @@ async function abrirPerfilCliente(tel) {
     <div class="perfil-tabcontent active" id="perfil-tab-pedidos">
       ${pedidosCliente.length ? pedidosCliente.map(p => {
         const itensStr = p.itens.map(i => i.emoji+' '+i.quantidade+'x '+i.sabor).join(', ');
-        const data = new Date(p.criado_em).toLocaleDateString('pt-BR');
+        const data = new Date(p.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
         const pagPedido = pags.filter(pg => pg.pedido_id === p.id).reduce((s,pg)=>s+parseFloat(pg.valor),0);
         const statusLabel = statusMap[p.status]?.label || p.status;
         const restante = parseFloat(p.total) - pagPedido;
@@ -1636,7 +1641,7 @@ async function abrirPerfilCliente(tel) {
     <div class="perfil-tabcontent" id="perfil-tab-pagamentos">
       ${pags.length ? pags.map(p => `
         <div class="perfil-pag-row">
-          <span>${new Date(p.criado_em).toLocaleDateString('pt-BR')} · <span class="pagamento-meio">${p.meio}</span> ${p.observacao?'· '+p.observacao:''}</span>
+          <span>${new Date(p.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'})} · <span class="pagamento-meio">${p.meio}</span> ${p.observacao?'· '+p.observacao:''}</span>
           <span style="font-weight:500;">R$ ${parseFloat(p.valor).toFixed(2).replace('.',',')}</span>
         </div>`).join('') : '<p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1.5rem;">Nenhum pagamento registrado ainda.</p>'}
       ${Object.keys(meiosPagamento).length ? `<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
@@ -1657,8 +1662,8 @@ async function abrirPerfilCliente(tel) {
       <div class="bar-row"><span class="bar-label">🏝️ Sul Ilha</span><div class="bar-track"><div class="bar-fill" style="width:${totalPedidos?Math.round(sulCount/totalPedidos*100):0}%;background:var(--tiffany);"></div></div><span class="bar-val">${sulCount}</span></div>
       <div class="bar-row"><span class="bar-label">📍 Outro</span><div class="bar-track"><div class="bar-fill" style="width:${totalPedidos?Math.round(outroCount/totalPedidos*100):0}%;background:var(--pink);"></div></div><span class="bar-val">${outroCount}</span></div>
       <div style="margin-top:1.25rem;font-size:0.82rem;color:var(--muted);">
-        Primeiro pedido: <strong>${primeiroPedido?primeiroPedido.toLocaleDateString('pt-BR'):'—'}</strong> ·
-        Último pedido: <strong>${ultimoPedido?ultimoPedido.toLocaleDateString('pt-BR'):'—'}</strong> ·
+        Primeiro pedido: <strong>${primeiroPedido?primeiroPedido.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}):'—'}</strong> ·
+        Último pedido: <strong>${ultimoPedido?ultimoPedido.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}):'—'}</strong> ·
         Média semanal: <strong>${mediaSemanal.toFixed(1)} cookies</strong>
       </div>
     </div>
