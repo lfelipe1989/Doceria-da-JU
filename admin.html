@@ -649,6 +649,60 @@ const SUPABASE_URL = 'https://jhnwtizmihecidadhubv.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_g1GinN-To8dOvXEzqnAy6A_33x-9yA9';
 const SENHA = 'doceriaju2025';
 
+// ═══════════════════════════════════════════════════════════
+// ✏️  MENSAGENS AUTOMÁTICAS — edite aqui à vontade!
+// Use {NOME} para o nome do cliente
+// Use {ITENS} para a lista de produtos do pedido
+// Use {TOTAL} para o valor total
+// Use {EXTRATO} para o conteúdo do extrato (só na msg de extrato)
+// ═══════════════════════════════════════════════════════════
+
+const MENSAGENS = {
+
+  // Enviada ao clicar em "💬 Enviar cobrança" num pedido
+  cobranca: (nome, itens, total) =>
+`Olá, ${nome}! 🍪
+
+Recebemos seu pedido da *Doceria da Ju Artesanais*:
+
+📦 *Itens:*
+${itens}
+
+💰 *Total: ${total}*
+
+Para confirmar seu pedido, envie o pagamento pelo link abaixo (Pix ou cartão via Mercado Pago):
+
+👉 [COLE AQUI O LINK DO MERCADO PAGO]
+
+Assim que confirmarmos o pagamento, seus cookies vão pro forno! 🧁
+
+Qualquer dúvida é só chamar aqui. 💕
+— Doceria da Ju Artesanais`,
+
+  // Enviada ao clicar em "💬 Enviar pelo WhatsApp" no extrato
+  extrato: (nome, conteudoExtrato) =>
+`🍪 *Doceria da Ju Artesanais*
+📋 *Extrato em aberto — ${nome}*
+━━━━━━━━━━━━━━━━━━━━
+
+${conteudoExtrato}
+━━━━━━━━━━━━━━━━━━━━
+
+Para regularizar, aceitamos Pix, cartão e dinheiro. 💕`,
+
+  // Enviada ao clicar em "💬 Contatar" em clientes abaixo da média
+  reativacao: (nome) =>
+`Olá, ${nome}! 🍪
+
+Faz um tempinho que você não pede nossos cookies artesanais e tava com saudade de te atender! 💕
+
+Que tal aproveitar e fazer um pedido essa semana? Temos Nutella, Red Velvet e Oreo fresquinhos esperando por você!
+
+— Doceria da Ju Artesanais`,
+
+};
+// ═══════════════════════════════════════════════════════════
+
 // ── LOGIN ──────────────────────────────────
 function doLogin() {
   const val = document.getElementById('login-input').value;
@@ -848,7 +902,7 @@ function enviarWhatsapp(id) {
   const br = num.startsWith('55')?num:'55'+num;
   const itensStr = o.itens.map(i => i.emoji+' '+i.quantidade+'x '+i.sabor).join('\n');
   const total = 'R$ '+parseFloat(o.total).toFixed(2).replace('.',',');
-  const msg = `Olá, ${o.cliente_nome}! 🍪\n\nRecebemos seu pedido da *Doceria da Ju Artesanais*:\n\n📦 *Itens:*\n${itensStr}\n\n💰 *Total: ${total}*\n\nPara confirmar seu pedido, envie o pagamento pelo link abaixo (Pix ou cartão via Mercado Pago):\n\n👉 [COLE AQUI O LINK DO MERCADO PAGO]\n\nAssim que confirmarmos o pagamento, seus cookies vão pro forno! 🧁\n\nQualquer dúvida é só chamar. 💕\n— Doceria da Ju Artesanais`;
+  const msg = MENSAGENS.cobranca(o.cliente_nome, itensStr, total);
   window.open('https://wa.me/'+br+'?text='+encodeURIComponent(msg),'_blank');
   showToast('💬 Abrindo WhatsApp para '+o.cliente_nome);
 }
@@ -1459,23 +1513,21 @@ function gerarTextoExtrato() {
   if (!c) return '';
   const pedidosAbertos = c.pedidos.filter(p => (parseFloat(p.total) - p.totalPago) > 0.01);
   const totalAberto = c.total - c.recebido;
-  let txt = `🍪 *Doceria da Ju Artesanais*\n`;
-  txt += `📋 *Extrato em aberto — ${c.nome}*\n`;
-  txt += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  let conteudo = '';
   pedidosAbertos.forEach((p, idx) => {
     const data = new Date(p.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
     const itens = p.itens.map(i => i.quantidade+'x '+i.sabor).join(', ');
     const resto = parseFloat(p.total) - p.totalPago;
-    txt += `*Pedido ${idx+1}* — ${data}\n`;
-    txt += `${itens}\n`;
-    txt += `Valor: R$ ${parseFloat(p.total).toFixed(2).replace('.',',')}\n`;
-    if (p.totalPago > 0) txt += `Pago: R$ ${p.totalPago.toFixed(2).replace('.',',')}\n`;
-    txt += `⏳ Em aberto: R$ ${resto.toFixed(2).replace('.',',')}\n\n`;
+    conteudo += `*Pedido ${idx+1}* — ${data}\n`;
+    conteudo += `${itens}\n`;
+    conteudo += `Valor: R$ ${parseFloat(p.total).toFixed(2).replace('.',',')}\n`;
+    if (p.totalPago > 0) conteudo += `Pago: R$ ${p.totalPago.toFixed(2).replace('.',',')}\n`;
+    conteudo += `⏳ Em aberto: R$ ${resto.toFixed(2).replace('.',',')}\n\n`;
   });
-  txt += `━━━━━━━━━━━━━━━━━━━━\n`;
-  txt += `💰 *Total em aberto: R$ ${totalAberto.toFixed(2).replace('.',',')}*\n\n`;
-  txt += `Para regularizar, aceitamos Pix, cartão e dinheiro. 💕`;
-  return txt;
+  conteudo += `💰 *Total em aberto: R$ ${totalAberto.toFixed(2).replace('.',',')}*`;
+
+  return MENSAGENS.extrato(c.nome, conteudo);
 }
 
 function copiarExtrato() {
@@ -1555,7 +1607,7 @@ function renderClientes(lista) {
 }
 
 function contatarClienteBaixo(numWpp, nome) {
-  const msg = `Olá, ${nome}! 🍪\n\nFaz um tempinho que você não pede nossos cookies artesanais e tava com saudade de te atender! 💕\n\nQue tal aproveitar e fazer um pedido essa semana? Temos Nutella, Red Velvet e Oreo fresquinhos esperando por você!\n\n— Doceria da Ju Artesanais`;
+  const msg = MENSAGENS.reativacao(nome);
   window.open('https://wa.me/'+numWpp+'?text='+encodeURIComponent(msg), '_blank');
 }
 
