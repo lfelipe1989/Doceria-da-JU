@@ -637,6 +637,19 @@
       <h1 class="page-title">Cardápio</h1>
       <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.25rem;">Clique em ✏️ Editar para alterar o preço. O novo valor reflete imediatamente no site.</p>
       <div id="cardapio-lista"><div class="empty"><div class="spinner"></div></div></div>
+
+      <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--brown);margin:2rem 0 0.5rem;">💬 Mensagens automáticas</h2>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.25rem;">
+        Edite o texto das mensagens enviadas pelo WhatsApp. Use as variáveis abaixo onde quiser:<br>
+        <span style="background:var(--pink-pale);padding:2px 7px;border-radius:6px;font-size:0.78rem;color:var(--pink-dark);margin-right:4px;">{NOME}</span>
+        <span style="background:var(--pink-pale);padding:2px 7px;border-radius:6px;font-size:0.78rem;color:var(--pink-dark);margin-right:4px;">{ITENS}</span>
+        <span style="background:var(--pink-pale);padding:2px 7px;border-radius:6px;font-size:0.78rem;color:var(--pink-dark);margin-right:4px;">{TOTAL}</span>
+        <span style="background:var(--pink-pale);padding:2px 7px;border-radius:6px;font-size:0.78rem;color:var(--pink-dark);">{EXTRATO}</span>
+      </p>
+
+      <div style="display:flex;flex-direction:column;gap:1.25rem;" id="mensagens-lista">
+        <div class="empty"><div class="spinner"></div></div>
+      </div>
     </div>
 
   </main>
@@ -649,59 +662,31 @@ const SUPABASE_URL = 'https://jhnwtizmihecidadhubv.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_g1GinN-To8dOvXEzqnAy6A_33x-9yA9';
 const SENHA = 'doceriaju2025';
 
-// ═══════════════════════════════════════════════════════════
-// ✏️  MENSAGENS AUTOMÁTICAS — edite aqui à vontade!
-// Use {NOME} para o nome do cliente
-// Use {ITENS} para a lista de produtos do pedido
-// Use {TOTAL} para o valor total
-// Use {EXTRATO} para o conteúdo do extrato (só na msg de extrato)
-// ═══════════════════════════════════════════════════════════
+// ── MENSAGENS — carregadas do banco e editáveis no painel ──
+let configMensagens = {}; // cache das mensagens carregadas do Supabase
+
+async function carregarMensagens() {
+  try {
+    const rows = await supaFetch('configuracoes?chave=in.(msg_cobranca,msg_extrato,msg_reativacao)');
+    rows.forEach(r => configMensagens[r.chave] = r.valor);
+  } catch(e) {}
+}
+
+function getMensagem(chave) {
+  return configMensagens[chave] || '';
+}
 
 const MENSAGENS = {
-
-  // Enviada ao clicar em "💬 Enviar cobrança" num pedido
-  cobranca: (nome, itens, total) =>
-`Olá, ${nome}! 🍪
-
-Recebemos seu pedido da *Doceria da Ju Artesanais*:
-
-📦 *Itens:*
-${itens}
-
-💰 *Total: ${total}*
-
-Para confirmar seu pedido, envie o pagamento pelo link abaixo (Pix ou cartão via Mercado Pago):
-
-👉 [COLE AQUI O LINK DO MERCADO PAGO]
-
-Assim que confirmarmos o pagamento, seus cookies vão pro forno! 🧁
-
-Qualquer dúvida é só chamar aqui. 💕
-— Doceria da Ju Artesanais`,
-
-  // Enviada ao clicar em "💬 Enviar pelo WhatsApp" no extrato
-  extrato: (nome, conteudoExtrato) =>
-`🍪 *Doceria da Ju Artesanais*
-📋 *Extrato em aberto — ${nome}*
-━━━━━━━━━━━━━━━━━━━━
-
-${conteudoExtrato}
-━━━━━━━━━━━━━━━━━━━━
-
-Para regularizar, aceitamos Pix, cartão e dinheiro. 💕`,
-
-  // Enviada ao clicar em "💬 Contatar" em clientes abaixo da média
-  reativacao: (nome) =>
-`Olá, ${nome}! 🍪
-
-Faz um tempinho que você não pede nossos cookies artesanais e tava com saudade de te atender! 💕
-
-Que tal aproveitar e fazer um pedido essa semana? Temos Nutella, Red Velvet e Oreo fresquinhos esperando por você!
-
-— Doceria da Ju Artesanais`,
-
+  cobranca: (nome, itens, total) => getMensagem('msg_cobranca')
+    .replace(/{NOME}/g, nome)
+    .replace(/{ITENS}/g, itens)
+    .replace(/{TOTAL}/g, total),
+  extrato: (nome, conteudo) => getMensagem('msg_extrato')
+    .replace(/{NOME}/g, nome)
+    .replace(/{EXTRATO}/g, conteudo),
+  reativacao: (nome) => getMensagem('msg_reativacao')
+    .replace(/{NOME}/g, nome),
 };
-// ═══════════════════════════════════════════════════════════
 
 // ── LOGIN ──────────────────────────────────
 function doLogin() {
@@ -718,6 +703,7 @@ function doLogin() {
   }
 }
 async function iniciar() {
+  await carregarMensagens();
   carregarPedidos();
   carregarCardapio();
   if (!todosClientes.length) todosClientes = await supaFetch('clientes?order=nome.asc').catch(()=>[]);
@@ -1813,7 +1799,78 @@ function filtrarClientes(val) {
 // ── CARDÁPIO ───────────────────────────────
 let produtosAdmin=[];
 async function carregarCardapio() {
-  try { produtosAdmin=await supaFetch('produtos?order=id.asc'); renderCardapio(); } catch(e) {}
+  try {
+    produtosAdmin = await supaFetch('produtos?order=id.asc');
+    renderCardapio();
+  } catch(e) {}
+  await carregarMensagens();
+  renderMensagens();
+}
+
+const defMensagens = [
+  { chave:'msg_cobranca',   titulo:'📦 Cobrança de pedido',          descricao:'Enviada ao clicar em "💬 Enviar cobrança" num pedido. Variáveis: {NOME}, {ITENS}, {TOTAL}' },
+  { chave:'msg_extrato',    titulo:'📋 Extrato em aberto',           descricao:'Enviada ao clicar "💬 Enviar pelo WhatsApp" no extrato financeiro. Variáveis: {NOME}, {EXTRATO}' },
+  { chave:'msg_reativacao', titulo:'💪 Reativação de cliente',       descricao:'Enviada ao clicar "💬 Contatar" em clientes abaixo da média. Variáveis: {NOME}' },
+];
+
+function renderMensagens() {
+  const container = document.getElementById('mensagens-lista');
+  container.innerHTML = defMensagens.map(m => `
+    <div class="order-card" style="border-color:var(--pink-border);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
+        <div>
+          <div style="font-weight:500;font-size:0.95rem;">${m.titulo}</div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;">${m.descricao}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-edit" id="mbtn-edit-${m.chave}" onclick="editarMensagem('${m.chave}')">✏️ Editar</button>
+          <button class="btn-save-p" id="mbtn-save-${m.chave}" onclick="salvarMensagem('${m.chave}')" style="display:none;">✓ Salvar</button>
+          <button class="btn-cancel-p" id="mbtn-cancel-${m.chave}" onclick="cancelarMensagem('${m.chave}')" style="display:none;">✕</button>
+        </div>
+      </div>
+      <div id="msg-display-${m.chave}" style="background:var(--pink-pale);border-radius:8px;padding:0.75rem;font-size:0.78rem;color:var(--text);white-space:pre-wrap;line-height:1.6;">${escHtml(getMensagem(m.chave))}</div>
+      <textarea id="msg-input-${m.chave}" style="display:none;width:100%;min-height:160px;padding:0.75rem;border:1.5px solid var(--pink);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem;color:var(--text);resize:vertical;outline:none;line-height:1.6;" onkeydown="if(event.ctrlKey&&event.key==='Enter') salvarMensagem('${m.chave}')">${escHtml(getMensagem(m.chave))}</textarea>
+      <div id="msg-hint-${m.chave}" style="display:none;font-size:0.72rem;color:var(--muted);margin-top:4px;">Ctrl+Enter para salvar rapidamente</div>
+    </div>`).join('');
+}
+
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function editarMensagem(chave) {
+  document.getElementById('msg-display-'+chave).style.display = 'none';
+  document.getElementById('msg-input-'+chave).style.display = 'block';
+  document.getElementById('msg-hint-'+chave).style.display = 'block';
+  document.getElementById('mbtn-edit-'+chave).style.display = 'none';
+  document.getElementById('mbtn-save-'+chave).style.display = 'inline-block';
+  document.getElementById('mbtn-cancel-'+chave).style.display = 'inline-block';
+  document.getElementById('msg-input-'+chave).focus();
+}
+
+function cancelarMensagem(chave) {
+  document.getElementById('msg-input-'+chave).value = getMensagem(chave);
+  document.getElementById('msg-display-'+chave).style.display = 'block';
+  document.getElementById('msg-input-'+chave).style.display = 'none';
+  document.getElementById('msg-hint-'+chave).style.display = 'none';
+  document.getElementById('mbtn-edit-'+chave).style.display = 'inline-block';
+  document.getElementById('mbtn-save-'+chave).style.display = 'none';
+  document.getElementById('mbtn-cancel-'+chave).style.display = 'none';
+}
+
+async function salvarMensagem(chave) {
+  const novoTexto = document.getElementById('msg-input-'+chave).value;
+  if (!novoTexto.trim()) { alert('A mensagem não pode estar vazia!'); return; }
+  try {
+    // Tenta UPDATE primeiro, se não existir faz INSERT
+    await supaFetch('configuracoes?chave=eq.'+chave, 'PATCH', { valor: novoTexto });
+    configMensagens[chave] = novoTexto;
+    document.getElementById('msg-display-'+chave).textContent = novoTexto;
+    cancelarMensagem(chave);
+    showToast('✓ Mensagem salva!');
+  } catch(e) {
+    showToast('Erro ao salvar mensagem.');
+  }
 }
 function renderCardapio() {
   document.getElementById('cardapio-lista').innerHTML=produtosAdmin.map(p=>`
