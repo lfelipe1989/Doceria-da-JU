@@ -503,6 +503,7 @@
         <button class="periodo-btn" onclick="selecionarPeriodo('ped','mes',this)">Este mês</button>
         <button class="periodo-btn" onclick="selecionarPeriodo('ped','tudo',this)">Tudo</button>
         <button class="periodo-btn" onclick="selecionarPeriodo('ped','custom',this)">📅 Personalizado</button>
+        <button class="periodo-btn" id="btn-filtro-aberto" onclick="toggleFiltroAberto(this)" style="margin-left:auto;border-color:var(--pink);color:var(--pink-dark);">⏳ Em aberto</button>
       </div>
       <div class="periodo-custom" id="periodo-custom-ped">
         <span style="font-size:0.8rem;color:var(--muted);">De</span>
@@ -735,9 +736,38 @@ const statusMap = {
 let todosOsPedidos = [];
 let todosPagamentos = [];
 
-let filtroClienteTel = null; // quando preenchido, mostra histórico completo desse cliente
+let filtroClienteTel = null;
+let filtroAberto = false;
 
 const labelsPeriodoPed = { hoje:'hoje', semana:'esta semana', mes:'este mês', tudo:'todos', custom:'no período' };
+
+function toggleFiltroAberto(el) {
+  filtroAberto = !filtroAberto;
+  el.classList.toggle('active', filtroAberto);
+  el.style.background = filtroAberto ? 'var(--pink)' : '';
+  el.style.color = filtroAberto ? 'white' : 'var(--pink-dark)';
+  el.textContent = filtroAberto ? '⏳ Em aberto ✓' : '⏳ Em aberto';
+  // Aplica o filtro nos pedidos já carregados, sem nova requisição ao banco
+  aplicarFiltroAberto();
+}
+
+function aplicarFiltroAberto() {
+  if (!filtroAberto) {
+    renderPedidos(todosOsPedidos, todosPagamentos);
+    document.getElementById('pedidos-titulo').textContent = tituloPedidosAtual();
+    return;
+  }
+  // Filtra pedidos que NÃO estão com status 'done' (ou seja, ainda em aberto)
+  const pedidosAbertos = todosOsPedidos.filter(p => p.status !== 'done');
+  renderPedidos(pedidosAbertos, todosPagamentos);
+  document.getElementById('pedidos-titulo').textContent = `⏳ Em aberto (${pedidosAbertos.length})`;
+}
+
+function tituloPedidosAtual() {
+  const periodo = periodos.ped || 'hoje';
+  if (filtroClienteTel) return 'Pedidos de ' + (todosOsPedidos[0]?.cliente_nome || '');
+  return 'Pedidos — ' + (labelsPeriodoPed[periodo] === 'hoje' ? 'hoje' : labelsPeriodoPed[periodo]).replace(/^./, c=>c.toUpperCase());
+}
 
 async function carregarPedidos() {
   if (filtroClienteTel) return carregarPedidosPorCliente(filtroClienteTel);
@@ -751,14 +781,14 @@ async function carregarPedidos() {
     ]);
     todosOsPedidos = pedidos;
     todosPagamentos = pags;
-    renderPedidos(pedidos, pags);
     atualizarMetricas(pedidos, pags);
     document.getElementById('pedidos-metrics').style.display = 'grid';
     document.getElementById('m-total-lbl').textContent = 'Pedidos ' + (labelsPeriodoPed[periodo] || 'no período');
     document.getElementById('m-receita-lbl').textContent = 'Recebido ' + (labelsPeriodoPed[periodo] || 'no período');
     if (!document.getElementById('ped-busca-cliente').value) {
-      document.getElementById('pedidos-titulo').textContent = 'Pedidos — ' + (labelsPeriodoPed[periodo] === 'hoje' ? 'hoje' : labelsPeriodoPed[periodo]).replace(/^./, c=>c.toUpperCase());
+      document.getElementById('pedidos-titulo').textContent = tituloPedidosAtual();
     }
+    aplicarFiltroAberto(); // aplica o filtro de em aberto se estiver ativo
   } catch(e) {
     document.getElementById('orders-container').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p>Erro ao carregar.</p></div>';
   }
