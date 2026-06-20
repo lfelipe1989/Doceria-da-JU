@@ -1804,10 +1804,14 @@ function abrirExtrato(tel) {
   document.getElementById('extrato-cliente-info').innerHTML =
     `<strong>${c.nome}</strong> · ${c.tel}`;
 
-  const pedidosAbertos = c.pedidos.filter(p => (parseFloat(p.total) - p.totalPago) > 0.01);
+  // Ordena do mais antigo para o mais recente
+  const pedidosAbertos = c.pedidos
+    .filter(p => (parseFloat(p.total) - p.totalPago) > 0.01)
+    .sort((a,b) => new Date(a.criado_em) - new Date(b.criado_em));
 
   document.getElementById('extrato-pedidos-lista').innerHTML = pedidosAbertos.map(p => {
     const data = new Date(p.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
+    const totalCookies = p.itens.reduce((s,i) => s+i.quantidade, 0);
     const itens = p.itens.map(i => i.emoji+' '+i.quantidade+'x '+i.sabor).join(', ');
     const resto = parseFloat(p.total) - p.totalPago;
     const pagStr = p.pagamentos.length
@@ -1818,7 +1822,7 @@ function abrirExtrato(tel) {
         <span class="extrato-pedido-data">📅 ${data}</span>
         <span class="extrato-pedido-valor">R$ ${parseFloat(p.total).toFixed(2).replace('.',',')}</span>
       </div>
-      <div class="extrato-pedido-itens">${itens}</div>
+      <div class="extrato-pedido-itens">${itens} <span style="color:var(--brown);font-weight:500;">(${totalCookies} cookies)</span></div>
       ${p.pagamentos.length ? `<div class="extrato-pedido-pag">${pagStr}</div>` : ''}
       <div class="extrato-pedido-resto">⏳ Em aberto: R$ ${resto.toFixed(2).replace('.',',')}</div>
     </div>`;
@@ -1832,16 +1836,22 @@ function abrirExtrato(tel) {
 function gerarTextoExtrato() {
   const c = extratoAtual;
   if (!c) return '';
-  const pedidosAbertos = c.pedidos.filter(p => (parseFloat(p.total) - p.totalPago) > 0.01);
+
+  // Ordena do mais antigo para o mais recente
+  const pedidosAbertos = c.pedidos
+    .filter(p => (parseFloat(p.total) - p.totalPago) > 0.01)
+    .sort((a,b) => new Date(a.criado_em) - new Date(b.criado_em));
+
   const totalAberto = c.total - c.recebido;
 
   let conteudo = '';
   pedidosAbertos.forEach((p, idx) => {
     const data = new Date(p.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
+    const totalCookies = p.itens.reduce((s,i) => s+i.quantidade, 0);
     const itens = p.itens.map(i => i.quantidade+'x '+i.sabor).join(', ');
     const resto = parseFloat(p.total) - p.totalPago;
     conteudo += `*Pedido ${idx+1}* — ${data}\n`;
-    conteudo += `${itens}\n`;
+    conteudo += `${itens} *(${totalCookies} cookies)*\n`;
     conteudo += `Valor: R$ ${parseFloat(p.total).toFixed(2).replace('.',',')}\n`;
     if (p.totalPago > 0) conteudo += `Pago: R$ ${p.totalPago.toFixed(2).replace('.',',')}\n`;
     conteudo += `⏳ Em aberto: R$ ${resto.toFixed(2).replace('.',',')}\n\n`;
