@@ -1337,7 +1337,7 @@ async function carregarRelatorios() {
     const totalCookiesVendidos = Object.values(contagem).reduce((a,b)=>a+b,0);
     document.getElementById('sabores-total').textContent = totalCookiesVendidos ? '('+totalCookiesVendidos+' cookies)' : '';
     document.getElementById('sabores-bars').innerHTML=Object.entries(contagem).sort((a,b)=>b[1]-a[1]).map(([s,q])=>
-      `<div class="bar-row"><span class="bar-label">${s}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(q/max*100)}%;background:${cores[s]||'#F2A7C3'};"></div></div><span class="bar-val" style="width:auto;min-width:30px;">${q} un</span><span style="font-size:0.72rem;color:var(--muted);margin-left:6px;white-space:nowrap;">R$ ${(contagemValor[s]||0).toFixed(2).replace('.',',')}</span></div>`).join('')||'<p style="color:var(--muted);font-size:0.85rem;">Sem dados.</p>';
+      `<div class="bar-row"><span class="bar-label">${s}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(q/max*100)}%;background:${cores[s]||'#F2A7C3'};"></div></div><span class="bar-val">${q}</span></div>`).join('')||'<p style="color:var(--muted);font-size:0.85rem;">Sem dados.</p>';
     const sul=data.filter(p=>p.tipo_entrega==='sul').length, outro=data.filter(p=>p.tipo_entrega==='outro').length;
     document.getElementById('entregas-resumo').innerHTML=`
       <div class="bar-row"><span class="bar-label">🏝️ Sul Ilha</span><div class="bar-track"><div class="bar-fill" style="width:${data.length?Math.round(sul/data.length*100):0}%;background:var(--tiffany);"></div></div><span class="bar-val">${sul}</span></div>
