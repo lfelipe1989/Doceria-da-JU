@@ -1400,47 +1400,45 @@ async function executarExclusaoPedido() {
   const pedido = todosOsPedidos.find(x => x.id === modoEdicaoId);
   if (!pedido) return;
   try {
-    // 1. Exclui pagamentos vinculados primeiro
-    const resPag = await fetch(SUPABASE_URL+'/rest/v1/pagamentos?pedido_id=eq.'+modoEdicaoId, {
-      method:'DELETE',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
-    });
-    if (!resPag.ok) {
-      const err = await resPag.text();
-      console.error('Erro ao excluir pagamentos:', err);
-      showToast('Erro ao excluir pagamentos vinculados.');
-      fecharModal('modal-confirmar-exclusao');
-      return;
-    }
-
-    // 2. Reverte estoque se o pedido estava em preparo ou posterior
+    // 1. Reverte estoque ANTES de apagar os movimentos
     if (['preparing','delivery','done'].includes(pedido.status)) {
       const estoque = await supaFetch('estoque?select=*');
       for (const item of pedido.itens) {
         const est = estoque.find(e => e.produto_nome === item.sabor);
         if (!est) continue;
         const novaQtd = est.quantidade + item.quantidade;
-        await Promise.all([
-          supaFetch('estoque?produto_nome=eq.'+encodeURIComponent(item.sabor), 'PATCH', { quantidade: novaQtd }),
-          supaFetch('estoque_movimentos', 'POST', {
-            produto_nome: item.sabor,
-            tipo: 'entrada_ajuste',
-            quantidade: item.quantidade,
-            observacao: 'Estorno — pedido #'+modoEdicaoId+' excluído'
-          })
-        ]);
+        await supaFetch('estoque?produto_nome=eq.'+encodeURIComponent(item.sabor), 'PATCH', { quantidade: novaQtd });
+        await supaFetch('estoque_movimentos', 'POST', {
+          produto_nome: item.sabor,
+          tipo: 'entrada_ajuste',
+          quantidade: item.quantidade,
+          observacao: 'Estorno — pedido #'+modoEdicaoId+' excluído'
+        });
       }
     }
 
-    // 3. Exclui o pedido
+    // 2. Remove movimentos de estoque vinculados ao pedido
+    await fetch(SUPABASE_URL+'/rest/v1/estoque_movimentos?pedido_id=eq.'+modoEdicaoId, {
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+
+    // 3. Remove pagamentos vinculados
+    await fetch(SUPABASE_URL+'/rest/v1/pagamentos?pedido_id=eq.'+modoEdicaoId, {
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+
+    // 4. Por fim remove o pedido
     const resPed = await fetch(SUPABASE_URL+'/rest/v1/pedidos?id=eq.'+modoEdicaoId, {
       method:'DELETE',
       headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
     });
+
     if (!resPed.ok) {
       const err = await resPed.text();
       console.error('Erro ao excluir pedido:', err);
-      showToast('Erro ao excluir pedido. Verifique o console.');
+      showToast('Erro ao excluir. Veja o console (F12).');
       fecharModal('modal-confirmar-exclusao');
       return;
     }
@@ -1448,7 +1446,7 @@ async function executarExclusaoPedido() {
     fecharModal('modal-confirmar-exclusao');
     fecharModal('modal-pedido');
     modoEdicaoId = null;
-    showToast('🗑️ Pedido excluído e estoque revertido.');
+    showToast('🗑️ Pedido excluído com sucesso!');
     await carregarPedidos();
   } catch(e) {
     console.error('Erro inesperado ao excluir:', e);
