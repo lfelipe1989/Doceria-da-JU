@@ -1400,8 +1400,18 @@ async function executarExclusaoPedido() {
   const pedido = todosOsPedidos.find(x => x.id === modoEdicaoId);
   if (!pedido) return;
   try {
-    // 1. Exclui pagamentos vinculados ao pedido
-    await supaFetch('pagamentos?pedido_id=eq.'+modoEdicaoId, 'DELETE');
+    // 1. Exclui pagamentos vinculados primeiro
+    const resPag = await fetch(SUPABASE_URL+'/rest/v1/pagamentos?pedido_id=eq.'+modoEdicaoId, {
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+    if (!resPag.ok) {
+      const err = await resPag.text();
+      console.error('Erro ao excluir pagamentos:', err);
+      showToast('Erro ao excluir pagamentos vinculados.');
+      fecharModal('modal-confirmar-exclusao');
+      return;
+    }
 
     // 2. Reverte estoque se o pedido estava em preparo ou posterior
     if (['preparing','delivery','done'].includes(pedido.status)) {
@@ -1423,7 +1433,17 @@ async function executarExclusaoPedido() {
     }
 
     // 3. Exclui o pedido
-    await supaFetch('pedidos?id=eq.'+modoEdicaoId, 'DELETE');
+    const resPed = await fetch(SUPABASE_URL+'/rest/v1/pedidos?id=eq.'+modoEdicaoId, {
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+    if (!resPed.ok) {
+      const err = await resPed.text();
+      console.error('Erro ao excluir pedido:', err);
+      showToast('Erro ao excluir pedido. Verifique o console.');
+      fecharModal('modal-confirmar-exclusao');
+      return;
+    }
 
     fecharModal('modal-confirmar-exclusao');
     fecharModal('modal-pedido');
@@ -1431,6 +1451,7 @@ async function executarExclusaoPedido() {
     showToast('🗑️ Pedido excluído e estoque revertido.');
     await carregarPedidos();
   } catch(e) {
+    console.error('Erro inesperado ao excluir:', e);
     fecharModal('modal-confirmar-exclusao');
     showToast('Erro ao excluir pedido.');
   }
