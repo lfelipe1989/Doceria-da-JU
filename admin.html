@@ -1045,13 +1045,11 @@ async function baixarEstoquePedido(pedido) {
       if (!est) continue;
       const novaQtd = Math.max(0, est.quantidade - item.quantidade);
       await Promise.all([
-        supaFetch('estoque?produto_nome=eq.'+encodeURIComponent(item.sabor), 'PATCH', { quantidade: novaQtd }),
+        supaFetch('estoque?produto_nome=eq.'+encodeURIComponent(item.sabor), 'PATCH', {quantidade: novaQtd}),
         supaFetch('estoque_movimentos', 'POST', {
-          produto_nome: item.sabor,
-          tipo: 'saida_pedido',
-          quantidade: item.quantidade,
-          pedido_id: pedido.id,
-          observacao: 'Pedido #'+pedido.id+' — '+pedido.cliente_nome
+          produto_nome:item.sabor, tipo:'saida_pedido',
+          quantidade:item.quantidade, pedido_id:pedido.id,
+          observacao:'Pedido #'+pedido.id+(pedido.cliente_nome?' — '+pedido.cliente_nome:'')
         })
       ]);
     }
@@ -1377,14 +1375,18 @@ async function salvarPedidoManual() {
   if (!dataStr) { alert('Selecione a data do pedido!'); return; }
   if (!itens.length) { alert('Adicione pelo menos um produto!'); return; }
   const total = itens.reduce((s,i) => s+(i.quantidade*i.preco_unit),0);
-  const criadoEm = dataStr + 'T' + horaStr + ':00-03:00'; // horário de Brasília (BRT = UTC-3)
+  const criadoEm = dataStr + 'T' + horaStr + ':00-03:00';
   try {
-    await supaFetch('pedidos','POST',{ cliente_nome:nome, cliente_telefone:tel, cliente_endereco:end, observacoes:obs, itens, total, tipo_entrega:entrega, status, pago:false, criado_em:criadoEm });
+    const res = await supaFetch('pedidos','POST',{ cliente_nome:nome, cliente_telefone:tel, cliente_endereco:end, observacoes:obs, itens, total, tipo_entrega:entrega, status, pago:false, criado_em:criadoEm });
+    const pedidoNovo = res && res[0];
+    if (['preparing','delivery','done'].includes(status) && pedidoNovo) {
+      await baixarEstoquePedido({id:pedidoNovo.id, cliente_nome:nome, itens});
+    }
     await salvarOuAtualizarCliente(nome, tel, end);
     fecharModal('modal-pedido');
     showToast('✓ Pedido lançado com sucesso!');
     await carregarPedidos();
-  } catch(e) { showToast('Erro ao lançar pedido.'); }
+  } catch(e) { console.error(e); showToast('Erro ao lançar pedido.'); }
 }
 
 function confirmarExclusaoPedido() {
@@ -1459,25 +1461,55 @@ async function salvarEdicaoPedido() {
   const end = document.getElementById('np-end').value.trim();
   const obs = document.getElementById('np-obs').value.trim();
   const entrega = document.getElementById('np-entrega').value;
-  const status = document.getElementById('np-status').value;
+  const novoStatus = document.getElementById('np-status').value;
   const dataStr = document.getElementById('np-data').value;
   const horaStr = document.getElementById('np-hora').value || '12:00';
-  const itens = produtosModal.filter(p => (qtysModal[p.id]||0)>0)
+  const novosItens = produtosModal.filter(p => (qtysModal[p.id]||0)>0)
     .map(p => ({ sabor:p.nome, emoji:p.emoji, quantidade:qtysModal[p.id], preco_unit:precoEfetivo(p.id) }));
   if (!end) { alert('Preencha o endereço!'); return; }
   if (!dataStr) { alert('Selecione a data do pedido!'); return; }
-  if (!itens.length) { alert('O pedido precisa ter pelo menos um produto!'); return; }
-  const total = itens.reduce((s,i) => s+(i.quantidade*i.preco_unit),0);
-  const criadoEm = dataStr + 'T' + horaStr + ':00-03:00'; // horário de Brasília (BRT = UTC-3)
+  if (!novosItens.length) { alert('O pedido precisa ter pelo menos um produto!'); return; }
+  const total = novosItens.reduce((s,i) => s+(i.quantidade*i.preco_unit),0);
+  const criadoEm = dataStr + 'T' + horaStr + ':00-03:00';
+  const pedidoAntigo = todosOsPedidos.find(x => x.id === modoEdicaoId);
+  const statusAnterior = pedidoAntigo ? pedidoAntigo.status : 'waiting';
+  const statusBaixou = ['preparing','delivery','done'];
   try {
     await supaFetch('pedidos?id=eq.'+modoEdicaoId, 'PATCH', {
-      cliente_endereco: end, observacoes: obs, itens, total, tipo_entrega: entrega, status, criado_em: criadoEm
+      cliente_endereco:end, observacoes:obs, itens:novosItens, total, tipo_entrega:entrega, status:novoStatus, criado_em:criadoEm
     });
+    const anteriorBaixou = statusBaixou.includes(statusAnterior);
+    const novoBaixa = statusBaixou.includes(novoStatus);
+    if (!anteriorBaixou && novoBaixa) {
+      await baixarEstoquePedido({id:modoEdicaoId, cliente_nome:pedidoAntigo && pedidoAntigo.cliente_nome, itens:novosItens});
+    } else if (anteriorBaixou && novoBaixa) {
+      await estornarEstoquePedido({id:modoEdicaoId, itens:pedidoAntigo.itens});
+      await baixarEstoquePedido({id:modoEdicaoId, cliente_nome:pedidoAntigo && pedidoAntigo.cliente_nome, itens:novosItens});
+    } else if (anteriorBaixou && !novoBaixa) {
+      await estornarEstoquePedido({id:modoEdicaoId, itens:pedidoAntigo.itens});
+    }
     fecharModal('modal-pedido');
-    showToast('✓ Pedido atualizado com sucesso!');
+    showToast('✓ Pedido atualizado!');
     modoEdicaoId = null;
     await carregarPedidos();
-  } catch(e) { showToast('Erro ao salvar alterações.'); }
+  } catch(e) { console.error(e); showToast('Erro ao salvar alterações.'); }
+}
+
+async function estornarEstoquePedido(pedido) {
+  try {
+    const estoque = await supaFetch('estoque?select=*');
+    await fetch(SUPABASE_URL+'/rest/v1/estoque_movimentos?pedido_id=eq.'+pedido.id+'&tipo=eq.saida_pedido', {
+      method:'DELETE', headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+    for (const item of pedido.itens) {
+      const est = estoque.find(e => e.produto_nome === item.sabor);
+      if (!est) continue;
+      await Promise.all([
+        supaFetch('estoque?produto_nome=eq.'+encodeURIComponent(item.sabor), 'PATCH', {quantidade: est.quantidade + item.quantidade}),
+        supaFetch('estoque_movimentos', 'POST', {produto_nome:item.sabor, tipo:'entrada_ajuste', quantidade:item.quantidade, observacao:'Estorno edição — pedido #'+pedido.id})
+      ]);
+    }
+  } catch(e) { console.error('Erro ao estornar estoque:', e); }
 }
 
 async function salvarOuAtualizarCliente(nome, tel, end) {
