@@ -403,6 +403,7 @@
     </div>
 
     <button onclick="salvarModalPedido()" id="btn-salvar-pedido" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">Lançar pedido</button>
+    <button onclick="confirmarExclusaoPedido()" id="btn-excluir-pedido" style="display:none;width:100%;padding:0.75rem;background:white;color:var(--red);border:1.5px solid var(--red);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;margin-top:8px;">🗑️ Excluir este pedido</button>
   </div>
 </div>
 
@@ -480,6 +481,22 @@
   <div class="modal modal-wide">
     <button class="modal-close" onclick="fecharModal('modal-perfil')">✕</button>
     <div id="perfil-conteudo"><div class="empty"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAÇÃO EXCLUSÃO -->
+<div class="modal-overlay" id="modal-confirmar-exclusao">
+  <div class="modal" style="max-width:400px;text-align:center;">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;">⚠️</div>
+    <div class="modal-title" style="text-align:center;">Excluir pedido?</div>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;" id="excluir-desc"></p>
+    <div style="background:var(--red-bg);border:1px solid #F0B5B5;border-radius:10px;padding:0.75rem;margin-bottom:1.25rem;font-size:0.82rem;color:var(--red);">
+      Esta ação é irreversível. O pedido será removido das vendas e os cookies retornarão ao estoque.
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="fecharModal('modal-confirmar-exclusao')" style="flex:1;padding:0.85rem;background:white;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
+      <button onclick="executarExclusaoPedido()" style="flex:1;padding:0.85rem;background:var(--red);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;">Sim, excluir</button>
+    </div>
   </div>
 </div>
 
@@ -1106,6 +1123,7 @@ async function abrirModalPedido() {
   precosModal = {};
   document.getElementById('modal-pedido-titulo').textContent = '🍪 Novo pedido manual';
   document.getElementById('btn-salvar-pedido').textContent = 'Lançar pedido';
+  document.getElementById('btn-excluir-pedido').style.display = 'none';
   document.getElementById('np-busca-group').style.display = 'block';
   document.getElementById('np-busca').value='';
   document.getElementById('np-nome').value='';
@@ -1150,6 +1168,7 @@ async function abrirModalEdicaoPedido(pedidoId) {
 
   document.getElementById('modal-pedido-titulo').textContent = '✏️ Editar pedido #' + pedidoId;
   document.getElementById('btn-salvar-pedido').textContent = 'Salvar alterações';
+  document.getElementById('btn-excluir-pedido').style.display = 'block';
   document.getElementById('np-busca-group').style.display = 'none';
   document.getElementById('np-nome').value = pedido.cliente_nome;
   document.getElementById('np-nome').readOnly = true;
@@ -1194,6 +1213,7 @@ async function abrirModalRepetirPedido(pedidoId) {
 
   document.getElementById('modal-pedido-titulo').textContent = '🔁 Repetir pedido — ' + pedido.cliente_nome;
   document.getElementById('btn-salvar-pedido').textContent = 'Lançar novo pedido';
+  document.getElementById('btn-excluir-pedido').style.display = 'none';
   document.getElementById('np-busca-group').style.display = 'none';
   document.getElementById('np-nome').value = pedido.cliente_nome;
   document.getElementById('np-nome').readOnly = true;
@@ -1365,6 +1385,55 @@ async function salvarPedidoManual() {
     showToast('✓ Pedido lançado com sucesso!');
     await carregarPedidos();
   } catch(e) { showToast('Erro ao lançar pedido.'); }
+}
+
+function confirmarExclusaoPedido() {
+  const pedido = todosOsPedidos.find(x => x.id === modoEdicaoId);
+  if (!pedido) return;
+  const itensStr = pedido.itens.map(i => i.quantidade+'x '+i.sabor).join(', ');
+  document.getElementById('excluir-desc').textContent =
+    `Pedido #${pedido.id} — ${pedido.cliente_nome} (${itensStr}) — R$ ${parseFloat(pedido.total).toFixed(2).replace('.',',')}`;
+  abrirModal('modal-confirmar-exclusao');
+}
+
+async function executarExclusaoPedido() {
+  const pedido = todosOsPedidos.find(x => x.id === modoEdicaoId);
+  if (!pedido) return;
+  try {
+    // 1. Exclui pagamentos vinculados ao pedido
+    await supaFetch('pagamentos?pedido_id=eq.'+modoEdicaoId, 'DELETE');
+
+    // 2. Reverte estoque se o pedido estava em preparo ou posterior
+    if (['preparing','delivery','done'].includes(pedido.status)) {
+      const estoque = await supaFetch('estoque?select=*');
+      for (const item of pedido.itens) {
+        const est = estoque.find(e => e.produto_nome === item.sabor);
+        if (!est) continue;
+        const novaQtd = est.quantidade + item.quantidade;
+        await Promise.all([
+          supaFetch('estoque?produto_nome=eq.'+encodeURIComponent(item.sabor), 'PATCH', { quantidade: novaQtd }),
+          supaFetch('estoque_movimentos', 'POST', {
+            produto_nome: item.sabor,
+            tipo: 'entrada_ajuste',
+            quantidade: item.quantidade,
+            observacao: 'Estorno — pedido #'+modoEdicaoId+' excluído'
+          })
+        ]);
+      }
+    }
+
+    // 3. Exclui o pedido
+    await supaFetch('pedidos?id=eq.'+modoEdicaoId, 'DELETE');
+
+    fecharModal('modal-confirmar-exclusao');
+    fecharModal('modal-pedido');
+    modoEdicaoId = null;
+    showToast('🗑️ Pedido excluído e estoque revertido.');
+    await carregarPedidos();
+  } catch(e) {
+    fecharModal('modal-confirmar-exclusao');
+    showToast('Erro ao excluir pedido.');
+  }
 }
 
 async function salvarEdicaoPedido() {
