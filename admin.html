@@ -1039,6 +1039,7 @@ function renderPedidos(pedidos, pags) {
     const hora = dataHora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'});
     const dataLabel = dataPedido === hoje ? hora : dataPedido + ' · ' + hora;
     const itensStr = o.itens.map(i => i.emoji+' '+i.quantidade+'x '+i.sabor).join(' · ');
+    const totalCookies = o.itens.reduce((s,i) => s+i.quantidade, 0);
     const totalFmt = 'R$ '+parseFloat(o.total).toFixed(2).replace('.',',');
     const pagsPedido = pagamentosDoPedido(o.id);
     const totalPago = pagsPedido.reduce((s,p) => s+parseFloat(p.valor), 0);
@@ -1052,7 +1053,7 @@ function renderPedidos(pedidos, pags) {
       <div class="order-top">
         <div>
           <div class="order-client">${o.cliente_nome}</div>
-          <div class="order-detail">${itensStr}</div>
+          <div class="order-detail">${itensStr} <span style="color:var(--brown);font-weight:500;">(${totalCookies})</span></div>
           <div class="order-detail" style="margin-top:2px;">💰 <strong>${totalFmt}</strong></div>
           <div class="order-detail" style="margin-top:2px;">📍 ${o.cliente_endereco}</div>
           <div class="order-detail" style="margin-top:2px;">📱 ${o.cliente_telefone}</div>
@@ -2314,7 +2315,7 @@ async function salvarPreco(id) {
 // ── UI ─────────────────────────────────────
 // ── ESTOQUE ────────────────────────────────
 const EMOJIS_SABOR = { 'Nutella':'🫙', 'Red Velvet':'❤️', 'Oreo':'🖤' };
-const LIMITE_BAIXO = 10; // quantidade abaixo da qual considera estoque baixo
+const LIMITE_BAIXO = { 'Nutella': 100, 'Red Velvet': 50, 'Oreo': 50 };
 
 let estoqueCache = [];
 let movimentosCache = [];
@@ -2335,9 +2336,9 @@ async function carregarEstoque() {
 
 function verificarAlertaEstoque(estoque) {
   const alerta = document.getElementById('estoque-alerta');
-  const baixos = estoque.filter(e => e.quantidade <= LIMITE_BAIXO);
+  const baixos = estoque.filter(e => e.quantidade <= (LIMITE_BAIXO[e.produto_nome] || 10));
   if (baixos.length) {
-    alerta.textContent = '⚠️ Estoque baixo: ' + baixos.map(e => e.produto_nome + ' (' + e.quantidade + ' un)').join(', ');
+    alerta.textContent = '⚠️ Estoque baixo: ' + baixos.map(e => e.produto_nome + ' (' + e.quantidade + ' un — avisa abaixo de ' + (LIMITE_BAIXO[e.produto_nome]||10) + ')').join(', ');
     alerta.classList.add('show');
   } else {
     alerta.classList.remove('show');
@@ -2346,8 +2347,9 @@ function verificarAlertaEstoque(estoque) {
 
 function renderEstoqueCards(estoque) {
   document.getElementById('estoque-cards').innerHTML = estoque.map(e => {
-    const cls = e.quantidade === 0 ? 'zerado' : e.quantidade <= LIMITE_BAIXO ? 'baixo' : 'ok';
-    const label = e.quantidade === 0 ? '⛔ Zerado' : e.quantidade <= LIMITE_BAIXO ? '⚠️ Baixo' : '✅ OK';
+    const limite = LIMITE_BAIXO[e.produto_nome] || 10;
+    const cls = e.quantidade === 0 ? 'zerado' : e.quantidade <= limite ? 'baixo' : 'ok';
+    const label = e.quantidade === 0 ? '⛔ Zerado' : e.quantidade <= limite ? `⚠️ Baixo (avisa < ${limite})` : '✅ OK';
     return `<div class="estoque-card">
       <span class="estoque-emoji">${EMOJIS_SABOR[e.produto_nome]||'🍪'}</span>
       <div class="estoque-info">
