@@ -727,7 +727,14 @@
       </div>
 
       <div class="report-card">
-        <div class="report-card-title">Clientes com conta em aberto</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:8px;">
+          <div class="report-card-title" style="margin:0;">Clientes com conta em aberto</div>
+          <div class="autocomplete-wrap" style="max-width:300px;flex:1;min-width:180px;">
+            <input type="text" id="fin-busca-cliente" class="form-input" style="padding:6px 10px;font-size:0.82rem;" placeholder="🔍 Buscar cliente..." autocomplete="off" oninput="buscarClienteFinanceiro(this.value)"/>
+            <div class="autocomplete-list" id="fin-autocomplete-list"></div>
+          </div>
+          <button id="fin-limpar-busca" onclick="limparBuscaFinanceiro()" style="display:none;background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:0.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">✕ Limpar</button>
+        </div>
         <table class="contas-table">
           <thead><tr><th>Cliente</th><th>Telefone</th><th>Pedidos</th><th>Total pedido</th><th>Pago</th><th class="em-aberto">Em aberto</th><th></th></tr></thead>
           <tbody id="contas-tbody"></tbody>
@@ -1775,21 +1782,60 @@ async function carregarFinanceiro() {
       porCliente[k].recebido+=totalPago;
     });
     dadosFinanceiros = porCliente;
-    const comAberto=Object.values(porCliente).filter(c=>c.total-c.recebido>0.01).sort((a,b)=>(b.total-b.recebido)-(a.total-a.recebido));
-    document.getElementById('contas-tbody').innerHTML=comAberto.length?comAberto.map(c=>{
-      const aberto=(c.total-c.recebido).toFixed(2).replace('.',',');
-      return `<tr>
-        <td><strong>${c.nome}</strong></td>
-        <td style="color:var(--muted)">${c.tel}</td>
-        <td>${c.pedidos.length}</td>
-        <td>R$ ${c.total.toFixed(2).replace('.',',')}</td>
-        <td>R$ ${c.recebido.toFixed(2).replace('.',',')}</td>
-        <td class="em-aberto">R$ ${aberto}</td>
-        <td><button class="action-btn btn-pay" onclick="abrirExtrato('${c.tel}')">📋 Extrato</button></td>
-      </tr>`;
-    }).join(''):
-      '<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:1.5rem;">✅ Nenhuma conta em aberto no período!</td></tr>';
+    renderContasAberto(Object.values(porCliente));
   } catch(e) { showToast('Erro ao carregar financeiro.'); }
+}
+
+function renderContasAberto(clientes) {
+  const comAberto = clientes.filter(c=>c.total-c.recebido>0.01).sort((a,b)=>(b.total-b.recebido)-(a.total-a.recebido));
+  document.getElementById('contas-tbody').innerHTML = comAberto.length ? comAberto.map(c => {
+    const aberto = (c.total-c.recebido).toFixed(2).replace('.',',');
+    return `<tr>
+      <td><strong>${c.nome}</strong></td>
+      <td style="color:var(--muted)">${c.tel}</td>
+      <td>${c.pedidos.length}</td>
+      <td>R$ ${c.total.toFixed(2).replace('.',',')}</td>
+      <td>R$ ${c.recebido.toFixed(2).replace('.',',')}</td>
+      <td class="em-aberto">R$ ${aberto}</td>
+      <td><button class="action-btn btn-pay" onclick="abrirExtrato('${c.tel}')">📋 Extrato</button></td>
+    </tr>`;
+  }).join('') :
+    '<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:1.5rem;">✅ Nenhuma conta em aberto no período!</td></tr>';
+}
+
+function buscarClienteFinanceiro(val) {
+  const list = document.getElementById('fin-autocomplete-list');
+  if (val.length < 2) {
+    list.classList.remove('show');
+    renderContasAberto(Object.values(dadosFinanceiros));
+    document.getElementById('fin-limpar-busca').style.display = 'none';
+    return;
+  }
+  const filtrados = Object.values(dadosFinanceiros)
+    .filter(c => c.nome.toLowerCase().includes(val.toLowerCase()) || c.tel.includes(val))
+    .slice(0, 6);
+  if (!filtrados.length) { list.classList.remove('show'); return; }
+  list.innerHTML = filtrados.map(c =>
+    `<div class="autocomplete-item" onclick="selecionarClienteFinanceiro('${c.tel}','${c.nome.replace(/'/g,"\\'")}')">
+      <div class="ac-name">${c.nome}</div>
+      <div class="ac-tel">${c.tel}</div>
+    </div>`).join('');
+  list.classList.add('show');
+}
+
+function selecionarClienteFinanceiro(tel, nome) {
+  document.getElementById('fin-busca-cliente').value = nome;
+  document.getElementById('fin-autocomplete-list').classList.remove('show');
+  document.getElementById('fin-limpar-busca').style.display = 'inline-block';
+  const cliente = dadosFinanceiros[tel];
+  if (cliente) renderContasAberto([cliente]);
+  else renderContasAberto([]);
+}
+
+function limparBuscaFinanceiro() {
+  document.getElementById('fin-busca-cliente').value = '';
+  document.getElementById('fin-limpar-busca').style.display = 'none';
+  renderContasAberto(Object.values(dadosFinanceiros));
 }
 
 // ── EXTRATO ────────────────────────────────
