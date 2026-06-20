@@ -237,6 +237,28 @@
   .historico-bar-fill { height:100%; border-radius:4px; background:var(--tiffany); }
   .historico-bar-val { width:50px; text-align:right; font-weight:500; color:var(--muted); }
 
+  /* ESTOQUE */
+  .estoque-card { background:white; border-radius:var(--radius); border:1px solid var(--pink-border); padding:1.25rem; display:flex; align-items:center; gap:1.25rem; margin-bottom:10px; }
+  .estoque-emoji { font-size:2.5rem; flex-shrink:0; }
+  .estoque-info { flex:1; }
+  .estoque-nome { font-weight:500; font-size:1rem; color:var(--brown); }
+  .estoque-qtd { font-size:2rem; font-weight:500; margin-top:4px; }
+  .estoque-qtd.ok { color:var(--green); }
+  .estoque-qtd.baixo { color:#B08000; }
+  .estoque-qtd.zerado { color:var(--red); }
+  .estoque-acoes { display:flex; gap:8px; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end; }
+  .mov-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:0.83rem; gap:8px; }
+  .mov-row:last-child { border-bottom:none; }
+  .mov-tipo { font-size:0.7rem; padding:2px 8px; border-radius:10px; font-weight:500; white-space:nowrap; }
+  .mov-producao { background:#E8F5EE; color:#1A6B3C; }
+  .mov-ajuste-in { background:var(--tiffany-pale); color:var(--tiffany-dark); }
+  .mov-saida-pedido { background:var(--pink-pale); color:var(--pink-dark); }
+  .mov-ajuste-out { background:var(--red-bg); color:var(--red); }
+  .mov-qtd-pos { color:var(--green); font-weight:500; }
+  .mov-qtd-neg { color:var(--red); font-weight:500; }
+  .estoque-alerta { background:#FEF3E2; border:1px solid #F0C84A; border-radius:10px; padding:0.75rem 1rem; font-size:0.83rem; color:#7A5C00; margin-bottom:1rem; display:none; }
+  .estoque-alerta.show { display:block; }
+
   .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:var(--brown); color:var(--pink); padding:0.75rem 1.25rem; border-radius:10px; font-size:0.85rem; box-shadow:0 4px 20px rgba(0,0,0,0.2); transform:translateY(100px); opacity:0; transition:all 0.3s; z-index:1000; }
   .toast.show { transform:translateY(0); opacity:1; }
 
@@ -461,6 +483,41 @@
   </div>
 </div>
 
+<!-- MODAL LANÇAMENTO DE ESTOQUE -->
+<div class="modal-overlay" id="modal-estoque">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-estoque')">✕</button>
+    <div class="modal-title" id="modal-estoque-titulo">📦 Lançar movimentação</div>
+    <input type="hidden" id="est-produto"/>
+    <input type="hidden" id="est-direcao"/>
+
+    <div class="form-group">
+      <label class="form-label">Tipo de movimentação</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="est-tipo-grid"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Quantidade</label>
+      <input class="form-input" type="number" min="1" id="est-qtd" placeholder="Ex: 20"/>
+    </div>
+
+    <div class="form-group" id="est-data-group">
+      <label class="form-label">Data e horário</label>
+      <div style="display:flex;gap:10px;">
+        <input class="form-input" type="date" id="est-data" style="flex:1;"/>
+        <input class="form-input" type="time" id="est-hora" style="flex:1;"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Observação (opcional)</label>
+      <input class="form-input" type="text" id="est-obs" placeholder="Ex: produção da tarde, contagem física..."/>
+    </div>
+
+    <button onclick="salvarMovimento()" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">✓ Confirmar lançamento</button>
+  </div>
+</div>
+
 <div class="layout" id="main-layout" style="display:none;">
   <aside class="sidebar">
     <div class="sidebar-logo">
@@ -474,6 +531,7 @@
       <div class="nav-item" onclick="showPage('financeiro',this)"><span class="nav-icon">💰</span><span>Financeiro</span></div>
       <div class="nav-item" onclick="showPage('clientes',this)"><span class="nav-icon">👥</span><span>Clientes</span></div>
       <div class="nav-item" onclick="showPage('cardapio',this)"><span class="nav-icon">🍫</span><span>Cardápio</span></div>
+      <div class="nav-item" onclick="showPage('estoque',this)"><span class="nav-icon">📦</span><span>Estoque</span></div>
     </nav>
   </aside>
 
@@ -650,6 +708,50 @@
 
       <div style="display:flex;flex-direction:column;gap:1.25rem;" id="mensagens-lista">
         <div class="empty"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- ESTOQUE -->
+    <div id="page-estoque" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px;">
+        <h1 class="page-title" style="margin:0;">Estoque em tempo real</h1>
+        <button onclick="carregarEstoque()" style="background:var(--tiffany-pale);color:var(--tiffany-dark);border:1px solid var(--tiffany);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.82rem;font-family:'DM Sans',sans-serif;">↻ Atualizar</button>
+      </div>
+
+      <div class="estoque-alerta" id="estoque-alerta"></div>
+
+      <div id="estoque-cards"><div class="empty"><div class="spinner"></div></div></div>
+
+      <div style="margin-top:2rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+          <h2 style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--brown);">📋 Extrato de movimentações</h2>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <select id="est-filtro-produto" onchange="filtrarMovimentos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'DM Sans',sans-serif;color:var(--text);background:white;">
+              <option value="">Todos os sabores</option>
+              <option value="Nutella">Nutella</option>
+              <option value="Red Velvet">Red Velvet</option>
+              <option value="Oreo">Oreo</option>
+            </select>
+            <select id="est-filtro-tipo" onchange="filtrarMovimentos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'DM Sans',sans-serif;color:var(--text);background:white;">
+              <option value="">Todos os tipos</option>
+              <option value="entrada_producao">Produção</option>
+              <option value="entrada_ajuste">Entrada ajuste</option>
+              <option value="saida_pedido">Saída por pedido</option>
+              <option value="saida_ajuste">Saída ajuste</option>
+            </select>
+            <input type="date" id="est-filtro-data" onchange="filtrarMovimentos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'DM Sans',sans-serif;color:var(--text);" placeholder="Filtrar data"/>
+          </div>
+        </div>
+
+        <div style="margin-bottom:0.75rem;display:flex;gap:8px;">
+          <div class="metric" style="flex:1;"><div class="metric-val" id="est-total-producao" style="color:var(--green);">—</div><div class="metric-lbl">Total produzido</div></div>
+          <div class="metric" style="flex:1;"><div class="metric-val" id="est-total-saidas" style="color:var(--pink-dark);">—</div><div class="metric-lbl">Total entregue</div></div>
+          <div class="metric" style="flex:1;"><div class="metric-val" id="est-total-estoque">—</div><div class="metric-lbl">Em estoque</div></div>
+        </div>
+
+        <div class="report-card">
+          <div id="mov-lista"><div class="empty"><div class="spinner"></div></div></div>
+        </div>
       </div>
     </div>
 
@@ -906,7 +1008,37 @@ function renderPedidos(pedidos, pags) {
 }
 
 async function avancarStatus(id, s) {
-  try { await supaFetch('pedidos?id=eq.'+id,'PATCH',{status:s}); showToast('✓ Status atualizado!'); await carregarPedidos(); } catch(e) { showToast('Erro.'); }
+  try {
+    await supaFetch('pedidos?id=eq.'+id,'PATCH',{status:s});
+    // Baixa automática no estoque quando o pedido entra em preparo
+    if (s === 'preparing') {
+      const pedido = todosOsPedidos.find(x => x.id===id);
+      if (pedido) await baixarEstoquePedido(pedido);
+    }
+    showToast('✓ Status atualizado!');
+    await carregarPedidos();
+  } catch(e) { showToast('Erro.'); }
+}
+
+async function baixarEstoquePedido(pedido) {
+  try {
+    const estoque = await supaFetch('estoque?select=*');
+    for (const item of pedido.itens) {
+      const est = estoque.find(e => e.produto_nome === item.sabor);
+      if (!est) continue;
+      const novaQtd = Math.max(0, est.quantidade - item.quantidade);
+      await Promise.all([
+        supaFetch('estoque?produto_nome=eq.'+encodeURIComponent(item.sabor), 'PATCH', { quantidade: novaQtd }),
+        supaFetch('estoque_movimentos', 'POST', {
+          produto_nome: item.sabor,
+          tipo: 'saida_pedido',
+          quantidade: item.quantidade,
+          pedido_id: pedido.id,
+          observacao: 'Pedido #'+pedido.id+' — '+pedido.cliente_nome
+        })
+      ]);
+    }
+  } catch(e) { console.error('Erro ao baixar estoque:', e); }
 }
 async function recusarPedido(id) {
   if (!confirm('Recusar este pedido?')) return;
@@ -1957,6 +2089,174 @@ async function salvarPreco(id) {
 }
 
 // ── UI ─────────────────────────────────────
+// ── ESTOQUE ────────────────────────────────
+const EMOJIS_SABOR = { 'Nutella':'🫙', 'Red Velvet':'❤️', 'Oreo':'🖤' };
+const LIMITE_BAIXO = 10; // quantidade abaixo da qual considera estoque baixo
+
+let estoqueCache = [];
+let movimentosCache = [];
+
+async function carregarEstoque() {
+  try {
+    const [estoque, movimentos] = await Promise.all([
+      supaFetch('estoque?order=produto_nome.asc'),
+      supaFetch('estoque_movimentos?order=criado_em.desc&limit=200')
+    ]);
+    estoqueCache = estoque;
+    movimentosCache = movimentos;
+    renderEstoqueCards(estoque);
+    filtrarMovimentos();
+    verificarAlertaEstoque(estoque);
+  } catch(e) { showToast('Erro ao carregar estoque.'); }
+}
+
+function verificarAlertaEstoque(estoque) {
+  const alerta = document.getElementById('estoque-alerta');
+  const baixos = estoque.filter(e => e.quantidade <= LIMITE_BAIXO);
+  if (baixos.length) {
+    alerta.textContent = '⚠️ Estoque baixo: ' + baixos.map(e => e.produto_nome + ' (' + e.quantidade + ' un)').join(', ');
+    alerta.classList.add('show');
+  } else {
+    alerta.classList.remove('show');
+  }
+}
+
+function renderEstoqueCards(estoque) {
+  document.getElementById('estoque-cards').innerHTML = estoque.map(e => {
+    const cls = e.quantidade === 0 ? 'zerado' : e.quantidade <= LIMITE_BAIXO ? 'baixo' : 'ok';
+    const label = e.quantidade === 0 ? '⛔ Zerado' : e.quantidade <= LIMITE_BAIXO ? '⚠️ Baixo' : '✅ OK';
+    return `<div class="estoque-card">
+      <span class="estoque-emoji">${EMOJIS_SABOR[e.produto_nome]||'🍪'}</span>
+      <div class="estoque-info">
+        <div class="estoque-nome">${e.produto_nome}</div>
+        <div class="estoque-qtd ${cls}">${e.quantidade} <span style="font-size:0.9rem;font-weight:400;color:var(--muted);">unidades</span></div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">${label}</div>
+      </div>
+      <div class="estoque-acoes">
+        <button class="action-btn" style="background:#E8F5EE;color:#1A6B3C;border-color:#A5D5B5;" onclick="abrirLancamento('${e.produto_nome}','entrada')">+ Entrada</button>
+        <button class="action-btn" style="background:var(--red-bg);color:var(--red);border-color:#F0B5B5;" onclick="abrirLancamento('${e.produto_nome}','saida')">− Saída</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+const tiposEntrada = [
+  { valor:'entrada_producao', label:'🧁 Produção',      desc:'Cookies produzidos hoje' },
+  { valor:'entrada_ajuste',   label:'📋 Ajuste entrada', desc:'Correção após contagem' },
+];
+const tiposSaida = [
+  { valor:'saida_ajuste', label:'📋 Ajuste saída', desc:'Correção após contagem' },
+];
+
+function abrirLancamento(produto, direcao) {
+  document.getElementById('est-produto').value = produto;
+  document.getElementById('est-direcao').value = direcao;
+  document.getElementById('est-qtd').value = '';
+  document.getElementById('est-obs').value = '';
+  document.getElementById('modal-estoque-titulo').textContent =
+    direcao === 'entrada' ? '📦 Lançar entrada — ' + produto : '📤 Lançar saída — ' + produto;
+
+  const tipos = direcao === 'entrada' ? tiposEntrada : tiposSaida;
+  document.getElementById('est-tipo-grid').innerHTML = tipos.map((t,i) =>
+    `<div onclick="selecionarTipoMov(this,'${t.valor}')" style="border:1.5px solid var(--pink-border);border-radius:10px;padding:0.75rem;cursor:pointer;text-align:center;transition:all 0.15s;${i===0?'border-color:var(--tiffany);background:var(--tiffany-pale);':''}" data-tipo="${t.valor}">
+      <div style="font-weight:500;font-size:0.85rem;">${t.label}</div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">${t.desc}</div>
+    </div>`).join('');
+
+  // Data/hora padrão = agora em Brasília
+  const agora = new Date();
+  const brt = new Date(agora.toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}));
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('est-data').value = `${brt.getFullYear()}-${pad(brt.getMonth()+1)}-${pad(brt.getDate())}`;
+  document.getElementById('est-hora').value = `${pad(brt.getHours())}:${pad(brt.getMinutes())}`;
+
+  abrirModal('modal-estoque');
+  document.getElementById('est-qtd').focus();
+}
+
+function selecionarTipoMov(el, tipo) {
+  document.querySelectorAll('#est-tipo-grid > div').forEach(d => {
+    d.style.borderColor = 'var(--pink-border)'; d.style.background = 'white';
+  });
+  el.style.borderColor = 'var(--tiffany)'; el.style.background = 'var(--tiffany-pale)';
+}
+
+function getTipoSelecionado() {
+  const sel = document.querySelector('#est-tipo-grid > div[style*="var(--tiffany-pale)"]');
+  return sel ? sel.dataset.tipo : null;
+}
+
+async function salvarMovimento() {
+  const produto = document.getElementById('est-produto').value;
+  const direcao = document.getElementById('est-direcao').value;
+  const tipo = getTipoSelecionado();
+  const qtd = parseInt(document.getElementById('est-qtd').value);
+  const obs = document.getElementById('est-obs').value.trim();
+  const dataStr = document.getElementById('est-data').value;
+  const horaStr = document.getElementById('est-hora').value || '12:00';
+
+  if (!tipo) { alert('Selecione o tipo de movimentação!'); return; }
+  if (!qtd || qtd <= 0) { alert('Digite uma quantidade válida!'); return; }
+  if (!dataStr) { alert('Selecione a data!'); return; }
+
+  const criadoEm = dataStr + 'T' + horaStr + ':00-03:00';
+  const delta = direcao === 'entrada' ? qtd : -qtd;
+  const estoqueAtual = estoqueCache.find(e => e.produto_nome === produto);
+  const novaQtd = Math.max(0, (estoqueAtual?.quantidade || 0) + delta);
+
+  try {
+    // Registra o movimento
+    await supaFetch('estoque_movimentos', 'POST', {
+      produto_nome: produto, tipo, quantidade: qtd, observacao: obs, criado_em: criadoEm
+    });
+    // Atualiza o saldo no estoque
+    await supaFetch('estoque?produto_nome=eq.'+encodeURIComponent(produto), 'PATCH', {
+      quantidade: novaQtd, atualizado_em: criadoEm
+    });
+    fecharModal('modal-estoque');
+    showToast('✓ Movimentação registrada!');
+    await carregarEstoque();
+  } catch(e) { showToast('Erro ao registrar movimentação.'); }
+}
+
+function filtrarMovimentos() {
+  const filtroProd = document.getElementById('est-filtro-produto').value;
+  const filtroTipo = document.getElementById('est-filtro-tipo').value;
+  const filtroData = document.getElementById('est-filtro-data').value;
+
+  let movs = [...movimentosCache];
+  if (filtroProd) movs = movs.filter(m => m.produto_nome === filtroProd);
+  if (filtroTipo) movs = movs.filter(m => m.tipo === filtroTipo);
+  if (filtroData) movs = movs.filter(m => new Date(m.criado_em).toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}) === filtroData);
+
+  const totalProd = movimentosCache.filter(m => m.tipo==='entrada_producao').reduce((s,m)=>s+m.quantidade,0);
+  const totalSaidas = movimentosCache.filter(m => m.tipo==='saida_pedido').reduce((s,m)=>s+m.quantidade,0);
+  const totalEstoque = estoqueCache.reduce((s,e)=>s+e.quantidade,0);
+  document.getElementById('est-total-producao').textContent = totalProd + ' un';
+  document.getElementById('est-total-saidas').textContent = totalSaidas + ' un';
+  document.getElementById('est-total-estoque').textContent = totalEstoque + ' un';
+
+  const tipoLabel = { entrada_producao:'🧁 Produção', entrada_ajuste:'📋 Entrada ajuste', saida_pedido:'🛵 Saída pedido', saida_ajuste:'📋 Saída ajuste' };
+  const tipoClasse = { entrada_producao:'mov-producao', entrada_ajuste:'mov-ajuste-in', saida_pedido:'mov-saida-pedido', saida_ajuste:'mov-ajuste-out' };
+
+  document.getElementById('mov-lista').innerHTML = movs.length ? movs.map(m => {
+    const eh_entrada = m.tipo.startsWith('entrada');
+    const data = new Date(m.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
+    const hora = new Date(m.criado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'});
+    return `<div class="mov-row">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+        <span style="font-size:1.1rem;">${EMOJIS_SABOR[m.produto_nome]||'🍪'}</span>
+        <div>
+          <div style="font-weight:500;">${m.produto_nome}</div>
+          <div style="font-size:0.72rem;color:var(--muted);">${data} às ${hora}${m.observacao?' · '+m.observacao:''}</div>
+        </div>
+      </div>
+      <span class="mov-tipo ${tipoClasse[m.tipo]||''}">${tipoLabel[m.tipo]||m.tipo}</span>
+      <span class="${eh_entrada?'mov-qtd-pos':'mov-qtd-neg'}" style="min-width:50px;text-align:right;">${eh_entrada?'+':'-'}${m.quantidade}</span>
+    </div>`;
+  }).join('') : '<p style="text-align:center;color:var(--muted);padding:1.5rem;font-size:0.85rem;">Nenhuma movimentação encontrada.</p>';
+}
+
 function showPage(id,el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1966,6 +2266,7 @@ function showPage(id,el) {
   if (id==='financeiro') carregarFinanceiro();
   if (id==='cardapio') carregarCardapio();
   if (id==='clientes') carregarClientes();
+  if (id==='estoque') carregarEstoque();
 }
 function abrirModal(id) { document.getElementById(id).classList.add('show'); }
 function fecharModal(id) { document.getElementById(id).classList.remove('show'); }
