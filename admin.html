@@ -561,7 +561,7 @@
         </div>
         <div class="report-grid">
           <div class="report-card">
-            <div class="report-card-title">Sabores mais vendidos</div>
+            <div class="report-card-title">Sabores mais vendidos <span id="sabores-total" style="font-weight:500;color:var(--brown);"></span></div>
             <div id="sabores-bars"><div class="spinner"></div></div>
           </div>
           <div class="report-card">
@@ -1327,11 +1327,17 @@ async function carregarRelatorios() {
     document.getElementById('r-clientes').textContent=clientes;
     document.getElementById('r-ticket').textContent='R$ '+ticket.toFixed(2).replace('.',',');
     const contagem={};
-    data.forEach(p=>p.itens.forEach(i=>{contagem[i.sabor]=(contagem[i.sabor]||0)+i.quantidade;}));
+    const contagemValor={};
+    data.forEach(p=>p.itens.forEach(i=>{
+      contagem[i.sabor]=(contagem[i.sabor]||0)+i.quantidade;
+      contagemValor[i.sabor]=(contagemValor[i.sabor]||0)+(i.quantidade*parseFloat(i.preco_unit||0));
+    }));
     const max=Math.max(...Object.values(contagem),1);
     const cores={'Nutella':'#F2A7C3','Red Velvet':'#D4759C','Oreo':'#4A2410'};
+    const totalCookiesVendidos = Object.values(contagem).reduce((a,b)=>a+b,0);
+    document.getElementById('sabores-total').textContent = totalCookiesVendidos ? '('+totalCookiesVendidos+' cookies)' : '';
     document.getElementById('sabores-bars').innerHTML=Object.entries(contagem).sort((a,b)=>b[1]-a[1]).map(([s,q])=>
-      `<div class="bar-row"><span class="bar-label">${s}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(q/max*100)}%;background:${cores[s]||'#F2A7C3'};"></div></div><span class="bar-val">${q}</span></div>`).join('')||'<p style="color:var(--muted);font-size:0.85rem;">Sem dados.</p>';
+      `<div class="bar-row"><span class="bar-label">${s}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(q/max*100)}%;background:${cores[s]||'#F2A7C3'};"></div></div><span class="bar-val" style="width:auto;min-width:30px;">${q} un</span><span style="font-size:0.72rem;color:var(--muted);margin-left:6px;white-space:nowrap;">R$ ${(contagemValor[s]||0).toFixed(2).replace('.',',')}</span></div>`).join('')||'<p style="color:var(--muted);font-size:0.85rem;">Sem dados.</p>';
     const sul=data.filter(p=>p.tipo_entrega==='sul').length, outro=data.filter(p=>p.tipo_entrega==='outro').length;
     document.getElementById('entregas-resumo').innerHTML=`
       <div class="bar-row"><span class="bar-label">🏝️ Sul Ilha</span><div class="bar-track"><div class="bar-fill" style="width:${data.length?Math.round(sul/data.length*100):0}%;background:var(--tiffany);"></div></div><span class="bar-val">${sul}</span></div>
@@ -1796,7 +1802,10 @@ async function abrirPerfilCliente(tel) {
 
     <div class="perfil-tabcontent" id="perfil-tab-sabores">
       <div class="report-card-title">Sabores favoritos (${saborFavorito} é o preferido)</div>
-      ${saboresOrdenados.length ? saboresOrdenados.map(([s,q]) => `<div class="bar-row"><span class="bar-label">${s}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(q/maxSabor*100)}%;background:${coresSabor[s]||'#F2A7C3'};"></div></div><span class="bar-val">${q}</span></div>`).join('') : '<p style="color:var(--muted);font-size:0.85rem;">Sem dados ainda.</p>'}
+      ${saboresOrdenados.length ? saboresOrdenados.map(([s,q]) => {
+        const val = pedidosCliente.reduce((acc,p) => acc + p.itens.filter(i=>i.sabor===s).reduce((a,i)=>a+(i.quantidade*parseFloat(i.preco_unit||0)),0), 0);
+        return `<div class="bar-row"><span class="bar-label">${s}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(q/maxSabor*100)}%;background:${coresSabor[s]||'#F2A7C3'};"></div></div><span class="bar-val" style="width:auto;min-width:30px;">${q} un</span><span style="font-size:0.72rem;color:var(--muted);margin-left:6px;white-space:nowrap;">R$ ${val.toFixed(2).replace('.',',')}</span></div>`;
+      }).join('') : '<p style="color:var(--muted);font-size:0.85rem;">Sem dados ainda.</p>'}
     </div>
 
     <div class="perfil-tabcontent" id="perfil-tab-habitos">
