@@ -263,58 +263,101 @@
   .toast.show { transform:translateY(0); opacity:1; }
 
   @media (max-width:768px) {
+    /* ── LAYOUT ── */
     .layout { flex-direction:column; }
-    .sidebar { width:100%; flex-direction:row; align-items:center; padding:0.75rem 1rem; overflow-x:auto; gap:0.5rem; }
+    .sidebar { width:100%; flex-direction:row; align-items:center; padding:0.6rem 0.75rem; overflow-x:auto; gap:0.25rem; flex-shrink:0; }
     .sidebar-logo { display:flex; align-items:center; gap:8px; margin-bottom:0; flex-shrink:0; text-align:left; }
-    .sidebar-logo img { width:36px; height:36px; margin-bottom:0; }
-    .sidebar-logo .s-title { font-size:0.8rem; }
+    .sidebar-logo img { width:32px; height:32px; margin-bottom:0; }
+    .sidebar-logo .s-title { font-size:0.75rem; }
     .sidebar-logo .s-sub { display:none; }
-    nav { display:flex; gap:4px; flex-shrink:0; }
-    .nav-item { margin-bottom:0; padding:0.5rem 0.6rem; flex-direction:column; gap:2px; font-size:0.65rem; white-space:nowrap; }
+    nav { display:flex; gap:2px; flex-shrink:0; overflow-x:auto; }
+    .nav-item { margin-bottom:0; padding:0.45rem 0.55rem; flex-direction:column; gap:1px; font-size:0.6rem; white-space:nowrap; }
     .nav-item span:last-child { display:block; }
-    .nav-icon { font-size:1.1rem; }
-    .content { padding:1rem; }
-    .page-title { font-size:1.25rem; }
+    .nav-icon { font-size:1rem; }
+    .content { padding:0.85rem; overflow-x:hidden; }
+    .page-title { font-size:1.15rem; }
 
+    /* ── MÉTRICAS ── */
     .metrics,.fin-metrics { grid-template-columns:1fr 1fr; gap:8px; }
-    .metric,.fin-metric { padding:0.75rem 0.9rem; }
-    .metric-val,.fin-metric-val { font-size:1.2rem; }
+    .metric,.fin-metric { padding:0.65rem 0.85rem; }
+    .metric-val,.fin-metric-val { font-size:1.1rem; }
+    .metric-lbl,.fin-metric-lbl { font-size:0.7rem; }
     .report-grid { grid-template-columns:1fr; }
 
-    .periodo-bar { gap:6px; }
-    .periodo-btn { padding:6px 10px; font-size:0.75rem; }
+    /* ── PERÍODO ── */
+    .periodo-bar { gap:5px; flex-wrap:wrap; }
+    .periodo-btn { padding:5px 9px; font-size:0.72rem; }
+    .periodo-custom { flex-wrap:wrap; gap:6px; }
+    .periodo-custom input { flex:1; min-width:120px; }
 
-    /* Tabelas: container com scroll horizontal, mantendo a tabela intacta por dentro */
+    /* ── TABELAS ── */
     .report-card { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-    .client-table, .contas-table { min-width:600px; }
+    .client-table, .contas-table { min-width:580px; }
 
-    .order-card { padding:0.85rem 1rem; }
+    /* ── CARDS DE PEDIDO ── */
+    .order-card { padding:0.75rem 0.85rem; }
     .order-top { flex-direction:column; gap:0.5rem; }
-    .order-top > div:last-child { text-align:left; margin-left:0; width:100%; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-    .order-actions { gap:6px; }
-    .action-btn { font-size:0.72rem; padding:5px 10px; flex:1 1 auto; min-width:0; text-align:center; }
+    .order-top > div:last-child { text-align:left; margin-left:0; width:100%; display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+    .order-actions { gap:5px; flex-wrap:wrap; }
+    .action-btn { font-size:0.7rem; padding:5px 9px; flex:1 1 auto; min-width:0; text-align:center; }
 
-    /* Modais ocupam quase a tela toda no celular */
-    .modal-overlay { padding:0.5rem; align-items:flex-end; }
-    .modal { max-width:100%; width:100%; border-radius:20px 20px 0 0; max-height:92vh; padding:1.25rem; }
+    /* ── MODAIS (bottom sheet) ── */
+    .modal-overlay { padding:0; align-items:flex-end; }
+    .modal { max-width:100%; width:100%; border-radius:20px 20px 0 0; max-height:92vh; padding:1.25rem 1rem; }
     .modal.modal-wide { max-width:100%; }
-    .perfil-metrics { grid-template-columns:1fr 1fr; }
-    .perfil-tabs { overflow-x:auto; white-space:nowrap; }
-    .perfil-tab { flex-shrink:0; }
+    .modal-title { font-size:1.05rem; }
 
-    .product-edit-card { flex-wrap:wrap; }
-    .price-edit-row { flex-wrap:wrap; }
+    /* ── PERFIL DO CLIENTE ── */
+    .perfil-header { flex-direction:column; gap:0.75rem; }
+    .perfil-metrics { grid-template-columns:1fr 1fr; gap:8px; }
+    .perfil-tabs { overflow-x:auto; white-space:nowrap; padding-bottom:2px; }
+    .perfil-tab { flex-shrink:0; padding:6px 12px; font-size:0.78rem; }
+    .cliente-detalhe-metrics { grid-template-columns:1fr 1fr; }
 
-    .login-box { max-width:100%; margin:0 1rem; }
+    /* ── CARDÁPIO / EDIÇÃO PREÇO ── */
+    .product-edit-card { flex-wrap:wrap; gap:0.75rem; }
+    .price-edit-row { flex-wrap:wrap; gap:4px; }
 
+    /* ── ESTOQUE ── */
+    .estoque-card { flex-wrap:wrap; gap:0.75rem; padding:1rem; }
+    .estoque-emoji { font-size:2rem; }
+    .estoque-qtd { font-size:1.6rem; }
+    .estoque-acoes { width:100%; justify-content:flex-start; }
+    .estoque-alerta { font-size:0.78rem; }
+    .mov-row { flex-wrap:wrap; gap:6px; }
+    .mov-tipo { flex-shrink:0; }
+
+    /* Filtros de estoque em coluna no mobile */
+    #page-estoque .report-card > div[style*="display:flex"] { flex-direction:column; align-items:stretch !important; }
+    #est-filtro-produto, #est-filtro-tipo, #est-filtro-data { width:100%; }
+
+    /* Métricas de estoque */
+    #page-estoque .metric { flex:1; min-width:0; }
+
+    /* ── MENSAGENS ── */
+    #mensagens-lista .order-card > div:first-child { flex-direction:column; gap:0.5rem; }
+
+    /* ── MODAL ESTOQUE ── */
+    #est-tipo-grid { grid-template-columns:1fr !important; }
+    #est-data-group > div { flex-direction:column; }
+
+    /* ── LOGIN ── */
+    .login-box { max-width:100%; margin:0 1rem; border-radius:16px; }
+
+    /* ── TOAST ── */
     .toast { left:1rem; right:1rem; bottom:1rem; text-align:center; }
   }
 
   @media (max-width:420px) {
-    .nav-item span:last-child { font-size:0.6rem; }
-    .metrics,.fin-metrics { grid-template-columns:1fr; }
+    .content { padding:0.65rem; }
+    .nav-item { padding:0.4rem 0.45rem; font-size:0.55rem; }
+    .nav-icon { font-size:0.9rem; }
+    .metrics,.fin-metrics { grid-template-columns:1fr 1fr; }
+    .metric-val,.fin-metric-val { font-size:1rem; }
     .perfil-metrics { grid-template-columns:1fr 1fr; }
-    .order-actions .action-btn { flex:1 1 100%; }
+    .order-actions .action-btn { flex:1 1 45%; }
+    .estoque-acoes .action-btn { flex:1; }
+    .periodo-btn { font-size:0.68rem; padding:4px 7px; }
   }
 </style>
 </head>
