@@ -1026,7 +1026,11 @@ function renderPedidos(pedidos, pags) {
   if (!pedidos.length) { c.innerHTML='<div class="empty"><div class="empty-icon">🍪</div><p>Nenhum pedido hoje ainda.</p></div>'; return; }
   c.innerHTML = pedidos.map(o => {
     const s = statusMap[o.status]||statusMap.waiting;
-    const hora = new Date(o.criado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'});
+    const dataHora = new Date(o.criado_em);
+    const hoje = new Date().toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
+    const dataPedido = dataHora.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
+    const hora = dataHora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'});
+    const dataLabel = dataPedido === hoje ? hora : dataPedido + ' · ' + hora;
     const itensStr = o.itens.map(i => i.emoji+' '+i.quantidade+'x '+i.sabor).join(' · ');
     const totalFmt = 'R$ '+parseFloat(o.total).toFixed(2).replace('.',',');
     const pagsPedido = pagamentosDoPedido(o.id);
@@ -1049,7 +1053,7 @@ function renderPedidos(pedidos, pags) {
         </div>
         <div style="text-align:right;flex-shrink:0;margin-left:1rem;">
           <span class="badge ${s.badge}">${s.label}</span>
-          <div style="font-size:0.75rem;color:var(--muted);margin-top:4px;">${hora}</div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:4px;">${dataLabel}</div>
           <div style="margin-top:6px;"><span class="badge" style="${corPag}">${statusPag}</span></div>
           <div style="margin-top:4px;font-size:0.7rem;color:var(--muted);">${o.tipo_entrega==='sul'?'🏝️ Sul da Ilha':'📍 Outro bairro'}</div>
         </div>
