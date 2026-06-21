@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Super Admin · Sistema</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --dark:#1A1A2E; --dark2:#16213E; --accent:#E94560; --accent2:#0F3460;
+    --teal:#5BC8C0; --text:#E0E0E0; --muted:#9090A0; --border:rgba(255,255,255,0.08);
+    --radius:14px; --green:#1A6B3C; --green-bg:#E8F5EE; --red:#B03030; --red-bg:#FAE8E8;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'DM Sans',sans-serif; background:var(--dark); color:var(--text); min-height:100vh; }
+
+  /* LOGIN */
+  #login-screen { position:fixed; inset:0; z-index:9999; background:var(--dark); display:flex; align-items:center; justify-content:center; }
+  .login-box { background:var(--dark2); border:1px solid var(--border); border-radius:20px; padding:2.5rem 2rem; width:100%; max-width:380px; text-align:center; }
+  .login-logo { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--accent); margin-bottom:0.5rem; }
+  .login-sub { font-size:0.8rem; color:var(--muted); margin-bottom:1.75rem; }
+  .login-input { width:100%; padding:0.85rem 1rem; border:1px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:0.95rem; background:rgba(255,255,255,0.05); color:var(--text); outline:none; margin-bottom:0.75rem; transition:border-color 0.2s; }
+  .login-input:focus { border-color:var(--accent); }
+  .login-btn { width:100%; padding:0.85rem; background:var(--accent); color:white; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:1rem; font-weight:500; cursor:pointer; }
+  .login-error { font-size:0.8rem; color:var(--accent); margin-top:0.5rem; display:none; }
+  .login-error.show { display:block; }
+
+  /* LAYOUT */
+  .layout { display:flex; min-height:100vh; }
+  .sidebar { width:240px; background:var(--dark2); border-right:1px solid var(--border); padding:1.5rem 1rem; display:flex; flex-direction:column; flex-shrink:0; }
+  .sidebar-logo { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--accent); margin-bottom:0.25rem; padding:0 0.5rem; }
+  .sidebar-sub { font-size:0.65rem; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; padding:0 0.5rem; margin-bottom:2rem; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:0.65rem 0.75rem; border-radius:8px; color:var(--muted); font-size:0.85rem; cursor:pointer; margin-bottom:4px; transition:all 0.15s; }
+  .nav-item:hover { color:var(--text); background:rgba(255,255,255,0.05); }
+  .nav-item.active { color:white; background:var(--accent2); }
+  .nav-icon { font-size:1rem; width:20px; text-align:center; }
+  .content { flex:1; padding:2rem; overflow-y:auto; }
+  .page { display:none; }
+  .page.active { display:block; }
+  .page-title { font-family:'Playfair Display',serif; font-size:1.5rem; color:white; margin-bottom:1.5rem; }
+
+  /* MÉTRICAS */
+  .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:2rem; }
+  .metric { background:var(--dark2); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; }
+  .metric-val { font-size:1.8rem; font-weight:500; color:white; }
+  .metric-lbl { font-size:0.75rem; color:var(--muted); margin-top:4px; }
+  .metric-sub { font-size:0.7rem; color:var(--teal); margin-top:6px; }
+
+  /* ESTABELECIMENTOS */
+  .estab-grid { display:flex; flex-direction:column; gap:12px; }
+  .estab-card { background:var(--dark2); border:1px solid var(--border); border-radius:var(--radius); padding:1.25rem; display:flex; align-items:center; gap:1rem; transition:border-color 0.2s; }
+  .estab-card:hover { border-color:rgba(255,255,255,0.15); }
+  .estab-avatar { width:48px; height:48px; border-radius:50%; object-fit:cover; flex-shrink:0; background:var(--accent2); display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+  .estab-avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+  .estab-info { flex:1; min-width:0; }
+  .estab-nome { font-weight:500; color:white; font-size:0.95rem; }
+  .estab-slug { font-size:0.75rem; color:var(--muted); margin-top:2px; }
+  .estab-meta { font-size:0.72rem; color:var(--muted); margin-top:4px; }
+  .estab-actions { display:flex; gap:8px; flex-shrink:0; flex-wrap:wrap; }
+  .badge { display:inline-block; font-size:0.7rem; font-weight:500; padding:3px 10px; border-radius:20px; }
+  .badge-ativo { background:#1A3A2A; color:#5BC8C0; }
+  .badge-inativo { background:#3A1A1A; color:#E94560; }
+  .badge-trial { background:#3A2A0A; color:#F0C84A; }
+
+  /* BOTÕES */
+  .btn { padding:6px 14px; border-radius:8px; border:1px solid; cursor:pointer; font-size:0.78rem; font-weight:500; font-family:'DM Sans',sans-serif; transition:all 0.15s; }
+  .btn-primary { background:var(--accent); color:white; border-color:var(--accent); }
+  .btn-outline { background:transparent; color:var(--muted); border-color:var(--border); }
+  .btn-outline:hover { color:white; border-color:rgba(255,255,255,0.3); }
+  .btn-danger { background:transparent; color:var(--accent); border-color:var(--accent); }
+  .btn-teal { background:var(--teal); color:var(--dark); border-color:var(--teal); }
+
+  /* MODAL */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:500; display:none; align-items:center; justify-content:center; padding:1rem; }
+  .modal-overlay.show { display:flex; }
+  .modal { background:var(--dark2); border:1px solid var(--border); border-radius:20px; padding:1.75rem; width:100%; max-width:500px; max-height:90vh; overflow-y:auto; }
+  .modal-title { font-family:'Playfair Display',serif; font-size:1.2rem; color:white; margin-bottom:1.25rem; }
+  .modal-close { float:right; background:none; border:none; color:var(--muted); font-size:1.2rem; cursor:pointer; margin-top:-4px; }
+  .form-group { margin-bottom:0.9rem; }
+  .form-label { font-size:0.78rem; color:var(--muted); display:block; margin-bottom:0.35rem; }
+  .form-input { width:100%; padding:0.75rem 0.9rem; border:1px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:0.9rem; background:rgba(255,255,255,0.05); color:var(--text); outline:none; transition:border-color 0.2s; }
+  .form-input:focus { border-color:var(--accent); }
+  select.form-input option { background:var(--dark2); }
+
+  /* RECEITA */
+  .receita-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+  .receita-table th { text-align:left; padding:8px 0; color:var(--muted); font-weight:500; border-bottom:1px solid var(--border); font-size:0.75rem; }
+  .receita-table td { padding:10px 0; border-bottom:1px solid var(--border); color:var(--text); }
+  .receita-table tr:last-child td { border-bottom:none; }
+
+  .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:var(--teal); color:var(--dark); padding:0.75rem 1.25rem; border-radius:10px; font-size:0.85rem; font-weight:500; box-shadow:0 4px 20px rgba(0,0,0,0.3); transform:translateY(100px); opacity:0; transition:all 0.3s; z-index:1000; }
+  .toast.show { transform:translateY(0); opacity:1; }
+
+  @media (max-width:768px) {
+    .sidebar { width:60px; padding:1rem 0.5rem; }
+    .sidebar-logo, .sidebar-sub, .nav-item span { display:none; }
+    .metrics { grid-template-columns:1fr 1fr; }
+    .estab-card { flex-wrap:wrap; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">⚡ Super Admin</div>
+    <p class="login-sub">Painel de gerenciamento geral</p>
+    <input class="login-input" type="email" id="sa-email" placeholder="E-mail" onkeydown="if(event.key==='Enter') doLoginSA()"/>
+    <input class="login-input" type="password" id="sa-senha" placeholder="Senha" onkeydown="if(event.key==='Enter') doLoginSA()"/>
+    <button class="login-btn" onclick="doLoginSA()">Entrar</button>
+    <p class="login-error" id="sa-login-error">Credenciais incorretas.</p>
+  </div>
+</div>
+
+<!-- MODAL NOVO/EDITAR ESTABELECIMENTO -->
+<div class="modal-overlay" id="modal-estab">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-estab')">✕</button>
+    <div class="modal-title" id="modal-estab-titulo">➕ Novo estabelecimento</div>
+    <input type="hidden" id="estab-edit-id"/>
+    <div class="form-group"><label class="form-label">Nome do estabelecimento</label><input class="form-input" type="text" id="estab-nome" placeholder="Ex: Pizzaria do João"/></div>
+    <div class="form-group"><label class="form-label">Slug (endereço único, sem espaços)</label><input class="form-input" type="text" id="estab-slug" placeholder="Ex: pizzaria-do-joao" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'-')"/></div>
+    <div class="form-group"><label class="form-label">Plano</label>
+      <select class="form-input" id="estab-plano">
+        <option value="ativo">✅ Ativo</option>
+        <option value="trial">🟡 Trial (teste)</option>
+        <option value="inativo">🔴 Inativo</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Mensalidade (R$)</label><input class="form-input" type="number" step="0.01" id="estab-mensalidade" placeholder="0,00"/></div>
+    <div class="form-group"><label class="form-label">Dia de vencimento</label><input class="form-input" type="number" min="1" max="28" id="estab-vencimento" placeholder="Ex: 5"/></div>
+    <div style="display:flex;gap:8px;margin-top:1rem;">
+      <button onclick="fecharModal('modal-estab')" class="btn btn-outline" style="flex:1;">Cancelar</button>
+      <button onclick="salvarEstabelecimento()" class="btn btn-primary" style="flex:2;">✓ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL USUÁRIO ADMIN -->
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-usuario')">✕</button>
+    <div class="modal-title">👤 Criar acesso admin</div>
+    <input type="hidden" id="usr-estab-id"/>
+    <div class="form-group"><label class="form-label">Nome</label><input class="form-input" type="text" id="usr-nome" placeholder="Nome do responsável"/></div>
+    <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" type="email" id="usr-email" placeholder="email@exemplo.com"/></div>
+    <div class="form-group"><label class="form-label">Senha</label><input class="form-input" type="password" id="usr-senha" placeholder="Mínimo 6 caracteres"/></div>
+    <div style="display:flex;gap:8px;margin-top:1rem;">
+      <button onclick="fecharModal('modal-usuario')" class="btn btn-outline" style="flex:1;">Cancelar</button>
+      <button onclick="salvarUsuario()" class="btn btn-teal" style="flex:2;">✓ Criar acesso</button>
+    </div>
+  </div>
+</div>
+
+<div class="layout" id="main-layout" style="display:none;">
+  <aside class="sidebar">
+    <div class="sidebar-logo">⚡ SuperAdmin</div>
+    <div class="sidebar-sub">Painel geral</div>
+    <nav>
+      <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></div>
+      <div class="nav-item" onclick="showPage('estabelecimentos',this)"><span class="nav-icon">🏪</span><span>Estabelecimentos</span></div>
+      <div class="nav-item" onclick="showPage('receita',this)"><span class="nav-icon">💰</span><span>Receita</span></div>
+    </nav>
+  </aside>
+
+  <main class="content">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <h1 class="page-title">Dashboard geral</h1>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val" id="d-total">—</div><div class="metric-lbl">Estabelecimentos</div><div class="metric-sub" id="d-ativos"></div></div>
+        <div class="metric"><div class="metric-val" id="d-receita">—</div><div class="metric-lbl">Receita mensal prevista</div></div>
+        <div class="metric"><div class="metric-val" id="d-pedidos">—</div><div class="metric-lbl">Pedidos hoje (todos)</div></div>
+        <div class="metric"><div class="metric-val" id="d-inativos">—</div><div class="metric-lbl">Inativos / Trial</div></div>
+      </div>
+
+      <h2 style="font-size:1rem;color:var(--muted);margin-bottom:1rem;font-weight:500;">Estabelecimentos recentes</h2>
+      <div class="estab-grid" id="dash-estab-lista"><div style="color:var(--muted);text-align:center;padding:2rem;">Carregando...</div></div>
+    </div>
+
+    <!-- ESTABELECIMENTOS -->
+    <div id="page-estabelecimentos" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px;">
+        <h1 class="page-title" style="margin:0;">Estabelecimentos</h1>
+        <button class="btn btn-primary" onclick="abrirNovoEstab()">➕ Novo estabelecimento</button>
+      </div>
+      <div style="margin-bottom:1rem;">
+        <input type="text" id="busca-estab" placeholder="🔍 Buscar por nome ou slug..." oninput="filtrarEstabs(this.value)" style="padding:0.75rem 1rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;background:rgba(255,255,255,0.05);color:var(--text);width:100%;max-width:360px;outline:none;"/>
+      </div>
+      <div class="estab-grid" id="estab-lista"><div style="color:var(--muted);text-align:center;padding:2rem;">Carregando...</div></div>
+    </div>
+
+    <!-- RECEITA -->
+    <div id="page-receita" class="page">
+      <h1 class="page-title">Receita de mensalidades</h1>
+      <div class="metrics" style="grid-template-columns:repeat(3,1fr);">
+        <div class="metric"><div class="metric-val" id="r-mensal">—</div><div class="metric-lbl">Mensalidade total/mês</div></div>
+        <div class="metric"><div class="metric-val" id="r-ativos">—</div><div class="metric-lbl">Pagantes ativos</div></div>
+        <div class="metric"><div class="metric-val" id="r-inadimp">—</div><div class="metric-lbl">Inativos</div></div>
+      </div>
+      <div style="background:var(--dark2);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;">
+        <table class="receita-table">
+          <thead><tr><th>Estabelecimento</th><th>Plano</th><th>Mensalidade</th><th>Vencimento</th><th>Status</th></tr></thead>
+          <tbody id="receita-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://jhnwtizmihecidadhubv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_g1GinN-To8dOvXEzqnAy6A_33x-9yA9';
+
+// ── SUPER ADMIN CREDENCIAIS (altere aqui) ──
+const SA_EMAIL = 'sistemagestaoluis';
+const SA_SENHA = 'Futebol10$';
+
+function doLoginSA() {
+  const email = document.getElementById('sa-email').value.trim();
+  const senha = document.getElementById('sa-senha').value;
+  if (email === SA_EMAIL && senha === SA_SENHA) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-layout').style.display = 'flex';
+    sessionStorage.setItem('sa-auth','1');
+    iniciarSA();
+  } else {
+    document.getElementById('sa-login-error').classList.add('show');
+  }
+}
+if (sessionStorage.getItem('sa-auth')==='1') {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('main-layout').style.display='flex';
+  iniciarSA();
+}
+
+async function supaFetch(path, method='GET', body=null) {
+  const opts = { method, headers: { 'apikey':SUPABASE_KEY, 'Authorization':'Bearer '+SUPABASE_KEY, 'Content-Type':'application/json', 'Prefer':method==='POST'?'return=representation':'' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(SUPABASE_URL+'/rest/v1/'+path, opts);
+  if (!res.ok) throw new Error(await res.text());
+  return method==='PATCH'||method==='DELETE' ? null : res.json();
+}
+
+// ── DADOS ──────────────────────────────────
+let estabelecimentosCache = [];
+
+async function iniciarSA() {
+  await carregarEstabelecimentos();
+  renderDashboard();
+  renderReceita();
+}
+
+async function carregarEstabelecimentos() {
+  try {
+    estabelecimentosCache = await supaFetch('estabelecimentos?order=criado_em.desc');
+    renderEstabs(estabelecimentosCache);
+  } catch(e) { showToast('Erro ao carregar estabelecimentos.'); }
+}
+
+async function renderDashboard() {
+  const total = estabelecimentosCache.length;
+  const ativos = estabelecimentosCache.filter(e => e.plano==='ativo').length;
+  const inativos = estabelecimentosCache.filter(e => e.plano!=='ativo').length;
+  const receita = estabelecimentosCache.filter(e=>e.plano==='ativo').reduce((s,e)=>s+parseFloat(e.mensalidade||0),0);
+
+  document.getElementById('d-total').textContent = total;
+  document.getElementById('d-ativos').textContent = ativos + ' ativos';
+  document.getElementById('d-receita').textContent = 'R$ '+receita.toFixed(2).replace('.',',');
+  document.getElementById('d-inativos').textContent = inativos;
+
+  // Pedidos de hoje em todos os estabelecimentos
+  try {
+    const hoje = new Date().toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}).split(',')[0];
+    const d = new Date(hoje); const pad = n=>String(n).padStart(2,'0');
+    const filtro = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    const pedidos = await supaFetch('pedidos?criado_em=gte.'+filtro+'T00:00:00-03:00&select=id');
+    document.getElementById('d-pedidos').textContent = pedidos.length;
+  } catch(e) { document.getElementById('d-pedidos').textContent = '—'; }
+
+  document.getElementById('dash-estab-lista').innerHTML = estabelecimentosCache.slice(0,5).map(e => renderEstabCard(e)).join('');
+}
+
+function renderEstabCard(e) {
+  const badgeCls = e.plano==='ativo'?'badge-ativo':e.plano==='trial'?'badge-trial':'badge-inativo';
+  const badgeLabel = e.plano==='ativo'?'✅ Ativo':e.plano==='trial'?'🟡 Trial':'🔴 Inativo';
+  return `<div class="estab-card">
+    <div class="estab-avatar">${e.logo_url?`<img src="${e.logo_url}" alt="logo"/>`:'🏪'}</div>
+    <div class="estab-info">
+      <div class="estab-nome">${e.nome}</div>
+      <div class="estab-slug">/${e.slug}</div>
+      <div class="estab-meta">Mensalidade: R$ ${parseFloat(e.mensalidade||0).toFixed(2).replace('.',',')} · Vence dia ${e.vencimento_dia||1}</div>
+    </div>
+    <span class="badge ${badgeCls}">${badgeLabel}</span>
+    <div class="estab-actions">
+      <button class="btn btn-outline" onclick="abrirEditarEstab(${e.id})">✏️ Editar</button>
+      <button class="btn btn-teal" onclick="abrirCriarUsuario(${e.id},'${e.nome.replace(/'/g,"\\'")}')">👤 Acesso</button>
+      <button class="btn btn-outline" onclick="alternarPlano(${e.id},'${e.plano}')">${e.plano==='ativo'?'⏸ Desativar':'▶ Ativar'}</button>
+    </div>
+  </div>`;
+}
+
+function renderEstabs(lista) {
+  document.getElementById('estab-lista').innerHTML = lista.length
+    ? lista.map(e => renderEstabCard(e)).join('')
+    : '<div style="color:var(--muted);text-align:center;padding:2rem;">Nenhum estabelecimento cadastrado.</div>';
+}
+
+function filtrarEstabs(val) {
+  const filtrados = estabelecimentosCache.filter(e =>
+    e.nome.toLowerCase().includes(val.toLowerCase()) || e.slug.includes(val.toLowerCase()));
+  renderEstabs(filtrados);
+}
+
+function renderReceita() {
+  const ativos = estabelecimentosCache.filter(e=>e.plano==='ativo');
+  const total = ativos.reduce((s,e)=>s+parseFloat(e.mensalidade||0),0);
+  document.getElementById('r-mensal').textContent = 'R$ '+total.toFixed(2).replace('.',',');
+  document.getElementById('r-ativos').textContent = ativos.length;
+  document.getElementById('r-inadimp').textContent = estabelecimentosCache.filter(e=>e.plano!=='ativo').length;
+
+  const badgeCls = {'ativo':'badge-ativo','trial':'badge-trial','inativo':'badge-inativo'};
+  const badgeLabel = {'ativo':'✅ Ativo','trial':'🟡 Trial','inativo':'🔴 Inativo'};
+  document.getElementById('receita-tbody').innerHTML = estabelecimentosCache.map(e =>
+    `<tr>
+      <td style="font-weight:500;">${e.nome}</td>
+      <td><span class="badge ${badgeCls[e.plano]||'badge-inativo'}">${badgeLabel[e.plano]||e.plano}</span></td>
+      <td>R$ ${parseFloat(e.mensalidade||0).toFixed(2).replace('.',',')}</td>
+      <td>Dia ${e.vencimento_dia||1}</td>
+      <td>${e.plano==='ativo'?'<span style="color:#5BC8C0;">Em dia</span>':'<span style="color:#E94560;">Inativo</span>'}</td>
+    </tr>`).join('');
+}
+
+// ── CRUD ESTABELECIMENTOS ──────────────────
+function abrirNovoEstab() {
+  document.getElementById('estab-edit-id').value = '';
+  document.getElementById('modal-estab-titulo').textContent = '➕ Novo estabelecimento';
+  document.getElementById('estab-nome').value = '';
+  document.getElementById('estab-slug').value = '';
+  document.getElementById('estab-plano').value = 'ativo';
+  document.getElementById('estab-mensalidade').value = '';
+  document.getElementById('estab-vencimento').value = '5';
+  abrirModal('modal-estab');
+}
+
+function abrirEditarEstab(id) {
+  const e = estabelecimentosCache.find(x=>x.id===id);
+  if (!e) return;
+  document.getElementById('estab-edit-id').value = id;
+  document.getElementById('modal-estab-titulo').textContent = '✏️ Editar — '+e.nome;
+  document.getElementById('estab-nome').value = e.nome;
+  document.getElementById('estab-slug').value = e.slug;
+  document.getElementById('estab-plano').value = e.plano;
+  document.getElementById('estab-mensalidade').value = e.mensalidade || '';
+  document.getElementById('estab-vencimento').value = e.vencimento_dia || 5;
+  abrirModal('modal-estab');
+}
+
+async function salvarEstabelecimento() {
+  const id = document.getElementById('estab-edit-id').value;
+  const nome = document.getElementById('estab-nome').value.trim();
+  const slug = document.getElementById('estab-slug').value.trim();
+  const plano = document.getElementById('estab-plano').value;
+  const mensalidade = parseFloat(document.getElementById('estab-mensalidade').value)||0;
+  const vencimento_dia = parseInt(document.getElementById('estab-vencimento').value)||5;
+  if (!nome||!slug) { alert('Preencha nome e slug!'); return; }
+  try {
+    if (id) {
+      await supaFetch('estabelecimentos?id=eq.'+id,'PATCH',{nome,slug,plano,mensalidade,vencimento_dia});
+      showToast('✓ Estabelecimento atualizado!');
+    } else {
+      await supaFetch('estabelecimentos','POST',{nome,slug,plano,mensalidade,vencimento_dia});
+      showToast('✓ Estabelecimento criado!');
+    }
+    fecharModal('modal-estab');
+    await carregarEstabelecimentos();
+    renderDashboard();
+    renderReceita();
+  } catch(e) { showToast('Erro ao salvar. Verifique se o slug já existe.'); }
+}
+
+async function alternarPlano(id, planoAtual) {
+  const novoPlano = planoAtual==='ativo' ? 'inativo' : 'ativo';
+  const label = novoPlano==='ativo' ? 'ativar' : 'desativar';
+  if (!confirm(`Deseja ${label} este estabelecimento?`)) return;
+  try {
+    await supaFetch('estabelecimentos?id=eq.'+id,'PATCH',{plano:novoPlano});
+    showToast(`✓ Estabelecimento ${novoPlano === 'ativo' ? 'ativado' : 'desativado'}!`);
+    await carregarEstabelecimentos();
+    renderDashboard();
+    renderReceita();
+  } catch(e) { showToast('Erro ao alterar plano.'); }
+}
+
+// ── USUÁRIOS ───────────────────────────────
+function abrirCriarUsuario(estabId, estabNome) {
+  document.getElementById('usr-estab-id').value = estabId;
+  document.getElementById('usr-nome').value = '';
+  document.getElementById('usr-email').value = '';
+  document.getElementById('usr-senha').value = '';
+  document.querySelector('#modal-usuario .modal-title').textContent = '👤 Acesso admin — '+estabNome;
+  abrirModal('modal-usuario');
+}
+
+async function salvarUsuario() {
+  const estabId = document.getElementById('usr-estab-id').value;
+  const nome = document.getElementById('usr-nome').value.trim();
+  const email = document.getElementById('usr-email').value.trim();
+  const senha = document.getElementById('usr-senha').value;
+  if (!nome||!email||!senha) { alert('Preencha todos os campos!'); return; }
+  if (senha.length < 6) { alert('A senha precisa ter pelo menos 6 caracteres!'); return; }
+  // Armazena senha como texto simples (para produção real, usar bcrypt no backend)
+  try {
+    const existe = await supaFetch('usuarios?email=eq.'+encodeURIComponent(email));
+    if (existe && existe.length > 0) {
+      await supaFetch('usuarios?email=eq.'+encodeURIComponent(email),'PATCH',{nome, senha_hash:senha, estabelecimento_id:estabId});
+      showToast('✓ Acesso atualizado!');
+    } else {
+      await supaFetch('usuarios','POST',{estabelecimento_id:estabId, nome, email, senha_hash:senha, papel:'admin'});
+      showToast('✓ Acesso criado! Login: '+email);
+    }
+    fecharModal('modal-usuario');
+  } catch(e) { showToast('Erro ao criar acesso.'); }
+}
+
+// ── UI ──────────────────────────────────────
+function showPage(id,el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+}
+function abrirModal(id) { document.getElementById(id).classList.add('show'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); }));
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// Auto-gera slug a partir do nome
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('estab-nome').addEventListener('input', function() {
+    const slug = document.getElementById('estab-slug');
+    if (!document.getElementById('estab-edit-id').value) {
+      slug.value = this.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    }
+  });
+});
+</script>
+</body>
+</html>
