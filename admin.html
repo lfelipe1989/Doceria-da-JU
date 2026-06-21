@@ -373,10 +373,12 @@
   <div class="login-box">
     <img src="logo.png" alt="Logo"/>
     <h2>Painel Administrativo</h2>
-    <p>Digite a senha para entrar</p>
+    <p>Entre com seu e-mail e senha</p>
+    <input class="login-input" type="email" id="login-email" placeholder="seu@email.com" style="text-align:left;letter-spacing:0;" onkeydown="if(event.key==='Enter') doLogin()"/>
     <input class="login-input" type="password" id="login-input" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()"/>
     <button class="login-btn" onclick="doLogin()">Entrar</button>
-    <p class="login-error" id="login-error">Senha incorreta. Tente novamente.</p>
+    <p class="login-error" id="login-error">E-mail ou senha incorretos.</p>
+    <p style="font-size:0.75rem;color:var(--muted);margin-top:1rem;">Não tem conta? <a href="cadastro.html" style="color:var(--tiffany);">Cadastre-se aqui</a></p>
   </div>
 </div>
 
@@ -835,14 +837,18 @@
 <script>
 const SUPABASE_URL = 'https://jhnwtizmihecidadhubv.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_g1GinN-To8dOvXEzqnAy6A_33x-9yA9';
-const SENHA = 'doceriaju2025';
+const SENHA = 'doceriaju2025'; // mantido para compatibilidade com Doceria da Ju
+
+// ── ESTADO GLOBAL DO ESTABELECIMENTO ──────
+let estabelecimentoId = 1; // padrão = Doceria da Ju
+let usuarioLogado = null;
 
 // ── MENSAGENS — carregadas do banco e editáveis no painel ──
-let configMensagens = {}; // cache das mensagens carregadas do Supabase
+let configMensagens = {};
 
 async function carregarMensagens() {
   try {
-    const rows = await supaFetch('configuracoes?chave=in.(msg_cobranca,msg_extrato,msg_reativacao)');
+    const rows = await supaFetch('configuracoes?chave=in.(msg_cobranca,msg_extrato,msg_reativacao)&estabelecimento_id=eq.'+estabelecimentoId);
     rows.forEach(r => configMensagens[r.chave] = r.valor);
   } catch(e) {}
 }
@@ -852,39 +858,75 @@ function getMensagem(chave) {
 }
 
 const MENSAGENS = {
-  cobranca: (nome, itens, total) => getMensagem('msg_cobranca')
-    .replace(/{NOME}/g, nome)
-    .replace(/{ITENS}/g, itens)
-    .replace(/{TOTAL}/g, total),
-  extrato: (nome, conteudo) => getMensagem('msg_extrato')
-    .replace(/{NOME}/g, nome)
-    .replace(/{EXTRATO}/g, conteudo),
-  reativacao: (nome) => getMensagem('msg_reativacao')
-    .replace(/{NOME}/g, nome),
+  cobranca: (nome, itens, total) => getMensagem('msg_cobranca').replace(/{NOME}/g,nome).replace(/{ITENS}/g,itens).replace(/{TOTAL}/g,total),
+  extrato: (nome, conteudo) => getMensagem('msg_extrato').replace(/{NOME}/g,nome).replace(/{EXTRATO}/g,conteudo),
+  reativacao: (nome) => getMensagem('msg_reativacao').replace(/{NOME}/g,nome),
 };
 
 // ── LOGIN ──────────────────────────────────
-function doLogin() {
-  const val = document.getElementById('login-input').value;
-  if (val === SENHA) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('main-layout').style.display = 'flex';
-    sessionStorage.setItem('ju-admin','1');
-    iniciar();
-  } else {
-    document.getElementById('login-error').classList.add('show');
-    document.getElementById('login-input').value = '';
-    document.getElementById('login-input').focus();
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-input').value;
+  const errEl = document.getElementById('login-error');
+
+  // Verifica primeiro se é login legado da Doceria da Ju (sem email, só senha)
+  if (!email && senha === SENHA) {
+    estabelecimentoId = 1;
+    ativarAdmin({nome:'Ju', estabelecimento_id:1});
+    return;
+  }
+
+  if (!email || !senha) { errEl.classList.add('show'); return; }
+
+  try {
+    const usuarios = await supaFetch('usuarios?email=eq.'+encodeURIComponent(email));
+    if (!usuarios || !usuarios.length || usuarios[0].senha_hash !== senha) {
+      errEl.classList.add('show');
+      document.getElementById('login-input').value = '';
+      return;
+    }
+    const u = usuarios[0];
+    estabelecimentoId = u.estabelecimento_id;
+    ativarAdmin(u);
+  } catch(e) {
+    errEl.classList.add('show');
   }
 }
+
+function ativarAdmin(usuario) {
+  usuarioLogado = usuario;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-layout').style.display = 'flex';
+  sessionStorage.setItem('ju-admin', JSON.stringify({ id: estabelecimentoId, nome: usuario.nome }));
+  iniciar();
+}
+
 async function iniciar() {
+  // Atualiza nome no sidebar se disponível
+  const stored = sessionStorage.getItem('ju-admin');
+  if (stored) {
+    try {
+      const d = JSON.parse(stored);
+      estabelecimentoId = d.id || 1;
+    } catch(e) { estabelecimentoId = 1; }
+  }
   await carregarMensagens();
   carregarPedidos();
   carregarCardapio();
-  if (!todosClientes.length) todosClientes = await supaFetch('clientes?order=nome.asc').catch(()=>[]);
+  if (!todosClientes.length) todosClientes = await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&order=nome.asc').catch(()=>[]);
   setInterval(carregarPedidos, 30000);
 }
-if (sessionStorage.getItem('ju-admin')==='1') {
+
+// Verifica sessão existente
+const _stored = sessionStorage.getItem('ju-admin');
+if (_stored) {
+  try {
+    const d = JSON.parse(_stored);
+    estabelecimentoId = d.id || 1;
+  } catch(e) {
+    // compatibilidade com sessão antiga (valor '1')
+    estabelecimentoId = 1;
+  }
   document.getElementById('login-screen').style.display='none';
   document.getElementById('main-layout').style.display='flex';
   iniciar();
@@ -951,7 +993,7 @@ async function carregarPedidos() {
     const query = range ? 'pedidos?'+range+'&order=criado_em.desc' : 'pedidos?order=criado_em.desc';
     const [pedidos, pags] = await Promise.all([
       supaFetch(query),
-      supaFetch('pagamentos?select=*&order=criado_em.desc')
+      supaFetch('pagamentos?estabelecimento_id=eq.'+estabelecimentoId+'&select=*&order=criado_em.desc')
     ]);
     todosOsPedidos = pedidos;
     todosPagamentos = pags;
@@ -971,8 +1013,8 @@ async function carregarPedidos() {
 async function carregarPedidosPorCliente(tel) {
   try {
     const [pedidos, pags] = await Promise.all([
-      supaFetch('pedidos?cliente_telefone=eq.'+encodeURIComponent(tel)+'&order=criado_em.desc'),
-      supaFetch('pagamentos?select=*&order=criado_em.desc')
+      supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&cliente_telefone=eq.'+encodeURIComponent(tel)+'&order=criado_em.desc'),
+      supaFetch('pagamentos?estabelecimento_id=eq.'+estabelecimentoId+'&select=*&order=criado_em.desc')
     ]);
     todosOsPedidos = pedidos;
     todosPagamentos = pags;
@@ -1099,7 +1141,7 @@ async function avancarStatus(id, s) {
 
 async function baixarEstoquePedido(pedido) {
   try {
-    const estoque = await supaFetch('estoque?select=*');
+    const estoque = await supaFetch('estoque?estabelecimento_id=eq.'+estabelecimentoId+'&select=*');
     for (const item of pedido.itens) {
       const est = estoque.find(e => e.produto_nome === item.sabor);
       if (!est) continue;
@@ -1108,7 +1150,7 @@ async function baixarEstoquePedido(pedido) {
         supaFetch('estoque?produto_nome=eq.'+encodeURIComponent(item.sabor), 'PATCH', {quantidade: novaQtd}),
         supaFetch('estoque_movimentos', 'POST', {
           produto_nome:item.sabor, tipo:'saida_pedido',
-          quantidade:item.quantidade, pedido_id:pedido.id,
+          quantidade:item.quantidade, pedido_id:pedido.id, estabelecimento_id:estabelecimentoId,
           observacao:'Pedido #'+pedido.id+(pedido.cliente_nome?' — '+pedido.cliente_nome:'')
         })
       ]);
@@ -1168,10 +1210,10 @@ let modoEdicaoId = null; // null = novo pedido; senão = id do pedido sendo edit
 
 async function garantirProdutosModal() {
   if (!produtosModal.length) {
-    produtosModal = await supaFetch('produtos?order=id.asc'); // inclui inativos para permitir editar pedidos antigos
+    produtosModal = await supaFetch('produtos?estabelecimento_id=eq.'+estabelecimentoId+'&order=id.asc'); // inclui inativos para permitir editar pedidos antigos
   }
   if (!todosClientes.length) {
-    todosClientes = await supaFetch('clientes?order=nome.asc');
+    todosClientes = await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&order=nome.asc');
   }
 }
 
@@ -1437,7 +1479,7 @@ async function salvarPedidoManual() {
   const total = itens.reduce((s,i) => s+(i.quantidade*i.preco_unit),0);
   const criadoEm = dataStr + 'T' + horaStr + ':00-03:00';
   try {
-    const res = await supaFetch('pedidos','POST',{ cliente_nome:nome, cliente_telefone:tel, cliente_endereco:end, observacoes:obs, itens, total, tipo_entrega:entrega, status, pago:false, criado_em:criadoEm });
+    const res = await supaFetch('pedidos','POST',{ cliente_nome:nome, cliente_telefone:tel, cliente_endereco:end, observacoes:obs, itens, total, tipo_entrega:entrega, status, pago:false, criado_em:criadoEm, estabelecimento_id:estabelecimentoId });
     const pedidoNovo = res && res[0];
     if (['preparing','delivery','done'].includes(status) && pedidoNovo) {
       await baixarEstoquePedido({id:pedidoNovo.id, cliente_nome:nome, itens});
@@ -1464,7 +1506,7 @@ async function executarExclusaoPedido() {
   try {
     // 1. Reverte estoque ANTES de apagar os movimentos
     if (['preparing','delivery','done'].includes(pedido.status)) {
-      const estoque = await supaFetch('estoque?select=*');
+      const estoque = await supaFetch('estoque?estabelecimento_id=eq.'+estabelecimentoId+'&select=*');
       for (const item of pedido.itens) {
         const est = estoque.find(e => e.produto_nome === item.sabor);
         if (!est) continue;
@@ -1557,7 +1599,7 @@ async function salvarEdicaoPedido() {
 
 async function estornarEstoquePedido(pedido) {
   try {
-    const estoque = await supaFetch('estoque?select=*');
+    const estoque = await supaFetch('estoque?estabelecimento_id=eq.'+estabelecimentoId+'&select=*');
     await fetch(SUPABASE_URL+'/rest/v1/estoque_movimentos?pedido_id=eq.'+pedido.id+'&tipo=eq.saida_pedido', {
       method:'DELETE', headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
     });
@@ -1579,7 +1621,7 @@ async function salvarOuAtualizarCliente(nome, tel, end) {
       await supaFetch('clientes?telefone=eq.'+encodeURIComponent(tel),'PATCH',{ nome, endereco:end });
     } else {
       await supaFetch('clientes','POST',{ nome, telefone:tel, endereco:end });
-      todosClientes = await supaFetch('clientes?order=nome.asc');
+      todosClientes = await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&order=nome.asc');
     }
   } catch(e) {}
 }
@@ -1625,11 +1667,11 @@ function getRangeQuery(secao) {
 
 async function carregarRelatorios() {
   try {
-    if (!todosClientes.length) todosClientes = await supaFetch('clientes?order=nome.asc');
+    if (!todosClientes.length) todosClientes = await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&order=nome.asc');
     const range = getRangeQuery('rel');
-    const data = await supaFetch('pedidos?'+(range?range+'&':'')+'order=criado_em.desc');
+    const data = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&'+(range?range+'&':'')+'order=criado_em.desc');
     const pags = await supaFetch('pagamentos?select=*');
-    todosPedidosCache = await supaFetch('pedidos?order=criado_em.asc'); // histórico completo para médias
+    todosPedidosCache = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&order=criado_em.asc'); // histórico completo para médias
 
     const recebido = pags.filter(p => data.find(d=>d.id===p.pedido_id)).reduce((s,p)=>s+parseFloat(p.valor),0);
     const clientes = [...new Set(data.map(p=>p.cliente_telefone))].length;
@@ -1705,7 +1747,7 @@ async function selecionarClienteRelatorio(tel, nome) {
   document.getElementById('rel-autocomplete-list').classList.remove('show');
   document.getElementById('rel-geral-content').style.display = 'none';
 
-  todosPedidosCache = await supaFetch('pedidos?order=criado_em.asc');
+  todosPedidosCache = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&order=criado_em.asc');
   const pedidosCliente = todosPedidosCache.filter(p => p.cliente_telefone === tel);
   const totalCookies = pedidosCliente.reduce((s,p) => s + p.itens.reduce((a,i)=>a+i.quantidade,0), 0);
   const totalGasto = pedidosCliente.reduce((s,p) => s + parseFloat(p.total), 0);
@@ -1757,7 +1799,7 @@ function limparFiltroClienteRelatorio() {
 async function carregarFinanceiro() {
   try {
     const range = getRangeQuery('fin');
-    const data = await supaFetch('pedidos?'+(range?range+'&':'')+'order=criado_em.desc');
+    const data = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&'+(range?range+'&':'')+'order=criado_em.desc');
     const todosIds = data.map(d=>d.id);
     const pags = todosIds.length ? await supaFetch('pagamentos?pedido_id=in.('+todosIds.join(',')+')'): [];
 
@@ -1932,8 +1974,8 @@ function enviarExtratoWhatsapp() {
 let clientesCache=[];
 async function carregarClientes() {
   try {
-    clientesCache = await supaFetch('clientes?order=nome.asc');
-    todosPedidosCache = await supaFetch('pedidos?order=criado_em.asc'); // sempre busca dados frescos
+    clientesCache = await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&order=nome.asc');
+    todosPedidosCache = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&order=criado_em.asc'); // sempre busca dados frescos
 
     // Calcula média semanal e últimos 7 dias para cada cliente
     clientesCache.forEach(c => {
@@ -2051,7 +2093,7 @@ async function abrirPerfilCliente(tel) {
   abrirModal('modal-perfil');
   document.getElementById('perfil-conteudo').innerHTML = '<div class="empty"><div class="spinner"></div></div>';
 
-  todosPedidosCache = await supaFetch('pedidos?order=criado_em.asc');
+  todosPedidosCache = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&order=criado_em.asc');
   const cliente = clientesCache.find(c => c.telefone === tel) || todosPedidosCache.filter(p=>p.cliente_telefone===tel).map(p=>({nome:p.cliente_nome,telefone:p.cliente_telefone}))[0];
   if (!cliente) { document.getElementById('perfil-conteudo').innerHTML = '<p>Cliente não encontrado.</p>'; return; }
 
@@ -2200,7 +2242,7 @@ function filtrarClientes(val) {
 let produtosAdmin=[];
 async function carregarCardapio() {
   try {
-    produtosAdmin = await supaFetch('produtos?order=id.asc');
+    produtosAdmin = await supaFetch('produtos?estabelecimento_id=eq.'+estabelecimentoId+'&order=id.asc');
     renderCardapio();
   } catch(e) {}
   await carregarMensagens();
@@ -2328,8 +2370,8 @@ let movimentosCache = [];
 async function carregarEstoque() {
   try {
     const [estoque, movimentos] = await Promise.all([
-      supaFetch('estoque?order=produto_nome.asc'),
-      supaFetch('estoque_movimentos?order=criado_em.desc&limit=200')
+      supaFetch('estoque?estabelecimento_id=eq.'+estabelecimentoId+'&order=produto_nome.asc'),
+      supaFetch('estoque_movimentos?estabelecimento_id=eq.'+estabelecimentoId+'&order=criado_em.desc&limit=200')
     ]);
     estoqueCache = estoque;
     movimentosCache = movimentos;
