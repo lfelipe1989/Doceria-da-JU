@@ -1062,7 +1062,9 @@ async function carregarPedidos() {
   try {
     const periodo = periodos.ped || 'hoje';
     const range = getRangeQuery('ped');
-    const query = range ? 'pedidos?'+range+'&order=criado_em.desc' : 'pedidos?order=criado_em.desc';
+    const query = range
+      ? 'pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&'+range+'&order=criado_em.desc'
+      : 'pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&order=criado_em.desc';
     const [pedidos, pags] = await Promise.all([
       supaFetch(query),
       supaFetch('pagamentos?estabelecimento_id=eq.'+estabelecimentoId+'&select=*&order=criado_em.desc')
@@ -1688,11 +1690,11 @@ async function estornarEstoquePedido(pedido) {
 
 async function salvarOuAtualizarCliente(nome, tel, end) {
   try {
-    const existe = await supaFetch('clientes?telefone=eq.'+encodeURIComponent(tel));
+    const existe = await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&telefone=eq.'+encodeURIComponent(tel));
     if (existe && existe.length > 0) {
-      await supaFetch('clientes?telefone=eq.'+encodeURIComponent(tel),'PATCH',{ nome, endereco:end });
+      await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&telefone=eq.'+encodeURIComponent(tel),'PATCH',{ nome, endereco:end });
     } else {
-      await supaFetch('clientes','POST',{ nome, telefone:tel, endereco:end });
+      await supaFetch('clientes','POST',{ nome, telefone:tel, endereco:end, estabelecimento_id:estabelecimentoId });
       todosClientes = await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&order=nome.asc');
     }
   } catch(e) {}
@@ -1742,7 +1744,7 @@ async function carregarRelatorios() {
     if (!todosClientes.length) todosClientes = await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&order=nome.asc');
     const range = getRangeQuery('rel');
     const data = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&'+(range?range+'&':'')+'order=criado_em.desc');
-    const pags = await supaFetch('pagamentos?select=*');
+    const pags = await supaFetch('pagamentos?estabelecimento_id=eq.'+estabelecimentoId+'&select=*');
     todosPedidosCache = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&order=criado_em.asc'); // histórico completo para médias
 
     const recebido = pags.filter(p => data.find(d=>d.id===p.pedido_id)).reduce((s,p)=>s+parseFloat(p.valor),0);
