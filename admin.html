@@ -1268,7 +1268,7 @@ async function salvarPagamento() {
   const obs = document.getElementById('pay-obs').value.trim();
   if (!valor || valor <= 0) { alert('Digite um valor válido!'); return; }
   try {
-    await supaFetch('pagamentos','POST',{ pedido_id:pedidoPagamentoId, valor, meio, observacao:obs });
+    await supaFetch('pagamentos','POST',{ pedido_id:pedidoPagamentoId, valor, meio, observacao:obs, estabelecimento_id:estabelecimentoId });
     fecharModal('modal-pagamento');
     showToast('✓ Pagamento registrado!');
     await carregarPedidos();
@@ -1586,11 +1586,12 @@ async function executarExclusaoPedido() {
         if (!est) continue;
         const novaQtd = est.quantidade + item.quantidade;
         await supaFetch('estoque?produto_nome=eq.'+encodeURIComponent(item.sabor), 'PATCH', { quantidade: novaQtd });
-        await supaFetch('estoque_movimentos', 'POST', {
+        await supaFetch('estoque_movimentos','POST',{
           produto_nome: item.sabor,
           tipo: 'entrada_ajuste',
           quantidade: item.quantidade,
-          observacao: 'Estorno — pedido #'+modoEdicaoId+' excluído'
+          observacao: 'Estorno — pedido #'+modoEdicaoId+' excluído',
+          estabelecimento_id: estabelecimentoId
         });
       }
     }
@@ -1682,7 +1683,7 @@ async function estornarEstoquePedido(pedido) {
       if (!est) continue;
       await Promise.all([
         supaFetch('estoque?produto_nome=eq.'+encodeURIComponent(item.sabor), 'PATCH', {quantidade: est.quantidade + item.quantidade}),
-        supaFetch('estoque_movimentos', 'POST', {produto_nome:item.sabor, tipo:'entrada_ajuste', quantidade:item.quantidade, observacao:'Estorno edição — pedido #'+pedido.id})
+        supaFetch('estoque_movimentos', 'POST', {produto_nome:item.sabor, tipo:'entrada_ajuste', quantidade:item.quantidade, observacao:'Estorno edição — pedido #'+pedido.id, estabelecimento_id:estabelecimentoId})
       ]);
     }
   } catch(e) { console.error('Erro ao estornar estoque:', e); }
@@ -2142,12 +2143,11 @@ async function salvarEdicaoCliente() {
     // Atualiza também os pedidos existentes com o telefone antigo para manter consistência
     const clienteAntigo = clientesCache.find(x => x.id == id);
     if (clienteAntigo && clienteAntigo.telefone !== tel) {
-      await supaFetch('pedidos?cliente_telefone=eq.'+encodeURIComponent(clienteAntigo.telefone), 'PATCH', {
+      await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&cliente_telefone=eq.'+encodeURIComponent(clienteAntigo.telefone), 'PATCH', {
         cliente_nome: nome, cliente_telefone: tel, cliente_endereco: end
       });
     } else if (clienteAntigo) {
-      // Atualiza nome e endereço mesmo que o telefone não mudou
-      await supaFetch('pedidos?cliente_telefone=eq.'+encodeURIComponent(tel), 'PATCH', {
+      await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&cliente_telefone=eq.'+encodeURIComponent(tel), 'PATCH', {
         cliente_nome: nome, cliente_endereco: end
       });
     }
@@ -2553,7 +2553,7 @@ async function salvarMovimento() {
   try {
     // Registra o movimento
     await supaFetch('estoque_movimentos', 'POST', {
-      produto_nome: produto, tipo, quantidade: qtd, observacao: obs, criado_em: criadoEm
+      produto_nome: produto, tipo, quantidade: qtd, observacao: obs, criado_em: criadoEm, estabelecimento_id: estabelecimentoId
     });
     // Atualiza o saldo no estoque
     await supaFetch('estoque?produto_nome=eq.'+encodeURIComponent(produto), 'PATCH', {
