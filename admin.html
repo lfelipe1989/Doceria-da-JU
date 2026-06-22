@@ -646,6 +646,9 @@
       <div class="nav-item" onclick="showPage('clientes',this)"><span class="nav-icon">👥</span><span>Clientes</span></div>
       <div class="nav-item" onclick="showPage('cardapio',this)"><span class="nav-icon">🍫</span><span>Cardápio</span></div>
       <div class="nav-item" onclick="showPage('estoque',this)"><span class="nav-icon">📦</span><span>Estoque</span></div>
+      <div class="nav-item" onclick="fazerLogout()" style="margin-top:auto;color:rgba(242,167,195,0.4);">
+        <span class="nav-icon">🚪</span><span>Sair</span>
+      </div>
     </nav>
   </aside>
 
@@ -945,14 +948,29 @@ async function doLogin() {
 
 function ativarAdmin(usuario) {
   usuarioLogado = usuario;
+  estabelecimentoId = usuario.estabelecimento_id || 1;
+  // Atualiza nome do estabelecimento no sidebar
+  supaFetch('estabelecimentos?id=eq.'+estabelecimentoId).then(res => {
+    if (res && res[0]) {
+      document.querySelector('.sidebar-logo .s-title').textContent = res[0].nome;
+    }
+  }).catch(()=>{});
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('main-layout').style.display = 'flex';
-  sessionStorage.setItem('ju-admin', JSON.stringify({ id: estabelecimentoId, nome: usuario.nome }));
+  sessionStorage.setItem('ju-admin', JSON.stringify({
+    id: estabelecimentoId,
+    nome: usuario.nome,
+    email: usuario.email || ''
+  }));
   iniciar();
 }
 
+function fazerLogout() {
+  sessionStorage.removeItem('ju-admin');
+  location.reload();
+}
+
 async function iniciar() {
-  // Atualiza nome no sidebar se disponível
   const stored = sessionStorage.getItem('ju-admin');
   if (stored) {
     try {
@@ -967,19 +985,23 @@ async function iniciar() {
   setInterval(carregarPedidos, 30000);
 }
 
-// Verifica sessão existente
+// Verifica sessão existente — só entra direto se tiver sessão válida com id
 const _stored = sessionStorage.getItem('ju-admin');
 if (_stored) {
   try {
     const d = JSON.parse(_stored);
-    estabelecimentoId = d.id || 1;
+    if (d && d.id) {
+      estabelecimentoId = d.id;
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('main-layout').style.display='flex';
+      iniciar();
+    } else {
+      sessionStorage.removeItem('ju-admin');
+    }
   } catch(e) {
-    // compatibilidade com sessão antiga (valor '1')
-    estabelecimentoId = 1;
+    // Sessão antiga inválida — limpa e exige login
+    sessionStorage.removeItem('ju-admin');
   }
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('main-layout').style.display='flex';
-  iniciar();
 }
 
 // ── API ────────────────────────────────────
