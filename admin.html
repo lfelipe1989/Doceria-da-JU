@@ -264,6 +264,9 @@
   .estoque-alerta { background:#FEF3E2; border:1px solid #F0C84A; border-radius:10px; padding:0.75rem 1rem; font-size:0.83rem; color:#7A5C00; margin-bottom:1rem; display:none; }
   .estoque-alerta.show { display:block; }
 
+  .exp-periodo-btn { padding:8px; border-radius:8px; border:1px solid var(--pink-border); background:white; color:var(--muted); font-size:0.82rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s; }
+  .exp-periodo-btn.active { background:var(--tiffany); color:white; border-color:var(--tiffany); font-weight:500; }
+
   .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:var(--brown); color:var(--pink); padding:0.75rem 1.25rem; border-radius:10px; font-size:0.85rem; box-shadow:0 4px 20px rgba(0,0,0,0.2); transform:translateY(100px); opacity:0; transition:all 0.3s; z-index:1000; }
   .toast.show { transform:translateY(0); opacity:1; }
 
@@ -485,6 +488,50 @@
   </div>
 </div>
 
+<!-- MODAL EXPORTAR -->
+<div class="modal-overlay" id="modal-exportar">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-exportar')">✕</button>
+    <div class="modal-title">📥 Exportar dados</div>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1.25rem;">Escolha o período e o que deseja exportar. O arquivo será baixado em Excel (.xlsx) pronto para abrir no Google Sheets ou Excel.</p>
+
+    <div class="form-group">
+      <label class="form-label">Período</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0.5rem;">
+        <button class="exp-periodo-btn active" data-p="hoje" onclick="selecionarPeriodoExp(this)">Hoje</button>
+        <button class="exp-periodo-btn" data-p="semana" onclick="selecionarPeriodoExp(this)">Esta semana</button>
+        <button class="exp-periodo-btn" data-p="mes" onclick="selecionarPeriodoExp(this)">Este mês</button>
+        <button class="exp-periodo-btn" data-p="tudo" onclick="selecionarPeriodoExp(this)">Tudo</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;" id="exp-custom-datas" style="display:none;">
+        <input type="date" id="exp-dt-ini" class="form-input" style="flex:1;"/>
+        <span style="font-size:0.8rem;color:var(--muted);">até</span>
+        <input type="date" id="exp-dt-fim" class="form-input" style="flex:1;"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">O que exportar</label>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.88rem;">
+          <input type="checkbox" id="exp-pedidos" checked style="width:16px;height:16px;accent-color:var(--tiffany);"/> Pedidos completos
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.88rem;">
+          <input type="checkbox" id="exp-clientes" checked style="width:16px;height:16px;accent-color:var(--tiffany);"/> Clientes
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.88rem;">
+          <input type="checkbox" id="exp-financeiro" checked style="width:16px;height:16px;accent-color:var(--tiffany);"/> Pagamentos e financeiro
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.88rem;">
+          <input type="checkbox" id="exp-estoque" style="width:16px;height:16px;accent-color:var(--tiffany);"/> Movimentações de estoque
+        </label>
+      </div>
+    </div>
+
+    <button onclick="executarExportacao()" id="btn-exportar" style="width:100%;padding:0.9rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">📥 Baixar Excel</button>
+  </div>
+</div>
+
 <!-- MODAL EXTRATO -->
 <div class="modal-overlay" id="modal-extrato">
   <div class="modal">
@@ -651,7 +698,10 @@
 
     <!-- RELATÓRIOS -->
     <div id="page-relatorios" class="page">
-      <h1 class="page-title">Relatórios de vendas</h1>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px;">
+        <h1 class="page-title" style="margin:0;">Relatórios de vendas</h1>
+        <button onclick="abrirModalExportar()" style="background:var(--green-bg);color:var(--green);border:1px solid #A5D5B5;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:0.85rem;font-family:'DM Sans',sans-serif;font-weight:500;">📥 Exportar dados</button>
+      </div>
       <div class="periodo-bar">
         <button class="periodo-btn active" onclick="selecionarPeriodo('rel','hoje',this)">Hoje</button>
         <button class="periodo-btn" onclick="selecionarPeriodo('rel','semana',this)">Esta semana</button>
@@ -2527,6 +2577,178 @@ function filtrarMovimentos() {
       <span class="${eh_entrada?'mov-qtd-pos':'mov-qtd-neg'}" style="min-width:50px;text-align:right;">${eh_entrada?'+':'-'}${m.quantidade}</span>
     </div>`;
   }).join('') : '<p style="text-align:center;color:var(--muted);padding:1.5rem;font-size:0.85rem;">Nenhuma movimentação encontrada.</p>';
+}
+
+// ── EXPORTAÇÃO ─────────────────────────────
+let expPeriodo = 'hoje';
+
+function abrirModalExportar() { abrirModal('modal-exportar'); }
+
+function selecionarPeriodoExp(el) {
+  document.querySelectorAll('.exp-periodo-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  expPeriodo = el.dataset.p;
+  document.getElementById('exp-custom-datas').style.display = expPeriodo === 'custom' ? 'flex' : 'none';
+}
+
+function getRangeExp() {
+  const agora = new Date();
+  const brt = new Date(agora.toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}));
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  if (expPeriodo === 'hoje') return `criado_em=gte.${fmt(brt)}T00:00:00-03:00`;
+  if (expPeriodo === 'semana') { const i=new Date(brt); i.setDate(brt.getDate()-brt.getDay()); return `criado_em=gte.${fmt(i)}T00:00:00-03:00`; }
+  if (expPeriodo === 'mes') { const i=new Date(brt.getFullYear(),brt.getMonth(),1); return `criado_em=gte.${fmt(i)}T00:00:00-03:00`; }
+  if (expPeriodo === 'custom') {
+    const ini = document.getElementById('exp-dt-ini').value;
+    const fim = document.getElementById('exp-dt-fim').value;
+    if (ini && fim) return `criado_em=gte.${ini}T00:00:00-03:00&criado_em=lte.${fim}T23:59:59-03:00`;
+  }
+  return ''; // tudo
+}
+
+async function executarExportacao() {
+  const btn = document.getElementById('btn-exportar');
+  btn.textContent = '⏳ Gerando...'; btn.disabled = true;
+
+  try {
+    const range = getRangeExp();
+    const wb = { SheetNames:[], Sheets:{} };
+
+    // ── ABA PEDIDOS ──
+    if (document.getElementById('exp-pedidos').checked) {
+      const pedidos = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+(range?'&'+range:'')+'&order=criado_em.desc');
+      const pags = await supaFetch('pagamentos?estabelecimento_id=eq.'+estabelecimentoId+'&select=*');
+      const rows = pedidos.map(p => {
+        const pagsPed = pags.filter(pg => pg.pedido_id === p.id);
+        const totalPago = pagsPed.reduce((s,pg)=>s+parseFloat(pg.valor),0);
+        const data = new Date(p.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
+        const hora = new Date(p.criado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'});
+        return {
+          'Data': data,
+          'Hora': hora,
+          'Cliente': p.cliente_nome,
+          'Telefone': p.cliente_telefone,
+          'Endereço': p.cliente_endereco,
+          'Itens': p.itens.map(i=>i.quantidade+'x '+i.sabor).join(', '),
+          'Total cookies': p.itens.reduce((s,i)=>s+i.quantidade,0),
+          'Valor (R$)': parseFloat(p.total).toFixed(2).replace('.',','),
+          'Pago (R$)': totalPago.toFixed(2).replace('.',','),
+          'Em aberto (R$)': Math.max(0, parseFloat(p.total)-totalPago).toFixed(2).replace('.',','),
+          'Status': {waiting:'Aguardando',accepted:'Aceito',preparing:'Em preparo',delivery:'Em entrega',done:'Entregue'}[p.status]||p.status,
+          'Entrega': p.tipo_entrega==='sul'?'Sul da Ilha':'Outro bairro',
+          'Observações': p.observacoes||'',
+        };
+      });
+      const ws = csvParaSheet(rows);
+      wb.SheetNames.push('Pedidos');
+      wb.Sheets['Pedidos'] = ws;
+    }
+
+    // ── ABA CLIENTES ──
+    if (document.getElementById('exp-clientes').checked) {
+      const clientes = await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&order=nome.asc');
+      const pedidosTodos = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&select=cliente_telefone,total,itens');
+      const rows = clientes.map(c => {
+        const pedsCli = pedidosTodos.filter(p => p.cliente_telefone === c.telefone);
+        const totalGasto = pedsCli.reduce((s,p)=>s+parseFloat(p.total),0);
+        const totalCookies = pedsCli.reduce((s,p)=>s+p.itens.reduce((a,i)=>a+i.quantidade,0),0);
+        return {
+          'Nome': c.nome,
+          'Telefone': c.telefone,
+          'Endereço': c.endereco||'',
+          'Total pedidos': pedsCli.length,
+          'Total cookies': totalCookies,
+          'Total gasto (R$)': totalGasto.toFixed(2).replace('.',','),
+          'Cadastrado em': new Date(c.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}),
+        };
+      });
+      const ws = csvParaSheet(rows);
+      wb.SheetNames.push('Clientes');
+      wb.Sheets['Clientes'] = ws;
+    }
+
+    // ── ABA FINANCEIRO ──
+    if (document.getElementById('exp-financeiro').checked) {
+      const pags = await supaFetch('pagamentos?estabelecimento_id=eq.'+estabelecimentoId+(range?'&'+range:'')+'&order=criado_em.desc');
+      const pedidosTodos = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&select=id,cliente_nome,cliente_telefone,total');
+      const rows = pags.map(pg => {
+        const ped = pedidosTodos.find(p=>p.id===pg.pedido_id);
+        return {
+          'Data': new Date(pg.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}),
+          'Hora': new Date(pg.criado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'}),
+          'Cliente': ped?.cliente_nome||'',
+          'Telefone': ped?.cliente_telefone||'',
+          'Meio': pg.meio,
+          'Valor (R$)': parseFloat(pg.valor).toFixed(2).replace('.',','),
+          'Observação': pg.observacao||'',
+          'Pedido #': pg.pedido_id,
+        };
+      });
+      const ws = csvParaSheet(rows);
+      wb.SheetNames.push('Pagamentos');
+      wb.Sheets['Pagamentos'] = ws;
+    }
+
+    // ── ABA ESTOQUE ──
+    if (document.getElementById('exp-estoque').checked) {
+      const movs = await supaFetch('estoque_movimentos?estabelecimento_id=eq.'+estabelecimentoId+(range?'&'+range:'')+'&order=criado_em.desc');
+      const tipoLabel = {entrada_producao:'Produção',entrada_ajuste:'Entrada ajuste',saida_pedido:'Saída pedido',saida_ajuste:'Saída ajuste'};
+      const rows = movs.map(m => ({
+        'Data': new Date(m.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}),
+        'Hora': new Date(m.criado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'}),
+        'Sabor': m.produto_nome,
+        'Tipo': tipoLabel[m.tipo]||m.tipo,
+        'Quantidade': (m.tipo.startsWith('entrada')?'+':'-')+m.quantidade,
+        'Pedido #': m.pedido_id||'',
+        'Observação': m.observacao||'',
+      }));
+      const ws = csvParaSheet(rows);
+      wb.SheetNames.push('Estoque');
+      wb.Sheets['Estoque'] = ws;
+    }
+
+    if (!wb.SheetNames.length) { alert('Selecione pelo menos uma opção!'); btn.textContent='📥 Baixar Excel'; btn.disabled=false; return; }
+
+    // Gera o arquivo e faz download
+    const brt = new Date(new Date().toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}));
+    const pad = n=>String(n).padStart(2,'0');
+    const nomeArq = `doceria-ju-${brt.getFullYear()}${pad(brt.getMonth()+1)}${pad(brt.getDate())}.csv`;
+
+    // Exporta como CSV (compatível com Google Sheets sem plugin)
+    const csvContent = '\uFEFF' + wb.SheetNames.map(nome => {
+      const ws = wb.Sheets[nome];
+      return `=== ${nome} ===\n` + ws._csv;
+    }).join('\n\n');
+
+    const blob = new Blob([csvContent], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = nomeArq; a.click();
+    URL.revokeObjectURL(url);
+
+    fecharModal('modal-exportar');
+    showToast('✅ Arquivo exportado com sucesso!');
+  } catch(e) {
+    console.error('Erro na exportação:', e);
+    showToast('Erro ao exportar. Verifique o console.');
+  } finally {
+    btn.textContent = '📥 Baixar Excel'; btn.disabled = false;
+  }
+}
+
+function csvParaSheet(rows) {
+  if (!rows.length) return { _csv:'' };
+  const headers = Object.keys(rows[0]);
+  const escape = v => {
+    const s = String(v??'');
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g,'""')}"` : s;
+  };
+  const csv = [
+    headers.map(escape).join(','),
+    ...rows.map(r => headers.map(h => escape(r[h]??'')).join(','))
+  ].join('\n');
+  return { _csv: csv };
 }
 
 function showPage(id,el) {
