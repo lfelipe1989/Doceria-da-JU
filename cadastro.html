@@ -184,18 +184,61 @@ async function criarConta() {
   try {
     const nome = document.getElementById('s1-nome').value.trim();
     const slug = document.getElementById('s1-slug').value.trim();
+    const nomeUser = document.getElementById('s2-nome').value.trim();
+    const email = document.getElementById('s2-email').value.trim();
+    const senha = document.getElementById('s2-senha').value;
+
+    // Verifica slug novamente antes de criar
+    const slugExiste = await supaFetch('estabelecimentos?slug=eq.'+slug);
+    if (slugExiste && slugExiste.length > 0) {
+      btn.textContent = '✓ Criar minha conta'; btn.disabled = false;
+      document.getElementById('err-slug').classList.add('show');
+      irStep(1);
+      return;
+    }
+
+    // Verifica se email já existe
+    const emailExiste = await supaFetch('usuarios?email=eq.'+encodeURIComponent(email));
+    if (emailExiste && emailExiste.length > 0) {
+      btn.textContent = '✓ Criar minha conta'; btn.disabled = false;
+      alert('Este e-mail já está cadastrado. Use outro ou faça login.');
+      return;
+    }
+
+    // Cria o estabelecimento
     const res = await supaFetch('estabelecimentos','POST',{ nome, slug, plano:'trial', mensalidade:0, vencimento_dia:5 });
     const estabId = res[0].id;
-    await supaFetch('usuarios','POST',{ estabelecimento_id:estabId, nome:document.getElementById('s2-nome').value.trim(), email:document.getElementById('s2-email').value.trim(), senha_hash:document.getElementById('s2-senha').value, papel:'admin' });
 
-    // Cria produtos padrão para o estabelecimento
-    await supaFetch('produtos','POST',{ nome:'Produto 1', emoji:'🛍️', descricao:'Clique em Cardápio para personalizar', preco:10.00, ativo:true, estabelecimento_id:estabId });
+    // Cria o usuário admin
+    await supaFetch('usuarios','POST',{ estabelecimento_id:estabId, nome:nomeUser, email, senha_hash:senha, papel:'admin' });
+
+    // Cria produto padrão
+    await supaFetch('produtos','POST',{ nome:'Produto 1', emoji:'🛍️', descricao:'Personalize no Cardápio', preco:10.00, ativo:true, estabelecimento_id:estabId });
+
+    // Cria estoque inicial zerado
+    const saboresPadrao = [
+      {produto_nome:'Produto 1', quantidade:0, estabelecimento_id:estabId}
+    ];
+    for (const s of saboresPadrao) {
+      await supaFetch('estoque','POST', s);
+    }
+
+    // Cria mensagens padrão
+    const msgs = [
+      {chave:'msg_cobranca', valor:'Olá, {NOME}! 🎉\n\nSeu pedido foi recebido!\n\n📦 *Itens:*\n{ITENS}\n\n💰 *Total: {TOTAL}*\n\nEnvie o pagamento pelo link:\n👉 [LINK DO PAGAMENTO]\n\nObrigado! 💕', estabelecimento_id:estabId},
+      {chave:'msg_extrato', valor:'📋 *Extrato em aberto — {NOME}*\n━━━━━━━━━━━━━━\n{EXTRATO}\n━━━━━━━━━━━━━━\nAceitamos Pix, cartão e dinheiro. 💕', estabelecimento_id:estabId},
+      {chave:'msg_reativacao', valor:'Olá, {NOME}! 😊\n\nSentimos sua falta! Que tal fazer um pedido essa semana?', estabelecimento_id:estabId},
+    ];
+    for (const m of msgs) {
+      await supaFetch('configuracoes','POST', m);
+    }
 
     document.getElementById('link-acesso').textContent = window.location.origin+'/admin.html';
     irStep('sucesso');
   } catch(e) {
+    console.error('Erro ao criar conta:', e);
     btn.textContent = '✓ Criar minha conta'; btn.disabled = false;
-    alert('Erro ao criar conta. Tente novamente.');
+    alert('Erro ao criar conta: ' + e.message);
   }
 }
 
