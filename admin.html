@@ -604,7 +604,9 @@
     <div style="display:flex;gap:10px;">
       <div class="form-group" style="flex:2;">
         <label class="form-label">Nome da receita (sabor/produto)</label>
-        <input class="form-input" type="text" id="rec-nome" placeholder="Ex: Nutella, Red Velvet..."/>
+        <select class="form-input" id="rec-nome">
+          <option value="">Selecione o produto do cardápio...</option>
+        </select>
       </div>
       <div class="form-group" style="flex:1;">
         <label class="form-label">Rendimento (unidades)</label>
@@ -3061,17 +3063,31 @@ async function salvarEntradaInsumo() {
 function abrirModalReceita(id) {
   document.getElementById('rec-id').value = id || '';
   document.getElementById('rec-ingredientes-lista').innerHTML = '';
+  ingLinhaCount = 0;
+
+  // Monta o select com produtos do cardápio
+  const nomesComReceita = receitasCache.map(r => r.produto_nome);
+  const select = document.getElementById('rec-nome');
+  select.innerHTML = '<option value="">Selecione o produto do cardápio...</option>' +
+    produtosAdmin.map(p => {
+      const jaTemReceita = nomesComReceita.includes(p.nome) && (!id || receitasCache.find(r=>r.id==id)?.produto_nome !== p.nome);
+      return `<option value="${p.nome}" ${jaTemReceita?'disabled':''} ${jaTemReceita?'style="color:var(--muted);"':''}>
+        ${p.emoji||'🛍️'} ${p.nome}${jaTemReceita?' (já tem receita)':''}
+      </option>`;
+    }).join('');
+
   if (id) {
     const r = receitasCache.find(x => x.id === id);
     if (!r) return;
     document.getElementById('modal-receita-titulo').textContent = '✏️ Editar receita — '+r.produto_nome;
-    document.getElementById('rec-nome').value = r.produto_nome;
+    select.value = r.produto_nome;
+    select.disabled = true; // não pode trocar o produto de uma receita existente
     document.getElementById('rec-rendimento').value = r.rendimento;
     const ings = receitaIngredientesCache[id] || [];
     ings.forEach(ing => addIngredienteModal(ing.insumo_id, ing.quantidade, ing.id));
   } else {
     document.getElementById('modal-receita-titulo').textContent = '📋 Nova receita';
-    document.getElementById('rec-nome').value = '';
+    select.disabled = false;
     document.getElementById('rec-rendimento').value = '';
     addIngredienteModal();
   }
@@ -3128,7 +3144,7 @@ async function salvarReceita() {
   const id = document.getElementById('rec-id').value;
   const nome = document.getElementById('rec-nome').value.trim();
   const rendimento = parseInt(document.getElementById('rec-rendimento').value)||1;
-  if (!nome) { alert('Informe o nome da receita!'); return; }
+  if (!nome) { alert('Selecione o produto do cardápio!'); return; }
 
   const ingredientes = [];
   let valido = true;
@@ -3153,6 +3169,7 @@ async function salvarReceita() {
     for (const ing of ingredientes) {
       await supaFetch('receita_ingredientes','POST',{receita_id:receitaId, insumo_id:ing.insumo_id, quantidade:ing.quantidade});
     }
+    document.getElementById('rec-nome').disabled = false;
     fecharModal('modal-receita');
     showToast('✓ Receita salva!');
     await carregarInventario();
@@ -3203,8 +3220,28 @@ salvarMovimento = async function() {
   const produto = document.getElementById('est-produto').value;
   const qtd = parseInt(document.getElementById('est-qtd').value);
   await _salvarMovimentoOriginal();
-  if (tipo === 'entrada_producao' && produto && qtd > 0 && insumosCache.length) {
-    await baixarInsumosProducao(produto, qtd);
+  if (tipo === 'entrada_producao' && produto && qtd > 0) {
+    // Garante que o cache do inventário está carregado
+    if (!insumosCache.length || !receitasCache.length) {
+      try {
+        const [insumos, receitas] = await Promise.all([
+          supaFetch('insumos?estabelecimento_id=eq.'+estabelecimentoId+'&order=nome.asc'),
+          supaFetch('receitas?estabelecimento_id=eq.'+estabelecimentoId),
+        ]);
+        insumosCache = insumos;
+        receitasCache = receitas;
+        if (receitas.length) {
+          const ids = receitas.map(r=>r.id).join(',');
+          const ings = await supaFetch('receita_ingredientes?receita_id=in.('+ids+')');
+          receitasCache.forEach(r => { receitaIngredientesCache[r.id] = ings.filter(i => i.receita_id === r.id); });
+        }
+      } catch(e) { console.error('Erro ao carregar inventário para baixa:', e); return; }
+    }
+    const receita = receitasCache.find(r => r.produto_nome === produto);
+    if (receita) {
+      await baixarInsumosProducao(produto, qtd);
+      showToast('✓ Insumos baixados no inventário!');
+    }
   }
 };
 
