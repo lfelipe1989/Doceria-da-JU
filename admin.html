@@ -3070,9 +3070,12 @@ function abrirModalInsumo(id) {
     document.getElementById('ins-estoque-ini').placeholder = 'Deixe vazio para não alterar o estoque atual';
 
     document.getElementById('ins-calc-titulo').textContent = '💰 Custo atual cadastrado';
-    // Placeholders sem exemplos na edição
-    document.getElementById('ins-preco-total').placeholder = 'Novo preço pago (opcional)';
-    document.getElementById('ins-qtd-compra').placeholder = 'Nova quantidade comprada (opcional)';
+    document.getElementById('ins-preco-total').placeholder = '';
+    document.getElementById('ins-qtd-compra').placeholder = '';
+
+    // Preenche com os valores reais salvos
+    document.getElementById('ins-preco-total').value = i.preco_compra > 0 ? i.preco_compra : '';
+    document.getElementById('ins-qtd-compra').value = i.qtd_compra > 0 ? i.qtd_compra : '';
 
     // Mostra custo atual com destaque
     if (i.preco_por_unidade > 0) {
@@ -3120,17 +3123,21 @@ async function salvarInsumo() {
   const unidade = document.getElementById('ins-unidade').value;
   const estoque_minimo = parseFloat(document.getElementById('ins-minimo').value)||0;
   const preco_por_unidade = parseFloat(document.getElementById('ins-preco').value)||0;
+  const preco_compra = parseFloat(document.getElementById('ins-preco-total').value)||0;
+  const qtd_compra = parseFloat(document.getElementById('ins-qtd-compra').value)||0;
   const estoque_ini = document.getElementById('ins-estoque-ini').value;
   if (!nome) { alert('Informe o nome do insumo!'); return; }
   try {
     if (id) {
       const patch = {nome, unidade, estoque_minimo, preco_por_unidade};
+      if (preco_compra > 0) patch.preco_compra = preco_compra;
+      if (qtd_compra > 0) patch.qtd_compra = qtd_compra;
       if (estoque_ini !== '') patch.estoque_atual = parseFloat(estoque_ini)||0;
       await supaFetch('insumos?id=eq.'+id, 'PATCH', patch);
       showToast('✓ Insumo atualizado!');
     } else {
       const estoque_atual = parseFloat(estoque_ini)||0;
-      const res = await supaFetch('insumos', 'POST', {nome, unidade, estoque_minimo, preco_por_unidade, estoque_atual, estabelecimento_id:estabelecimentoId});
+      const res = await supaFetch('insumos', 'POST', {nome, unidade, estoque_minimo, preco_por_unidade, preco_compra, qtd_compra, estoque_atual, estabelecimento_id:estabelecimentoId});
       if (estoque_atual > 0 && res && res[0]) {
         await supaFetch('insumo_movimentos','POST',{insumo_id:res[0].id, tipo:'entrada', quantidade:estoque_atual, observacao:'Estoque inicial', estabelecimento_id:estabelecimentoId});
       }
