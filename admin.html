@@ -538,11 +538,16 @@
     <button class="modal-close" onclick="fecharModal('modal-insumo')">✕</button>
     <div class="modal-title" id="modal-insumo-titulo">🧂 Novo insumo</div>
     <input type="hidden" id="ins-id"/>
-    <div class="form-group"><label class="form-label">Nome do insumo</label><input class="form-input" type="text" id="ins-nome" placeholder="Ex: Farinha de trigo"/></div>
+
+    <div class="form-group">
+      <label class="form-label">Nome do insumo</label>
+      <input class="form-input" type="text" id="ins-nome" placeholder="Ex: Nutella, Farinha de trigo..."/>
+    </div>
+
     <div style="display:flex;gap:10px;">
       <div class="form-group" style="flex:1;">
-        <label class="form-label">Unidade</label>
-        <select class="form-input" id="ins-unidade">
+        <label class="form-label">Unidade de controle</label>
+        <select class="form-input" id="ins-unidade" onchange="calcularPrecoPorUnidade()">
           <option value="g">g (gramas)</option>
           <option value="kg">kg (quilos)</option>
           <option value="ml">ml (mililitros)</option>
@@ -552,18 +557,53 @@
       </div>
       <div class="form-group" style="flex:1;">
         <label class="form-label">Estoque mínimo</label>
-        <input class="form-input" type="number" step="0.001" min="0" id="ins-minimo" placeholder="0"/>
+        <input class="form-input" type="number" step="1" min="0" id="ins-minimo" placeholder="Ex: 500"/>
       </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Preço por unidade (R$ por g, kg, ml, l ou un)</label>
-      <input class="form-input" type="number" step="0.0001" min="0" id="ins-preco" placeholder="Ex: 0,0085 por grama"/>
-      <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;">Dica: se o kg custa R$ 8,50, o preço por grama é 0,0085</div>
+
+    <div style="background:var(--cream);border-radius:12px;padding:1rem;margin-bottom:1rem;">
+      <div style="font-size:0.78rem;font-weight:500;color:var(--brown);margin-bottom:0.75rem;">💰 Calculadora de custo</div>
+      <div style="display:flex;gap:10px;margin-bottom:0.5rem;">
+        <div style="flex:1;">
+          <label class="form-label">Preço pago (R$)</label>
+          <input class="form-input" type="number" step="0.01" min="0" id="ins-preco-total" placeholder="Ex: 180,00" oninput="calcularPrecoPorUnidade()"/>
+        </div>
+        <div style="flex:1;">
+          <label class="form-label" id="ins-qtd-label">Quantidade comprada (g)</label>
+          <input class="form-input" type="number" step="1" min="0" id="ins-qtd-compra" placeholder="Ex: 3000" oninput="calcularPrecoPorUnidade()"/>
+        </div>
+      </div>
+      <!-- Resultado calculado -->
+      <div id="ins-custo-resultado" style="display:none;background:white;border-radius:8px;padding:0.65rem 0.9rem;font-size:0.85rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:var(--muted);">Custo por <span id="ins-custo-unidade-label">g</span>:</span>
+          <span style="font-weight:500;color:var(--tiffany-dark);" id="ins-custo-calculado">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:0.75rem;color:var(--muted);">
+          <span>Custo por kg:</span>
+          <span id="ins-custo-kg">—</span>
+        </div>
+      </div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:6px;">
+        Ex: Pote de Nutella 3kg por R$ 180 → coloque 180 e 3000g → custo: R$ 0,06/g
+      </div>
     </div>
+
+    <!-- Campo avançado: preço manual (editável) -->
     <div class="form-group">
-      <label class="form-label">Estoque inicial (quantidade disponível agora)</label>
-      <input class="form-input" type="number" step="0.001" min="0" id="ins-estoque-ini" placeholder="0"/>
+      <label class="form-label" style="display:flex;justify-content:space-between;">
+        <span>Custo por <span id="ins-unidade-label2">g</span> (calculado automaticamente)</span>
+        <button onclick="togglePrecoManual()" style="background:none;border:none;color:var(--tiffany-dark);font-size:0.72rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✏️ editar manual</button>
+      </label>
+      <input class="form-input" type="number" step="0.000001" min="0" id="ins-preco" placeholder="0,000000" readonly style="background:var(--pink-pale);color:var(--muted);"/>
     </div>
+
+    <div class="form-group">
+      <label class="form-label">Estoque inicial (quanto você tem agora)</label>
+      <input class="form-input" type="number" step="1" min="0" id="ins-estoque-ini" placeholder="0"/>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:3px;">Deixe vazio ao editar para não alterar o estoque atual</div>
+    </div>
+
     <div style="display:flex;gap:8px;margin-top:0.5rem;">
       <button onclick="fecharModal('modal-insumo')" style="flex:1;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
       <button onclick="salvarInsumo()" style="flex:2;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">✓ Salvar</button>
@@ -2968,8 +3008,56 @@ function trocarTabInv(tab, el) {
 }
 
 // ── MODAL INSUMO ───────────────────────────
+function calcularPrecoPorUnidade() {
+  const precoTotal = parseFloat(document.getElementById('ins-preco-total').value) || 0;
+  const qtdCompra = parseFloat(document.getElementById('ins-qtd-compra').value) || 0;
+  const unidade = document.getElementById('ins-unidade').value;
+
+  // Atualiza labels de unidade
+  document.getElementById('ins-qtd-label').textContent = `Quantidade comprada (${unidade})`;
+  document.getElementById('ins-custo-unidade-label').textContent = unidade;
+  document.getElementById('ins-unidade-label2').textContent = unidade;
+
+  if (precoTotal > 0 && qtdCompra > 0) {
+    const custoPorUnidade = precoTotal / qtdCompra;
+    document.getElementById('ins-preco').value = custoPorUnidade.toFixed(6);
+    document.getElementById('ins-custo-calculado').textContent = 'R$ ' + custoPorUnidade.toFixed(6).replace('.', ',');
+
+    // Mostra também o custo por kg/l se unidade for g ou ml
+    const custoKgEl = document.getElementById('ins-custo-kg');
+    if (unidade === 'g') {
+      custoKgEl.textContent = 'R$ ' + (custoPorUnidade * 1000).toFixed(4).replace('.', ',') + ' /kg';
+      custoKgEl.parentElement.style.display = 'flex';
+    } else if (unidade === 'ml') {
+      custoKgEl.textContent = 'R$ ' + (custoPorUnidade * 1000).toFixed(4).replace('.', ',') + ' /litro';
+      custoKgEl.parentElement.style.display = 'flex';
+    } else {
+      custoKgEl.parentElement.style.display = 'none';
+    }
+    document.getElementById('ins-custo-resultado').style.display = 'block';
+  } else {
+    document.getElementById('ins-custo-resultado').style.display = 'none';
+  }
+}
+
+function togglePrecoManual() {
+  const input = document.getElementById('ins-preco');
+  const isReadonly = input.readOnly;
+  input.readOnly = !isReadonly;
+  input.style.background = isReadonly ? 'white' : 'var(--pink-pale)';
+  input.style.color = isReadonly ? 'var(--text)' : 'var(--muted)';
+  if (!input.readOnly) input.focus();
+}
+
 function abrirModalInsumo(id) {
   document.getElementById('ins-id').value = id || '';
+  document.getElementById('ins-preco-total').value = '';
+  document.getElementById('ins-qtd-compra').value = '';
+  document.getElementById('ins-custo-resultado').style.display = 'none';
+  document.getElementById('ins-preco').readOnly = true;
+  document.getElementById('ins-preco').style.background = 'var(--pink-pale)';
+  document.getElementById('ins-preco').style.color = 'var(--muted)';
+
   if (id) {
     const i = insumosCache.find(x => x.id === id);
     if (!i) return;
@@ -2980,6 +3068,12 @@ function abrirModalInsumo(id) {
     document.getElementById('ins-preco').value = i.preco_por_unidade;
     document.getElementById('ins-estoque-ini').value = '';
     document.getElementById('ins-estoque-ini').placeholder = 'Deixe vazio para não alterar o estoque atual';
+    // Mostra o preço atual já calculado
+    if (i.preco_por_unidade > 0) {
+      document.getElementById('ins-custo-calculado').textContent = 'R$ ' + parseFloat(i.preco_por_unidade).toFixed(6).replace('.', ',');
+      document.getElementById('ins-custo-unidade-label').textContent = i.unidade;
+      document.getElementById('ins-custo-resultado').style.display = 'block';
+    }
   } else {
     document.getElementById('modal-insumo-titulo').textContent = '🧂 Novo insumo';
     document.getElementById('ins-nome').value = '';
@@ -2989,6 +3083,13 @@ function abrirModalInsumo(id) {
     document.getElementById('ins-estoque-ini').value = '';
     document.getElementById('ins-estoque-ini').placeholder = '0';
   }
+
+  // Atualiza labels com a unidade atual
+  const unidade = document.getElementById('ins-unidade').value;
+  document.getElementById('ins-qtd-label').textContent = `Quantidade comprada (${unidade})`;
+  document.getElementById('ins-custo-unidade-label').textContent = unidade;
+  document.getElementById('ins-unidade-label2').textContent = unidade;
+
   abrirModal('modal-insumo');
 }
 
