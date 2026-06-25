@@ -562,7 +562,7 @@
     </div>
 
     <div style="background:var(--cream);border-radius:12px;padding:1rem;margin-bottom:1rem;">
-      <div style="font-size:0.78rem;font-weight:500;color:var(--brown);margin-bottom:0.75rem;">💰 Calculadora de custo</div>
+      <div style="font-size:0.78rem;font-weight:500;color:var(--brown);margin-bottom:0.75rem;" id="ins-calc-titulo">💰 Calculadora de custo</div>
       <div style="display:flex;gap:10px;margin-bottom:0.5rem;">
         <div style="flex:1;">
           <label class="form-label">Preço pago (R$)</label>
@@ -3068,10 +3068,28 @@ function abrirModalInsumo(id) {
     document.getElementById('ins-preco').value = i.preco_por_unidade;
     document.getElementById('ins-estoque-ini').value = '';
     document.getElementById('ins-estoque-ini').placeholder = 'Deixe vazio para não alterar o estoque atual';
-    // Mostra o preço atual já calculado
+
+    document.getElementById('ins-calc-titulo').textContent = '💰 Custo atual cadastrado';
+    // Placeholders sem exemplos na edição
+    document.getElementById('ins-preco-total').placeholder = 'Novo preço pago (opcional)';
+    document.getElementById('ins-qtd-compra').placeholder = 'Nova quantidade comprada (opcional)';
+
+    // Mostra custo atual com destaque
     if (i.preco_por_unidade > 0) {
-      document.getElementById('ins-custo-calculado').textContent = 'R$ ' + parseFloat(i.preco_por_unidade).toFixed(6).replace('.', ',');
+      const preco = parseFloat(i.preco_por_unidade);
+      document.getElementById('ins-custo-calculado').textContent = 'R$ ' + preco.toFixed(6).replace('.', ',');
       document.getElementById('ins-custo-unidade-label').textContent = i.unidade;
+      // Linha de kg/l
+      const custoKgEl = document.getElementById('ins-custo-kg');
+      if (i.unidade === 'g') {
+        custoKgEl.textContent = 'R$ ' + (preco * 1000).toFixed(4).replace('.', ',') + ' /kg';
+        custoKgEl.parentElement.style.display = 'flex';
+      } else if (i.unidade === 'ml') {
+        custoKgEl.textContent = 'R$ ' + (preco * 1000).toFixed(4).replace('.', ',') + ' /litro';
+        custoKgEl.parentElement.style.display = 'flex';
+      } else {
+        custoKgEl.parentElement.style.display = 'none';
+      }
       document.getElementById('ins-custo-resultado').style.display = 'block';
     }
   } else {
@@ -3082,6 +3100,9 @@ function abrirModalInsumo(id) {
     document.getElementById('ins-preco').value = '';
     document.getElementById('ins-estoque-ini').value = '';
     document.getElementById('ins-estoque-ini').placeholder = '0';
+    document.getElementById('ins-calc-titulo').textContent = '💰 Calculadora de custo';
+    document.getElementById('ins-preco-total').placeholder = 'Ex: 180,00';
+    document.getElementById('ins-qtd-compra').placeholder = 'Ex: 3000';
   }
 
   // Atualiza labels com a unidade atual
