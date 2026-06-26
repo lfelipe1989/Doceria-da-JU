@@ -264,6 +264,10 @@
   .estoque-alerta { background:#FEF3E2; border:1px solid #F0C84A; border-radius:10px; padding:0.75rem 1rem; font-size:0.83rem; color:#7A5C00; margin-bottom:1rem; display:none; }
   .estoque-alerta.show { display:block; }
 
+  .inv-mov-btn { padding:0.65rem;border-radius:10px;border:1.5px solid var(--border);background:white;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;transition:all 0.15s;text-align:center; }
+  .inv-mov-btn.active { border-color:var(--tiffany);background:var(--tiffany-pale);color:var(--tiffany-dark);font-weight:500; }
+  .inv-mov-btn.active-red { border-color:var(--red);background:var(--red-bg);color:var(--red);font-weight:500; }
+
   .exp-periodo-btn { padding:8px; border-radius:8px; border:1px solid var(--pink-border); background:white; color:var(--muted); font-size:0.82rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s; }
   .exp-periodo-btn.active { background:var(--tiffany); color:white; border-color:var(--tiffany); font-weight:500; }
 
@@ -615,22 +619,39 @@
 <div class="modal-overlay" id="modal-entrada-insumo">
   <div class="modal">
     <button class="modal-close" onclick="fecharModal('modal-entrada-insumo')">✕</button>
-    <div class="modal-title" id="modal-entrada-titulo">📥 Entrada de insumo</div>
+    <div class="modal-title" id="modal-entrada-titulo">📦 Movimentação de insumo</div>
     <input type="hidden" id="entrada-ins-id"/>
-    <div class="form-group"><label class="form-label">Quantidade</label><input class="form-input" type="number" step="0.001" min="0" id="entrada-qtd" placeholder="Ex: 500"/></div>
+
     <div class="form-group">
-      <label class="form-label">Tipo</label>
-      <div style="display:flex;gap:8px;">
-        <label style="flex:1;background:var(--pink-pale);border:1.5px solid transparent;border-radius:10px;padding:0.65rem;text-align:center;cursor:pointer;font-size:0.85rem;" id="lbl-entrada-compra">
-          <input type="radio" name="entrada-tipo" value="entrada" checked style="display:none;"/> 🛒 Compra
-        </label>
-        <label style="flex:1;background:white;border:1.5px solid var(--border);border-radius:10px;padding:0.65rem;text-align:center;cursor:pointer;font-size:0.85rem;" id="lbl-entrada-ajuste">
-          <input type="radio" name="entrada-tipo" value="entrada_ajuste" style="display:none;"/> 📋 Ajuste
-        </label>
+      <label class="form-label">Tipo de movimentação</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button type="button" class="inv-mov-btn active" id="btn-mov-compra" onclick="selecionarMovInsumo('entrada','btn-mov-compra')">
+          🛒 Compra
+        </button>
+        <button type="button" class="inv-mov-btn" id="btn-mov-ajuste-in" onclick="selecionarMovInsumo('entrada_ajuste','btn-mov-ajuste-in')">
+          📋 Ajuste entrada
+        </button>
+        <button type="button" class="inv-mov-btn" id="btn-mov-ajuste-out" onclick="selecionarMovInsumo('saida_ajuste','btn-mov-ajuste-out')">
+          📤 Ajuste saída
+        </button>
+        <button type="button" class="inv-mov-btn" id="btn-mov-descarte" onclick="selecionarMovInsumo('saida_descarte','btn-mov-descarte')">
+          🗑️ Descarte/Perda
+        </button>
       </div>
+      <input type="hidden" id="entrada-tipo" value="entrada"/>
     </div>
-    <div class="form-group"><label class="form-label">Observação (opcional)</label><input class="form-input" type="text" id="entrada-obs" placeholder="Ex: Compra mercado, nota fiscal 123..."/></div>
-    <button onclick="salvarEntradaInsumo()" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">✓ Confirmar entrada</button>
+
+    <div class="form-group">
+      <label class="form-label" id="entrada-qtd-label">Quantidade (g)</label>
+      <input class="form-input" type="number" step="0.001" min="0" id="entrada-qtd" placeholder="Ex: 500"/>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Observação (opcional)</label>
+      <input class="form-input" type="text" id="entrada-obs" placeholder="Ex: Compra mercado, nota fiscal 123..."/>
+    </div>
+
+    <button onclick="salvarEntradaInsumo()" id="btn-confirmar-mov" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">✓ Confirmar entrada</button>
   </div>
 </div>
 
@@ -1185,9 +1206,11 @@
           </select>
           <select id="inv-filtro-tipo" onchange="filtrarMovInsumos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'DM Sans',sans-serif;color:var(--text);background:white;">
             <option value="">Todos os tipos</option>
-            <option value="entrada">Entrada</option>
-            <option value="saida_producao">Saída produção</option>
-            <option value="saida_ajuste">Saída ajuste</option>
+            <option value="entrada">🛒 Compra</option>
+            <option value="entrada_ajuste">📋 Ajuste entrada</option>
+            <option value="saida_producao">🧁 Saída produção</option>
+            <option value="saida_ajuste">📋 Ajuste saída</option>
+            <option value="saida_descarte">🗑️ Descarte</option>
           </select>
           <input type="date" id="inv-filtro-data" onchange="filtrarMovInsumos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'DM Sans',sans-serif;color:var(--text);"/>
         </div>
@@ -3071,8 +3094,8 @@ function filtrarMovInsumos() {
   if (filtroTipo) movs = movs.filter(m => m.tipo === filtroTipo);
   if (filtroData) movs = movs.filter(m => new Date(m.criado_em).toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}) === filtroData);
 
-  const tipoLabel = {entrada:'🛒 Compra',entrada_ajuste:'📋 Ajuste entrada',saida_producao:'🧁 Produção',saida_ajuste:'📋 Ajuste saída'};
-  const tipoColor = {entrada:'mov-producao',entrada_ajuste:'mov-ajuste-in',saida_producao:'mov-saida-pedido',saida_ajuste:'mov-ajuste-out'};
+  const tipoLabel = {entrada:'🛒 Compra',entrada_ajuste:'📋 Ajuste entrada',saida_producao:'🧁 Produção',saida_ajuste:'📋 Ajuste saída',saida_descarte:'🗑️ Descarte'};
+  const tipoColor = {entrada:'mov-producao',entrada_ajuste:'mov-ajuste-in',saida_producao:'mov-saida-pedido',saida_ajuste:'mov-ajuste-out',saida_descarte:'mov-ajuste-out'};
 
   document.getElementById('inv-mov-lista').innerHTML = movs.length ? movs.map(m => {
     const insumo = insumosCache.find(i => i.id === m.insumo_id);
@@ -3252,32 +3275,62 @@ async function excluirInsumo(id, nome) {
 }
 
 // ── ENTRADA DE INSUMO ──────────────────────
+function selecionarMovInsumo(tipo, btnId) {
+  // Reset todos os botões
+  document.querySelectorAll('.inv-mov-btn').forEach(b => {
+    b.classList.remove('active','active-red');
+  });
+  // Ativa o clicado
+  const btn = document.getElementById(btnId);
+  const isSaida = tipo.startsWith('saida');
+  btn.classList.add(isSaida ? 'active-red' : 'active');
+  document.getElementById('entrada-tipo').value = tipo;
+  // Atualiza botão de confirmar e label
+  const confirmBtn = document.getElementById('btn-confirmar-mov');
+  if (isSaida) {
+    confirmBtn.style.background = 'var(--red)';
+    confirmBtn.textContent = '✓ Confirmar saída';
+  } else {
+    confirmBtn.style.background = 'var(--tiffany)';
+    confirmBtn.textContent = '✓ Confirmar entrada';
+  }
+}
+
 function abrirEntradaInsumo(id, nome, unidade) {
   document.getElementById('entrada-ins-id').value = id;
-  document.getElementById('modal-entrada-titulo').textContent = '📥 Entrada — '+nome+' ('+unidade+')';
+  document.getElementById('modal-entrada-titulo').textContent = '📦 Movimentação — '+nome+' ('+unidade+')';
   document.getElementById('entrada-qtd').value = '';
+  document.getElementById('entrada-qtd-label').textContent = 'Quantidade ('+unidade+')';
   document.getElementById('entrada-obs').value = '';
-  document.querySelectorAll('input[name="entrada-tipo"]')[0].checked = true;
+  // Reset seleção para Compra
+  selecionarMovInsumo('entrada', 'btn-mov-compra');
   abrirModal('modal-entrada-insumo');
 }
 
 async function salvarEntradaInsumo() {
   const id = document.getElementById('entrada-ins-id').value;
   const qtd = parseFloat(document.getElementById('entrada-qtd').value);
-  const tipo = document.querySelector('input[name="entrada-tipo"]:checked').value;
+  const tipo = document.getElementById('entrada-tipo').value;
   const obs = document.getElementById('entrada-obs').value.trim();
   if (!qtd || qtd <= 0) { alert('Informe uma quantidade válida!'); return; }
   const insumo = insumosCache.find(x => x.id == id);
-  const novoEstoque = (parseFloat(insumo?.estoque_atual)||0) + qtd;
+  const isSaida = tipo.startsWith('saida');
+  const novoEstoque = isSaida
+    ? Math.max(0, (parseFloat(insumo?.estoque_atual)||0) - qtd)
+    : (parseFloat(insumo?.estoque_atual)||0) + qtd;
   try {
     await Promise.all([
       supaFetch('insumos?id=eq.'+id, 'PATCH', {estoque_atual: novoEstoque}),
-      supaFetch('insumo_movimentos','POST',{insumo_id:parseInt(id), tipo, quantidade:qtd, observacao:obs, estabelecimento_id:estabelecimentoId})
+      supaFetch('insumo_movimentos','POST',{
+        insumo_id:parseInt(id), tipo,
+        quantidade: qtd, observacao: obs,
+        estabelecimento_id: estabelecimentoId
+      })
     ]);
     fecharModal('modal-entrada-insumo');
-    showToast('✓ Entrada registrada!');
+    showToast(isSaida ? '✓ Saída registrada!' : '✓ Entrada registrada!');
     await carregarInventario();
-  } catch(e) { showToast('Erro ao registrar entrada.'); }
+  } catch(e) { showToast('Erro ao registrar movimentação.'); }
 }
 
 // ── MODAL RECEITA ──────────────────────────
