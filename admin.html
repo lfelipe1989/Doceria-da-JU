@@ -536,6 +536,17 @@
   </div>
 </div>
 
+<!-- MODAL LISTA DE COMPRAS -->
+<div class="modal-overlay" id="modal-lista-compras">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-lista-compras')">✕</button>
+    <div class="modal-title">🛒 Lista de compras</div>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">Insumos abaixo do estoque mínimo, em ordem alfabética.</p>
+    <div id="lista-compras-conteudo"></div>
+    <button onclick="copiarListaCompras()" style="width:100%;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;margin-top:1rem;">📋 Copiar lista</button>
+  </div>
+</div>
+
 <!-- MODAL INSUMO -->
 <div class="modal-overlay" id="modal-insumo">
   <div class="modal">
@@ -606,6 +617,22 @@
       <label class="form-label">Estoque inicial (quanto você tem agora)</label>
       <input class="form-input" type="number" step="1" min="0" id="ins-estoque-ini" placeholder="0"/>
       <div style="font-size:0.7rem;color:var(--muted);margin-top:3px;">Deixe vazio ao editar para não alterar o estoque atual</div>
+    </div>
+
+    <div style="background:var(--pink-pale);border-radius:12px;padding:1rem;margin-bottom:1rem;">
+      <div style="font-size:0.78rem;font-weight:500;color:var(--brown);margin-bottom:0.75rem;">📦 Embalagem (opcional)</div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.75rem;">Use para visualizar o estoque em embalagens (ex: caixas, sacos) sem afetar os cálculos de receita que continuam em gramas.</div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:2;">
+          <label class="form-label">Nome da embalagem</label>
+          <input class="form-input" type="text" id="ins-emb-nome" placeholder="Ex: caixa, saco, pote, lata..."/>
+        </div>
+        <div style="flex:1;">
+          <label class="form-label" id="ins-emb-qtd-label">Quantidade por embalagem (g)</label>
+          <input class="form-input" type="number" step="1" min="0" id="ins-emb-qtd" placeholder="Ex: 395" oninput="calcularEmbalagemPreview()"/>
+        </div>
+      </div>
+      <div id="ins-emb-preview" style="display:none;margin-top:8px;font-size:0.8rem;color:var(--tiffany-dark);background:white;border-radius:8px;padding:0.5rem 0.75rem;"></div>
     </div>
 
     <div style="display:flex;gap:8px;margin-top:0.5rem;">
@@ -1189,6 +1216,9 @@
           <div class="metric"><div class="metric-val" id="inv-total-insumos">—</div><div class="metric-lbl">Insumos cadastrados</div></div>
           <div class="metric"><div class="metric-val" id="inv-alertas" style="color:var(--red);">—</div><div class="metric-lbl">Abaixo do mínimo</div></div>
           <div class="metric"><div class="metric-val" id="inv-valor-total">—</div><div class="metric-lbl">Valor em estoque</div></div>
+          <div class="metric" style="display:flex;align-items:center;justify-content:center;">
+            <button onclick="abrirListaCompras()" style="background:var(--pink);color:white;border:none;border-radius:10px;padding:0.6rem 1rem;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;cursor:pointer;text-align:center;line-height:1.3;">🛒 Lista de<br/>compras</button>
+          </div>
         </div>
         <div id="insumos-lista"><div class="empty"><div class="spinner"></div></div></div>
       </div>
@@ -2967,6 +2997,76 @@ function formatQtd(qtd, unidade) {
   return n % 1 === 0 ? n+' '+unidade : n.toFixed(3).replace(/\.?0+$/,'')+' '+unidade;
 }
 
+function calcularEmbalagemPreview() {
+  const nome = document.getElementById('ins-emb-nome').value.trim();
+  const qtd = parseFloat(document.getElementById('ins-emb-qtd').value)||0;
+  const estoqueAtual = parseFloat(document.getElementById('ins-estoque-ini').value)||0;
+  const preview = document.getElementById('ins-emb-preview');
+  if (nome && qtd > 0) {
+    preview.style.display = 'block';
+    const embs = estoqueAtual > 0 ? (estoqueAtual / qtd).toFixed(1) : '—';
+    preview.textContent = `📦 Cada ${nome} tem ${qtd}g · Estoque atual ≈ ${embs} ${nome}(s)`;
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+function formatQtdComEmbalagem(insumo) {
+  const base = formatQtd(insumo.estoque_atual, insumo.unidade);
+  if (insumo.embalagem_nome && insumo.embalagem_qtd > 0) {
+    const embs = (parseFloat(insumo.estoque_atual) / parseFloat(insumo.embalagem_qtd)).toFixed(1);
+    return `${base} <span style="color:var(--muted);font-size:0.75rem;">(${embs} ${insumo.embalagem_nome})</span>`;
+  }
+  return base;
+}
+
+function abrirListaCompras() {
+  const baixos = insumosCache
+    .filter(i => parseFloat(i.estoque_atual) < parseFloat(i.estoque_minimo))
+    .sort((a,b) => a.nome.localeCompare(b.nome));
+
+  const el = document.getElementById('lista-compras-conteudo');
+  if (!baixos.length) {
+    el.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--green);">✅ Estoque em dia! Nada para comprar no momento.</div>';
+  } else {
+    el.innerHTML = baixos.map(i => {
+      const falta = Math.max(0, parseFloat(i.estoque_minimo) - parseFloat(i.estoque_atual));
+      let embHtml = '';
+      if (i.embalagem_nome && i.embalagem_qtd > 0) {
+        const embs = Math.ceil(falta / i.embalagem_qtd);
+        embHtml = `<span style="color:var(--tiffany-dark);font-size:0.78rem;">≈ ${embs} ${i.embalagem_nome}(s)</span>`;
+      }
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-weight:500;font-size:0.9rem;">${i.nome}</div>
+          ${embHtml}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:0.8rem;color:var(--muted);">Atual: ${formatQtd(i.estoque_atual,i.unidade)}</div>
+          <div style="font-size:0.85rem;color:var(--red);font-weight:500;">Mín: ${formatQtd(i.estoque_minimo,i.unidade)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  abrirModal('modal-lista-compras');
+}
+
+function copiarListaCompras() {
+  const baixos = insumosCache
+    .filter(i => parseFloat(i.estoque_atual) < parseFloat(i.estoque_minimo))
+    .sort((a,b) => a.nome.localeCompare(b.nome));
+  if (!baixos.length) { showToast('Nada para copiar!'); return; }
+  const texto = '🛒 Lista de compras\n\n' + baixos.map(i => {
+    const falta = Math.max(0, parseFloat(i.estoque_minimo) - parseFloat(i.estoque_atual));
+    let linha = `• ${i.nome} — mín: ${formatQtd(i.estoque_minimo,i.unidade)}`;
+    if (i.embalagem_nome && i.embalagem_qtd > 0) {
+      linha += ` (≈ ${Math.ceil(falta/i.embalagem_qtd)} ${i.embalagem_nome})`;
+    }
+    return linha;
+  }).join('\n');
+  navigator.clipboard.writeText(texto).then(() => showToast('✓ Lista copiada!')).catch(() => showToast('Erro ao copiar.'));
+}
+
 function renderInsumosLista() {
   const el = document.getElementById('insumos-lista');
   if (!insumosCache.length) { el.innerHTML='<p style="color:var(--muted);text-align:center;padding:2rem;font-size:0.85rem;">Nenhum insumo cadastrado. Clique em "+ Novo insumo" para começar.</p>'; return; }
@@ -2974,24 +3074,26 @@ function renderInsumosLista() {
     const pct = i.estoque_minimo > 0 ? Math.min(100, Math.round((i.estoque_atual/i.estoque_minimo)*100)) : 100;
     const cor = pct >= 100 ? 'var(--green)' : pct >= 50 ? '#B08000' : 'var(--red)';
     const valorEstoque = (parseFloat(i.estoque_atual)||0) * (parseFloat(i.preco_por_unidade)||0);
+    // Mostra em gramas + embalagem
+    const qtdDisplay = formatQtdComEmbalagem(i);
     return `<div class="order-card" style="margin-bottom:8px;">
       <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
         <div style="flex:1;min-width:150px;">
           <div style="font-weight:500;font-size:0.95rem;">${i.nome}</div>
           <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">
-            Preço: R$ ${parseFloat(i.preco_por_unidade||0).toFixed(4).replace('.',',')} / ${i.unidade}
-            · Valor em estoque: R$ ${valorEstoque.toFixed(2).replace('.',',')}
+            R$ ${parseFloat(i.preco_por_unidade||0).toFixed(4).replace('.',',')} / ${i.unidade}
+            · Valor: R$ ${valorEstoque.toFixed(2).replace('.',',')}
           </div>
         </div>
-        <div style="text-align:center;min-width:120px;">
-          <div style="font-size:1.3rem;font-weight:500;color:${cor};">${formatQtd(i.estoque_atual,i.unidade)}</div>
+        <div style="text-align:center;min-width:140px;">
+          <div style="font-size:1.3rem;font-weight:500;color:${cor};">${qtdDisplay}</div>
           <div style="font-size:0.7rem;color:var(--muted);">mín: ${formatQtd(i.estoque_minimo,i.unidade)}</div>
           <div style="background:var(--border);border-radius:4px;height:4px;margin-top:4px;">
             <div style="background:${cor};height:4px;border-radius:4px;width:${pct}%;transition:width 0.3s;"></div>
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button class="action-btn" style="background:var(--green-bg);color:var(--green);border-color:#A5D5B5;" onclick="abrirEntradaInsumo(${i.id},'${i.nome.replace(/'/g,"\\'")}','${i.unidade}')">+ Entrada</button>
+          <button class="action-btn" style="background:var(--green-bg);color:var(--green);border-color:#A5D5B5;" onclick="abrirEntradaInsumo(${i.id},'${i.nome.replace(/'/g,"\\'")}','${i.unidade}')">+ Mov.</button>
           <button class="action-btn" style="background:var(--purple-bg);color:var(--purple);border-color:#CEBEF0;" onclick="abrirModalInsumo(${i.id})">✏️ Editar</button>
           <button class="action-btn btn-reject" onclick="excluirInsumo(${i.id},'${i.nome.replace(/'/g,"\\'")}')">🗑️</button>
         </div>
@@ -3192,6 +3294,12 @@ function abrirModalInsumo(id) {
     document.getElementById('ins-preco-total').value = i.preco_compra > 0 ? i.preco_compra : '';
     document.getElementById('ins-qtd-compra').value = i.qtd_compra > 0 ? i.qtd_compra : '';
 
+    // Embalagem
+    document.getElementById('ins-emb-nome').value = i.embalagem_nome || '';
+    document.getElementById('ins-emb-qtd').value = i.embalagem_qtd > 0 ? i.embalagem_qtd : '';
+    document.getElementById('ins-emb-qtd-label').textContent = `Quantidade por embalagem (${i.unidade})`;
+    document.getElementById('ins-emb-preview').style.display = 'none';
+
     // Mostra custo atual com destaque
     if (i.preco_por_unidade > 0) {
       const preco = parseFloat(i.preco_por_unidade);
@@ -3221,6 +3329,9 @@ function abrirModalInsumo(id) {
     document.getElementById('ins-calc-titulo').textContent = '💰 Calculadora de custo';
     document.getElementById('ins-preco-total').placeholder = 'Ex: 180,00';
     document.getElementById('ins-qtd-compra').placeholder = 'Ex: 3000';
+    document.getElementById('ins-emb-nome').value = '';
+    document.getElementById('ins-emb-qtd').value = '';
+    document.getElementById('ins-emb-preview').style.display = 'none';
   }
 
   // Atualiza labels com a unidade atual
@@ -3240,11 +3351,13 @@ async function salvarInsumo() {
   const preco_por_unidade = parseFloat(document.getElementById('ins-preco').value)||0;
   const preco_compra = parseFloat(document.getElementById('ins-preco-total').value)||0;
   const qtd_compra = parseFloat(document.getElementById('ins-qtd-compra').value)||0;
+  const embalagem_nome = document.getElementById('ins-emb-nome').value.trim();
+  const embalagem_qtd = parseFloat(document.getElementById('ins-emb-qtd').value)||0;
   const estoque_ini = document.getElementById('ins-estoque-ini').value;
   if (!nome) { alert('Informe o nome do insumo!'); return; }
   try {
     if (id) {
-      const patch = {nome, unidade, estoque_minimo, preco_por_unidade};
+      const patch = {nome, unidade, estoque_minimo, preco_por_unidade, embalagem_nome, embalagem_qtd};
       if (preco_compra > 0) patch.preco_compra = preco_compra;
       if (qtd_compra > 0) patch.qtd_compra = qtd_compra;
       if (estoque_ini !== '') patch.estoque_atual = parseFloat(estoque_ini)||0;
@@ -3252,7 +3365,7 @@ async function salvarInsumo() {
       showToast('✓ Insumo atualizado!');
     } else {
       const estoque_atual = parseFloat(estoque_ini)||0;
-      const res = await supaFetch('insumos', 'POST', {nome, unidade, estoque_minimo, preco_por_unidade, preco_compra, qtd_compra, estoque_atual, estabelecimento_id:estabelecimentoId});
+      const res = await supaFetch('insumos', 'POST', {nome, unidade, estoque_minimo, preco_por_unidade, preco_compra, qtd_compra, embalagem_nome, embalagem_qtd, estoque_atual, estabelecimento_id:estabelecimentoId});
       if (estoque_atual > 0 && res && res[0]) {
         await supaFetch('insumo_movimentos','POST',{insumo_id:res[0].id, tipo:'entrada', quantidade:estoque_atual, observacao:'Estoque inicial', estabelecimento_id:estabelecimentoId});
       }
