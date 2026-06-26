@@ -641,8 +641,8 @@
     <div class="modal-title" id="modal-receita-titulo">📋 Nova receita</div>
     <input type="hidden" id="rec-id"/>
 
-    <!-- TIPO DE RECEITA -->
-    <div class="form-group">
+    <!-- TIPO DE RECEITA — só aparece ao criar, não ao editar -->
+    <div class="form-group" id="rec-tipo-seletor">
       <label class="form-label">Tipo de receita</label>
       <div style="display:flex;gap:10px;margin-bottom:0.5rem;">
         <label style="flex:1;border:2px solid var(--tiffany);background:var(--tiffany-pale);border-radius:10px;padding:0.65rem;text-align:center;cursor:pointer;font-size:0.85rem;font-weight:500;" id="lbl-tipo-produto" onclick="selecionarTipoReceita('produto')">
@@ -3334,24 +3334,41 @@ function abrirModalReceita(id) {
     const r = receitasCache.find(x => x.id === id);
     if (!r) return;
     const tipo = r.tipo || 'produto';
-    document.getElementById('modal-receita-titulo').textContent = tipo === 'recheio' ? '✏️ Editar recheio — '+r.produto_nome : '✏️ Editar receita — '+r.produto_nome;
-    document.getElementById('rec-rendimento').value = r.rendimento;
-    selecionarTipoReceita(tipo);
+
+    // EDIÇÃO — esconde o seletor de tipo, tipo já está definido
+    document.getElementById('rec-tipo-seletor').style.display = 'none';
+    document.getElementById('rec-tipo').value = tipo;
+
     if (tipo === 'produto') {
+      document.getElementById('modal-receita-titulo').textContent = '✏️ Editar receita — '+r.produto_nome;
+      document.getElementById('rec-nome-grupo-produto').style.display = 'block';
+      document.getElementById('rec-nome-grupo-recheio').style.display = 'none';
+      document.getElementById('rec-recheio-secao').style.display = 'block'; // pode vincular/desvincular recheio
       selProd.value = r.produto_nome;
       selProd.disabled = true;
+      document.getElementById('rec-rendimento-label').textContent = 'Rendimento (unidades)';
+      if (r.recheio_id) {
+        document.getElementById('rec-usa-recheio').checked = true;
+        document.getElementById('rec-recheio-opcoes').style.display = 'block';
+        document.getElementById('rec-recheio-id').value = r.recheio_id;
+        document.getElementById('rec-recheio-qtd').value = r.recheio_qtd_por_unidade || '';
+      }
     } else {
+      // EDITAR RECHEIO — sem seletor de tipo, sem seção de recheio vinculado
+      document.getElementById('modal-receita-titulo').textContent = '✏️ Editar recheio — '+r.produto_nome;
+      document.getElementById('rec-nome-grupo-produto').style.display = 'none';
+      document.getElementById('rec-nome-grupo-recheio').style.display = 'block';
+      document.getElementById('rec-recheio-secao').style.display = 'none';
       document.getElementById('rec-nome-recheio').value = r.produto_nome;
+      document.getElementById('rec-rendimento-label').textContent = 'Rendimento (g ou porções)';
     }
-    if (r.recheio_id) {
-      document.getElementById('rec-usa-recheio').checked = true;
-      document.getElementById('rec-recheio-opcoes').style.display = 'block';
-      document.getElementById('rec-recheio-id').value = r.recheio_id;
-      document.getElementById('rec-recheio-qtd').value = r.recheio_qtd_por_unidade || '';
-    }
+
+    document.getElementById('rec-rendimento').value = r.rendimento;
     const ings = receitaIngredientesCache[id] || [];
     ings.forEach(ing => addIngredienteModal(ing.insumo_id, ing.quantidade, ing.id));
   } else {
+    // NOVO — mostra seletor de tipo
+    document.getElementById('rec-tipo-seletor').style.display = 'block';
     document.getElementById('modal-receita-titulo').textContent = '📋 Nova receita';
     selecionarTipoReceita('produto');
     selProd.disabled = false;
