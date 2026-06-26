@@ -3484,15 +3484,16 @@ async function excluirReceita(id, nome) {
 
 // ── INTEGRAÇÃO COM ESTOQUE (baixa insumos ao produzir) ────────
 async function baixarInsumosProducao(produtoNome, quantidade) {
-  // Busca receita do produto
-  const receita = receitasCache.find(r => r.produto_nome === produtoNome);
-  if (!receita) return; // sem receita cadastrada, não baixa
-  const ings = receitaIngredientesCache[receita.id] || [];
-  if (!ings.length) return;
+  // Busca receita do produto (tipo produto, não recheio)
+  const receita = receitasCache.find(r => r.produto_nome === produtoNome && r.tipo !== 'recheio');
+  if (!receita) return;
 
-  // Calcula lotes: quantos lotes (receitas) foram produzidos
+  // Calcula lotes baseado no rendimento da receita
   const lotes = Math.ceil(quantidade / receita.rendimento);
+  const obs = `Produção: ${quantidade} ${produtoNome} (${lotes} lote${lotes>1?'s':''})`;
 
+  // 1. Baixa ingredientes da receita principal
+  const ings = receitaIngredientesCache[receita.id] || [];
   for (const ing of ings) {
     const insumo = insumosCache.find(x => x.id === ing.insumo_id);
     if (!insumo) continue;
@@ -3503,9 +3504,42 @@ async function baixarInsumosProducao(produtoNome, quantidade) {
       supaFetch('insumo_movimentos','POST',{
         insumo_id: ing.insumo_id, tipo:'saida_producao',
         quantidade: qtdBaixar, estabelecimento_id: estabelecimentoId,
-        observacao: `Produção: ${quantidade} ${produtoNome} (${lotes} lote${lotes>1?'s':''})`
+        observacao: obs
       })
     ]);
+    // Atualiza cache local
+    insumo.estoque_atual = novoEstoque;
+  }
+
+  // 2. Se tem recheio vinculado, baixa os ingredientes do recheio também
+  if (receita.recheio_id && receita.recheio_qtd_por_unidade > 0) {
+    const receitaRecheio = receitasCache.find(r => r.id === receita.recheio_id);
+    if (receitaRecheio) {
+      const ingsRecheio = receitaIngredientesCache[receitaRecheio.id] || [];
+      // Quantidade total de recheio usada = qtd por unidade × total de unidades produzidas
+      const qtdTotalRecheio = receita.recheio_qtd_por_unidade * quantidade;
+      // Lotes do recheio necessários
+      const lotesRecheio = receitaRecheio.rendimento > 0
+        ? qtdTotalRecheio / receitaRecheio.rendimento
+        : 1;
+      const obsRecheio = `${obs} — recheio: ${qtdTotalRecheio}g de ${receitaRecheio.produto_nome}`;
+
+      for (const ing of ingsRecheio) {
+        const insumo = insumosCache.find(x => x.id === ing.insumo_id);
+        if (!insumo) continue;
+        const qtdBaixar = parseFloat(ing.quantidade) * lotesRecheio;
+        const novoEstoque = Math.max(0, parseFloat(insumo.estoque_atual) - qtdBaixar);
+        await Promise.all([
+          supaFetch('insumos?id=eq.'+ing.insumo_id, 'PATCH', {estoque_atual: novoEstoque}),
+          supaFetch('insumo_movimentos','POST',{
+            insumo_id: ing.insumo_id, tipo:'saida_producao',
+            quantidade: qtdBaixar, estabelecimento_id: estabelecimentoId,
+            observacao: obsRecheio
+          })
+        ]);
+        insumo.estoque_atual = novoEstoque;
+      }
+    }
   }
 }
 
