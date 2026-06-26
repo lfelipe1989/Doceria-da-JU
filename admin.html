@@ -641,39 +641,92 @@
     <div class="modal-title" id="modal-receita-titulo">📋 Nova receita</div>
     <input type="hidden" id="rec-id"/>
 
+    <!-- TIPO DE RECEITA -->
+    <div class="form-group">
+      <label class="form-label">Tipo de receita</label>
+      <div style="display:flex;gap:10px;margin-bottom:0.5rem;">
+        <label style="flex:1;border:2px solid var(--tiffany);background:var(--tiffany-pale);border-radius:10px;padding:0.65rem;text-align:center;cursor:pointer;font-size:0.85rem;font-weight:500;" id="lbl-tipo-produto" onclick="selecionarTipoReceita('produto')">
+          🍪 Produto do cardápio
+        </label>
+        <label style="flex:1;border:2px solid var(--border);background:white;border-radius:10px;padding:0.65rem;text-align:center;cursor:pointer;font-size:0.85rem;" id="lbl-tipo-recheio" onclick="selecionarTipoReceita('recheio')">
+          🥣 Recheio artesanal
+        </label>
+      </div>
+      <input type="hidden" id="rec-tipo" value="produto"/>
+    </div>
+
+    <!-- NOME: produto puxa do cardápio, recheio é texto livre -->
     <div style="display:flex;gap:10px;">
-      <div class="form-group" style="flex:2;">
-        <label class="form-label">Nome da receita (sabor/produto)</label>
-        <select class="form-input" id="rec-nome">
-          <option value="">Selecione o produto do cardápio...</option>
+      <div class="form-group" style="flex:2;" id="rec-nome-grupo-produto">
+        <label class="form-label">Produto do cardápio</label>
+        <select class="form-input" id="rec-nome-produto">
+          <option value="">Selecione o produto...</option>
         </select>
       </div>
+      <div class="form-group" style="flex:2;display:none;" id="rec-nome-grupo-recheio">
+        <label class="form-label">Nome do recheio</label>
+        <input class="form-input" type="text" id="rec-nome-recheio" placeholder="Ex: Recheio Red Velvet, Creme Oreo..."/>
+      </div>
       <div class="form-group" style="flex:1;">
-        <label class="form-label">Rendimento (unidades)</label>
-        <input class="form-input" type="number" min="1" id="rec-rendimento" placeholder="Ex: 20"/>
+        <label class="form-label" id="rec-rendimento-label">Rendimento (unidades)</label>
+        <input class="form-input" type="number" min="1" id="rec-rendimento" placeholder="Ex: 20" oninput="calcularCustoReceita()"/>
       </div>
     </div>
 
+    <!-- INGREDIENTES (insumos) -->
     <div class="form-group">
       <label class="form-label" style="margin-bottom:0.5rem;">Ingredientes</label>
       <div id="rec-ingredientes-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
       <button onclick="addIngredienteModal()" style="width:100%;padding:8px;background:var(--pink-pale);color:var(--pink-dark);border:1.5px dashed var(--pink-border);border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.85rem;">+ Adicionar ingrediente</button>
     </div>
 
+    <!-- RECHEIO (só aparece em receitas de produto) -->
+    <div id="rec-recheio-secao" class="form-group" style="background:var(--pink-pale);border-radius:12px;padding:1rem;">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.88rem;font-weight:500;margin-bottom:0.5rem;">
+        <input type="checkbox" id="rec-usa-recheio" onchange="toggleRecheioOpcao()" style="width:16px;height:16px;accent-color:var(--tiffany);"/>
+        🥣 Este produto usa recheio artesanal
+      </label>
+      <div id="rec-recheio-opcoes" style="display:none;margin-top:0.5rem;">
+        <div style="display:flex;gap:10px;">
+          <div style="flex:2;">
+            <label class="form-label">Qual recheio?</label>
+            <select class="form-input" id="rec-recheio-id" onchange="calcularCustoReceita()">
+              <option value="">Selecione o recheio...</option>
+            </select>
+          </div>
+          <div style="flex:1;">
+            <label class="form-label" id="rec-recheio-qtd-label">Quantidade usada (g)</label>
+            <input class="form-input" type="number" step="0.1" min="0" id="rec-recheio-qtd" placeholder="Ex: 15" oninput="calcularCustoReceita()"/>
+          </div>
+        </div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;">Quantidade de recheio usada em <strong>cada unidade</strong> do produto</div>
+      </div>
+    </div>
+
     <!-- CUSTO CALCULADO -->
-    <div style="background:var(--cream);border-radius:12px;padding:1rem;margin-top:0.5rem;" id="rec-custo-box">
+    <div style="background:var(--cream);border-radius:12px;padding:1rem;margin-top:0.75rem;" id="rec-custo-box">
       <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.5rem;">💰 Custo estimado</div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:0.85rem;">Custo total da receita</span>
-        <span style="font-weight:500;font-size:1rem;" id="rec-custo-total">R$ 0,00</span>
+        <span style="font-size:0.85rem;">Custo ingredientes</span>
+        <span style="font-weight:500;" id="rec-custo-ingredientes">R$ 0,00</span>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
-        <span style="font-size:0.85rem;">Custo por unidade</span>
-        <span style="font-weight:500;font-size:1rem;color:var(--tiffany-dark);" id="rec-custo-unit">R$ 0,00</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;" id="rec-custo-recheio-linha" style="display:none;">
+        <span style="font-size:0.85rem;">Custo recheio (total)</span>
+        <span style="font-weight:500;" id="rec-custo-recheio-val">R$ 0,00</span>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:0.75rem;color:var(--muted);">
-        <span>Rendimento</span>
-        <span id="rec-rendimento-display">0 unidades</span>
+      <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.85rem;font-weight:500;">Custo total do lote</span>
+          <span style="font-weight:500;font-size:1rem;" id="rec-custo-total">R$ 0,00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+          <span style="font-size:0.85rem;">Custo por unidade</span>
+          <span style="font-weight:500;color:var(--tiffany-dark);" id="rec-custo-unit">R$ 0,00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:0.75rem;color:var(--muted);">
+          <span>Rendimento</span>
+          <span id="rec-rendimento-display">0 unidades</span>
+        </div>
       </div>
     </div>
 
@@ -2927,40 +2980,79 @@ function renderInsumosLista() {
 function renderReceitasLista() {
   const el = document.getElementById('receitas-lista');
   if (!receitasCache.length) { el.innerHTML='<p style="color:var(--muted);text-align:center;padding:2rem;font-size:0.85rem;">Nenhuma receita cadastrada. Clique em "+ Nova receita" para começar.</p>'; return; }
-  el.innerHTML = receitasCache.map(r => {
+
+  const recheios = receitasCache.filter(r => r.tipo === 'recheio');
+  const produtos = receitasCache.filter(r => r.tipo !== 'recheio');
+
+  const renderCard = (r) => {
     const ings = receitaIngredientesCache[r.id] || [];
-    let custoTotal = 0;
+    let custoIngredientes = 0;
     const ingsHtml = ings.map(ing => {
       const insumo = insumosCache.find(x => x.id === ing.insumo_id);
       if (!insumo) return '';
       const custo = (parseFloat(ing.quantidade)||0) * (parseFloat(insumo.preco_por_unidade)||0);
-      custoTotal += custo;
+      custoIngredientes += custo;
       return `<div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;border-bottom:1px solid var(--border);">
         <span>${insumo.nome}</span>
         <span style="color:var(--muted);">${formatQtd(ing.quantidade,insumo.unidade)}</span>
         <span style="color:var(--brown);">R$ ${custo.toFixed(4).replace('.',',')}</span>
       </div>`;
     }).join('');
+
+    // Custo do recheio vinculado
+    let custoRecheio = 0;
+    let recheioHtml = '';
+    if (r.recheio_id && r.recheio_qtd_por_unidade > 0) {
+      const recReceita = receitasCache.find(x => x.id === r.recheio_id);
+      if (recReceita) {
+        const ingsRec = receitaIngredientesCache[recReceita.id] || [];
+        const custoLote = ingsRec.reduce((s,ing) => {
+          const ins = insumosCache.find(x=>x.id===ing.insumo_id);
+          return s + (parseFloat(ing.quantidade)||0)*(parseFloat(ins?.preco_por_unidade)||0);
+        },0);
+        const custoPorG = recReceita.rendimento > 0 ? custoLote/recReceita.rendimento : 0;
+        custoRecheio = custoPorG * r.recheio_qtd_por_unidade * r.rendimento;
+        recheioHtml = `<div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;border-bottom:1px solid var(--border);color:var(--pink-dark);">
+          <span>🥣 ${recReceita.produto_nome}</span>
+          <span>${r.recheio_qtd_por_unidade}g/un × ${r.rendimento} un</span>
+          <span>R$ ${custoRecheio.toFixed(4).replace('.',',')}</span>
+        </div>`;
+      }
+    }
+
+    const custoTotal = custoIngredientes + custoRecheio;
     const custoUnit = r.rendimento > 0 ? custoTotal/r.rendimento : 0;
-    return `<div class="order-card" style="margin-bottom:10px;">
+    const isRecheio = r.tipo === 'recheio';
+
+    return `<div class="order-card" style="margin-bottom:10px;${isRecheio?'border-color:var(--pink-border);':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;flex-wrap:wrap;gap:8px;">
         <div>
-          <div style="font-weight:500;font-size:1rem;">${r.produto_nome}</div>
-          <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">Rendimento: ${r.rendimento} unidades</div>
+          <div style="font-weight:500;font-size:1rem;">${isRecheio?'🥣 ':'🍪 '}${r.produto_nome}</div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">Rendimento: ${r.rendimento} ${isRecheio?'g/porções':'unidades'}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:0.75rem;color:var(--muted);">Custo do lote</div>
           <div style="font-weight:500;font-size:1.1rem;color:var(--brown);">R$ ${custoTotal.toFixed(2).replace('.',',')}</div>
-          <div style="font-size:0.78rem;color:var(--tiffany-dark);">R$ ${custoUnit.toFixed(4).replace('.',',')} / un</div>
+          <div style="font-size:0.78rem;color:var(--tiffany-dark);">R$ ${custoUnit.toFixed(4).replace('.',',')} / ${isRecheio?'g':'un'}</div>
         </div>
       </div>
-      ${ingsHtml ? `<div style="margin-bottom:0.75rem;">${ingsHtml}</div>` : '<p style="font-size:0.78rem;color:var(--muted);">Sem ingredientes cadastrados.</p>'}
-      <div style="display:flex;gap:6px;margin-top:0.5rem;">
-        <button class="action-btn" style="background:var(--purple-bg);color:var(--purple);border-color:#CEBEF0;" onclick="abrirModalReceita(${r.id})">✏️ Editar receita</button>
+      ${ingsHtml ? `<div style="margin-bottom:4px;">${ingsHtml}</div>` : ''}
+      ${recheioHtml}
+      <div style="display:flex;gap:6px;margin-top:0.75rem;">
+        <button class="action-btn" style="background:var(--purple-bg);color:var(--purple);border-color:#CEBEF0;" onclick="abrirModalReceita(${r.id})">✏️ Editar</button>
         <button class="action-btn btn-reject" onclick="excluirReceita(${r.id},'${r.produto_nome.replace(/'/g,"\\'")}')">🗑️ Excluir</button>
       </div>
     </div>`;
-  }).join('');
+  };
+
+  let html = '';
+  if (recheios.length) {
+    html += `<div style="font-size:0.78rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem;">🥣 Recheios artesanais</div>`;
+    html += recheios.map(renderCard).join('');
+    html += `<div style="margin:1rem 0 0.5rem;font-size:0.78rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">🍪 Receitas de produtos</div>`;
+  }
+  html += produtos.length ? produtos.map(renderCard).join('') : '<p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1rem;">Nenhuma receita de produto cadastrada.</p>';
+  el.innerHTML = html;
 }
 
 function atualizarFiltroInsumos() {
@@ -3189,18 +3281,51 @@ async function salvarEntradaInsumo() {
 }
 
 // ── MODAL RECEITA ──────────────────────────
+function selecionarTipoReceita(tipo) {
+  document.getElementById('rec-tipo').value = tipo;
+  const isProduto = tipo === 'produto';
+  document.getElementById('lbl-tipo-produto').style.cssText = isProduto
+    ? 'flex:1;border:2px solid var(--tiffany);background:var(--tiffany-pale);border-radius:10px;padding:0.65rem;text-align:center;cursor:pointer;font-size:0.85rem;font-weight:500;'
+    : 'flex:1;border:2px solid var(--border);background:white;border-radius:10px;padding:0.65rem;text-align:center;cursor:pointer;font-size:0.85rem;';
+  document.getElementById('lbl-tipo-recheio').style.cssText = !isProduto
+    ? 'flex:1;border:2px solid var(--pink);background:var(--pink-pale);border-radius:10px;padding:0.65rem;text-align:center;cursor:pointer;font-size:0.85rem;font-weight:500;'
+    : 'flex:1;border:2px solid var(--border);background:white;border-radius:10px;padding:0.65rem;text-align:center;cursor:pointer;font-size:0.85rem;';
+  document.getElementById('rec-nome-grupo-produto').style.display = isProduto ? 'block' : 'none';
+  document.getElementById('rec-nome-grupo-recheio').style.display = isProduto ? 'none' : 'block';
+  document.getElementById('rec-recheio-secao').style.display = isProduto ? 'block' : 'none';
+  document.getElementById('rec-rendimento-label').textContent = isProduto ? 'Rendimento (unidades)' : 'Rendimento (g ou porções)';
+}
+
+function toggleRecheioOpcao() {
+  const usa = document.getElementById('rec-usa-recheio').checked;
+  document.getElementById('rec-recheio-opcoes').style.display = usa ? 'block' : 'none';
+  calcularCustoReceita();
+}
+
+function popularSelectRecheios() {
+  const recheios = receitasCache.filter(r => r.tipo === 'recheio');
+  const sel = document.getElementById('rec-recheio-id');
+  const valAtual = sel.value;
+  sel.innerHTML = '<option value="">Selecione o recheio...</option>' +
+    recheios.map(r => `<option value="${r.id}"${r.id==valAtual?' selected':''}>${r.produto_nome}</option>`).join('');
+}
+
 function abrirModalReceita(id) {
   document.getElementById('rec-id').value = id || '';
   document.getElementById('rec-ingredientes-lista').innerHTML = '';
+  document.getElementById('rec-usa-recheio').checked = false;
+  document.getElementById('rec-recheio-opcoes').style.display = 'none';
+  document.getElementById('rec-recheio-id').value = '';
+  document.getElementById('rec-recheio-qtd').value = '';
   ingLinhaCount = 0;
+  popularSelectRecheios();
 
-  // Monta o select com produtos do cardápio
-  const nomesComReceita = receitasCache.map(r => r.produto_nome);
-  const select = document.getElementById('rec-nome');
-  select.innerHTML = '<option value="">Selecione o produto do cardápio...</option>' +
+  const nomesComReceita = receitasCache.filter(r => r.tipo !== 'recheio').map(r => r.produto_nome);
+  const selProd = document.getElementById('rec-nome-produto');
+  selProd.innerHTML = '<option value="">Selecione o produto...</option>' +
     produtosAdmin.map(p => {
       const jaTemReceita = nomesComReceita.includes(p.nome) && (!id || receitasCache.find(r=>r.id==id)?.produto_nome !== p.nome);
-      return `<option value="${p.nome}" ${jaTemReceita?'disabled':''} ${jaTemReceita?'style="color:var(--muted);"':''}>
+      return `<option value="${p.nome}" ${jaTemReceita?'disabled':''}>
         ${p.emoji||'🛍️'} ${p.nome}${jaTemReceita?' (já tem receita)':''}
       </option>`;
     }).join('');
@@ -3208,15 +3333,28 @@ function abrirModalReceita(id) {
   if (id) {
     const r = receitasCache.find(x => x.id === id);
     if (!r) return;
-    document.getElementById('modal-receita-titulo').textContent = '✏️ Editar receita — '+r.produto_nome;
-    select.value = r.produto_nome;
-    select.disabled = true; // não pode trocar o produto de uma receita existente
+    const tipo = r.tipo || 'produto';
+    document.getElementById('modal-receita-titulo').textContent = tipo === 'recheio' ? '✏️ Editar recheio — '+r.produto_nome : '✏️ Editar receita — '+r.produto_nome;
     document.getElementById('rec-rendimento').value = r.rendimento;
+    selecionarTipoReceita(tipo);
+    if (tipo === 'produto') {
+      selProd.value = r.produto_nome;
+      selProd.disabled = true;
+    } else {
+      document.getElementById('rec-nome-recheio').value = r.produto_nome;
+    }
+    if (r.recheio_id) {
+      document.getElementById('rec-usa-recheio').checked = true;
+      document.getElementById('rec-recheio-opcoes').style.display = 'block';
+      document.getElementById('rec-recheio-id').value = r.recheio_id;
+      document.getElementById('rec-recheio-qtd').value = r.recheio_qtd_por_unidade || '';
+    }
     const ings = receitaIngredientesCache[id] || [];
     ings.forEach(ing => addIngredienteModal(ing.insumo_id, ing.quantidade, ing.id));
   } else {
     document.getElementById('modal-receita-titulo').textContent = '📋 Nova receita';
-    select.disabled = false;
+    selecionarTipoReceita('produto');
+    selProd.disabled = false;
     document.getElementById('rec-rendimento').value = '';
     addIngredienteModal();
   }
@@ -3226,7 +3364,6 @@ function abrirModalReceita(id) {
 
 let ingLinhaCount = 0;
 function addIngredienteModal(insumoId=null, qtd=null, ingId=null) {
-  const idx = ++ingLinhaCount;
   const opts = insumosCache.map(i =>
     `<option value="${i.id}" data-preco="${i.preco_por_unidade}" data-unidade="${i.unidade}"${i.id==insumoId?' selected':''}>${i.nome} (${i.unidade})</option>`
   ).join('');
@@ -3241,10 +3378,8 @@ function addIngredienteModal(insumoId=null, qtd=null, ingId=null) {
     <span class="rec-ing-unidade" style="font-size:0.78rem;color:var(--muted);min-width:20px;"></span>
     <button onclick="this.parentElement.remove();calcularCustoReceita();" style="background:none;border:none;color:var(--red);font-size:1.1rem;cursor:pointer;padding:0 4px;">✕</button>`;
   document.getElementById('rec-ingredientes-lista').appendChild(div);
-  // Atualiza unidade ao selecionar
   div.querySelector('.rec-ing-select').addEventListener('change', function() {
-    const opt = this.options[this.selectedIndex];
-    div.querySelector('.rec-ing-unidade').textContent = opt.dataset.unidade || '';
+    div.querySelector('.rec-ing-unidade').textContent = this.options[this.selectedIndex].dataset.unidade || '';
   });
   if (insumoId) {
     const opt = div.querySelector(`.rec-ing-select option[value="${insumoId}"]`);
@@ -3254,16 +3389,40 @@ function addIngredienteModal(insumoId=null, qtd=null, ingId=null) {
 
 function calcularCustoReceita() {
   const rendimento = parseInt(document.getElementById('rec-rendimento').value)||1;
-  let custoTotal = 0;
+  let custoIngredientes = 0;
   document.querySelectorAll('#rec-ingredientes-lista > div').forEach(row => {
     const sel = row.querySelector('.rec-ing-select');
     const qtd = parseFloat(row.querySelector('.rec-ing-qtd').value)||0;
-    if (!sel.value || !qtd) return;
-    const opt = sel.options[sel.selectedIndex];
-    const preco = parseFloat(opt.dataset.preco)||0;
-    custoTotal += qtd * preco;
+    if (!sel || !sel.value || !qtd) return;
+    custoIngredientes += qtd * (parseFloat(sel.options[sel.selectedIndex].dataset.preco)||0);
   });
+
+  let custoRecheio = 0;
+  const usaRecheio = document.getElementById('rec-usa-recheio')?.checked;
+  const recheioId = document.getElementById('rec-recheio-id')?.value;
+  const recheioQtdUnit = parseFloat(document.getElementById('rec-recheio-qtd')?.value)||0;
+  const linhaRecheio = document.getElementById('rec-custo-recheio-linha');
+
+  if (usaRecheio && recheioId && recheioQtdUnit > 0) {
+    const recReceita = receitasCache.find(r => r.id == recheioId);
+    if (recReceita) {
+      const ingsRecheio = receitaIngredientesCache[recReceita.id] || [];
+      const custoLoteRecheio = ingsRecheio.reduce((s, ing) => {
+        const ins = insumosCache.find(x => x.id === ing.insumo_id);
+        return s + (parseFloat(ing.quantidade)||0) * (parseFloat(ins?.preco_por_unidade)||0);
+      }, 0);
+      const custoPorGRecheio = recReceita.rendimento > 0 ? custoLoteRecheio / recReceita.rendimento : 0;
+      custoRecheio = custoPorGRecheio * recheioQtdUnit * rendimento;
+      document.getElementById('rec-custo-recheio-val').textContent = 'R$ '+custoRecheio.toFixed(4).replace('.',',');
+      if (linhaRecheio) linhaRecheio.style.display = 'flex';
+    }
+  } else {
+    if (linhaRecheio) linhaRecheio.style.display = 'none';
+  }
+
+  const custoTotal = custoIngredientes + custoRecheio;
   const custoUnit = rendimento > 0 ? custoTotal/rendimento : 0;
+  document.getElementById('rec-custo-ingredientes').textContent = 'R$ '+custoIngredientes.toFixed(4).replace('.',',');
   document.getElementById('rec-custo-total').textContent = 'R$ '+custoTotal.toFixed(2).replace('.',',');
   document.getElementById('rec-custo-unit').textContent = 'R$ '+custoUnit.toFixed(4).replace('.',',');
   document.getElementById('rec-rendimento-display').textContent = rendimento+' unidades';
@@ -3271,34 +3430,42 @@ function calcularCustoReceita() {
 
 async function salvarReceita() {
   const id = document.getElementById('rec-id').value;
-  const nome = document.getElementById('rec-nome').value.trim();
+  const tipo = document.getElementById('rec-tipo').value;
+  const nome = tipo === 'produto'
+    ? document.getElementById('rec-nome-produto').value.trim()
+    : document.getElementById('rec-nome-recheio').value.trim();
   const rendimento = parseInt(document.getElementById('rec-rendimento').value)||1;
-  if (!nome) { alert('Selecione o produto do cardápio!'); return; }
+  if (!nome) { alert(tipo === 'produto' ? 'Selecione o produto do cardápio!' : 'Informe o nome do recheio!'); return; }
+
+  const usaRecheio = tipo === 'produto' && document.getElementById('rec-usa-recheio').checked;
+  const recheio_id = usaRecheio ? (parseInt(document.getElementById('rec-recheio-id').value)||null) : null;
+  const recheio_qtd_por_unidade = usaRecheio ? (parseFloat(document.getElementById('rec-recheio-qtd').value)||0) : 0;
+  if (usaRecheio && !recheio_id) { alert('Selecione qual recheio será usado!'); return; }
+  if (usaRecheio && !recheio_qtd_por_unidade) { alert('Informe a quantidade de recheio por unidade!'); return; }
 
   const ingredientes = [];
-  let valido = true;
   document.querySelectorAll('#rec-ingredientes-lista > div').forEach(row => {
     const insumo_id = parseInt(row.querySelector('.rec-ing-select').value);
     const quantidade = parseFloat(row.querySelector('.rec-ing-qtd').value);
-    if (!insumo_id || !quantidade || quantidade <= 0) { valido = false; return; }
-    ingredientes.push({insumo_id, quantidade, ing_id: row.dataset.ingId || null});
+    if (insumo_id && quantidade > 0) ingredientes.push({insumo_id, quantidade});
   });
-  if (!valido || !ingredientes.length) { alert('Preencha todos os ingredientes corretamente!'); return; }
+  if (!ingredientes.length) { alert('Adicione pelo menos um ingrediente!'); return; }
 
   try {
     let receitaId;
+    const dados = {produto_nome:nome, rendimento, tipo, recheio_id, recheio_qtd_por_unidade};
     if (id) {
-      await supaFetch('receitas?id=eq.'+id, 'PATCH', {produto_nome:nome, rendimento});
+      await supaFetch('receitas?id=eq.'+id, 'PATCH', dados);
       await supaFetch('receita_ingredientes?receita_id=eq.'+id, 'DELETE');
       receitaId = parseInt(id);
     } else {
-      const res = await supaFetch('receitas','POST',{produto_nome:nome, rendimento, estabelecimento_id:estabelecimentoId});
+      const res = await supaFetch('receitas','POST',{...dados, estabelecimento_id:estabelecimentoId});
       receitaId = res[0].id;
     }
     for (const ing of ingredientes) {
       await supaFetch('receita_ingredientes','POST',{receita_id:receitaId, insumo_id:ing.insumo_id, quantidade:ing.quantidade});
     }
-    document.getElementById('rec-nome').disabled = false;
+    document.getElementById('rec-nome-produto').disabled = false;
     fecharModal('modal-receita');
     showToast('✓ Receita salva!');
     await carregarInventario();
