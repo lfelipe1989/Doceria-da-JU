@@ -3392,6 +3392,27 @@ async function excluirInsumo(id, nome) {
 }
 
 // ── ENTRADA DE INSUMO ──────────────────────
+function selecionarMovInsumo(tipo, btnId) {
+  // Reset só os botões de tipo de movimentação (não os de modo embalagem)
+  ['btn-mov-compra','btn-mov-ajuste-in','btn-mov-ajuste-out','btn-mov-descarte'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.classList.remove('active','active-red');
+  });
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  const isSaida = tipo.startsWith('saida');
+  btn.classList.add(isSaida ? 'active-red' : 'active');
+  document.getElementById('entrada-tipo').value = tipo;
+  const confirmBtn = document.getElementById('btn-confirmar-mov');
+  if (isSaida) {
+    confirmBtn.style.background = 'var(--red)';
+    confirmBtn.textContent = '✓ Confirmar saída';
+  } else {
+    confirmBtn.style.background = 'var(--tiffany)';
+    confirmBtn.textContent = '✓ Confirmar entrada';
+  }
+}
+
 function selecionarModoEntrada(modo) {
   document.getElementById('entrada-modo').value = modo;
   const porEmb = modo === 'embalagem';
