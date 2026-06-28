@@ -358,6 +358,26 @@
 
     /* ── TOAST ── */
     .toast { left:1rem; right:1rem; bottom:1rem; text-align:center; }
+
+    /* ── INVENTÁRIO ── */
+    #page-inventario .metrics { grid-template-columns:1fr 1fr; }
+    #inv-tab-extrato > div:first-child { flex-direction:column; }
+    #inv-filtro-insumo, #inv-filtro-tipo, #inv-filtro-data { width:100%; }
+    #rec-ingredientes-lista > div { flex-wrap:wrap; }
+    #rec-ingredientes-lista .rec-ing-qtd { min-width:80px; }
+    #rec-recheio-opcoes > div { flex-direction:column; }
+    #entrada-emb-toggle > div { flex-direction:column; }
+    #modal-entrada-insumo div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns:1fr !important; }
+
+    /* ── GRÁFICO DIA SEMANA ── */
+    #dow-legenda { gap:6px; flex-wrap:wrap; }
+
+    /* ── RELATÓRIOS: cards full width ── */
+    #page-relatorios .report-card[style*="grid-column"] { grid-column:auto !important; }
+
+    /* ── FINANCEIRO: busca em coluna ── */
+    #page-financeiro .report-card > div:first-child { flex-wrap:wrap; }
+    #fin-busca-cliente { max-width:100% !important; }
   }
 
   @media (max-width:420px) {
@@ -370,6 +390,8 @@
     .order-actions .action-btn { flex:1 1 45%; }
     .estoque-acoes .action-btn { flex:1; }
     .periodo-btn { font-size:0.68rem; padding:4px 7px; }
+    #page-inventario .metrics { grid-template-columns:1fr 1fr; }
+    #rec-tipo-seletor > div { flex-direction:column; }
   }
 </style>
 </head>
