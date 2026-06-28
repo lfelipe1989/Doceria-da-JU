@@ -648,29 +648,33 @@
     <button class="modal-close" onclick="fecharModal('modal-entrada-insumo')">✕</button>
     <div class="modal-title" id="modal-entrada-titulo">📦 Movimentação de insumo</div>
     <input type="hidden" id="entrada-ins-id"/>
+    <input type="hidden" id="entrada-emb-qtd-por-emb"/>
 
     <div class="form-group">
       <label class="form-label">Tipo de movimentação</label>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <button type="button" class="inv-mov-btn active" id="btn-mov-compra" onclick="selecionarMovInsumo('entrada','btn-mov-compra')">
-          🛒 Compra
-        </button>
-        <button type="button" class="inv-mov-btn" id="btn-mov-ajuste-in" onclick="selecionarMovInsumo('entrada_ajuste','btn-mov-ajuste-in')">
-          📋 Ajuste entrada
-        </button>
-        <button type="button" class="inv-mov-btn" id="btn-mov-ajuste-out" onclick="selecionarMovInsumo('saida_ajuste','btn-mov-ajuste-out')">
-          📤 Ajuste saída
-        </button>
-        <button type="button" class="inv-mov-btn" id="btn-mov-descarte" onclick="selecionarMovInsumo('saida_descarte','btn-mov-descarte')">
-          🗑️ Descarte/Perda
-        </button>
+        <button type="button" class="inv-mov-btn active" id="btn-mov-compra" onclick="selecionarMovInsumo('entrada','btn-mov-compra')">🛒 Compra</button>
+        <button type="button" class="inv-mov-btn" id="btn-mov-ajuste-in" onclick="selecionarMovInsumo('entrada_ajuste','btn-mov-ajuste-in')">📋 Ajuste entrada</button>
+        <button type="button" class="inv-mov-btn" id="btn-mov-ajuste-out" onclick="selecionarMovInsumo('saida_ajuste','btn-mov-ajuste-out')">📤 Ajuste saída</button>
+        <button type="button" class="inv-mov-btn" id="btn-mov-descarte" onclick="selecionarMovInsumo('saida_descarte','btn-mov-descarte')">🗑️ Descarte/Perda</button>
       </div>
       <input type="hidden" id="entrada-tipo" value="entrada"/>
     </div>
 
+    <!-- Toggle embalagem — só aparece se tiver embalagem cadastrada -->
+    <div id="entrada-emb-toggle" style="display:none;" class="form-group">
+      <label class="form-label">Lançar por</label>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="inv-mov-btn active" id="btn-por-emb" onclick="selecionarModoEntrada('embalagem')">📦 Embalagem</button>
+        <button type="button" class="inv-mov-btn" id="btn-por-unit" onclick="selecionarModoEntrada('unidade')">⚖️ Unidade base</button>
+      </div>
+      <input type="hidden" id="entrada-modo" value="embalagem"/>
+    </div>
+
     <div class="form-group">
-      <label class="form-label" id="entrada-qtd-label">Quantidade (g)</label>
-      <input class="form-input" type="number" step="0.001" min="0" id="entrada-qtd" placeholder="Ex: 500"/>
+      <label class="form-label" id="entrada-qtd-label">Quantidade</label>
+      <input class="form-input" type="number" step="0.001" min="0" id="entrada-qtd" placeholder="0" oninput="atualizarPreviewEntrada()"/>
+      <div id="entrada-conversao" style="display:none;font-size:0.82rem;color:var(--tiffany-dark);margin-top:6px;background:var(--tiffany-pale);border-radius:8px;padding:6px 10px;"></div>
     </div>
 
     <div class="form-group">
@@ -3388,55 +3392,117 @@ async function excluirInsumo(id, nome) {
 }
 
 // ── ENTRADA DE INSUMO ──────────────────────
-function selecionarMovInsumo(tipo, btnId) {
-  // Reset todos os botões
-  document.querySelectorAll('.inv-mov-btn').forEach(b => {
-    b.classList.remove('active','active-red');
-  });
-  // Ativa o clicado
-  const btn = document.getElementById(btnId);
-  const isSaida = tipo.startsWith('saida');
-  btn.classList.add(isSaida ? 'active-red' : 'active');
-  document.getElementById('entrada-tipo').value = tipo;
-  // Atualiza botão de confirmar e label
-  const confirmBtn = document.getElementById('btn-confirmar-mov');
-  if (isSaida) {
-    confirmBtn.style.background = 'var(--red)';
-    confirmBtn.textContent = '✓ Confirmar saída';
+function selecionarModoEntrada(modo) {
+  document.getElementById('entrada-modo').value = modo;
+  const porEmb = modo === 'embalagem';
+  document.getElementById('btn-por-emb').classList.toggle('active', porEmb);
+  document.getElementById('btn-por-unit').classList.toggle('active', !porEmb);
+  const qtdPorEmb = parseFloat(document.getElementById('entrada-emb-qtd-por-emb').value)||0;
+  const unidade = document.getElementById('entrada-qtd-label').dataset.unidade || 'g';
+  const embNome = document.getElementById('entrada-qtd-label').dataset.embNome || 'embalagem';
+  if (porEmb) {
+    document.getElementById('entrada-qtd-label').textContent = `Quantidade de ${embNome}(s)`;
+    document.getElementById('entrada-qtd').step = '1';
+    document.getElementById('entrada-qtd').placeholder = 'Ex: 10';
   } else {
-    confirmBtn.style.background = 'var(--tiffany)';
-    confirmBtn.textContent = '✓ Confirmar entrada';
+    document.getElementById('entrada-qtd-label').textContent = `Quantidade (${unidade})`;
+    document.getElementById('entrada-qtd').step = '0.001';
+    document.getElementById('entrada-qtd').placeholder = 'Ex: 3950';
+  }
+  document.getElementById('entrada-qtd').value = '';
+  document.getElementById('entrada-conversao').style.display = 'none';
+}
+
+function atualizarPreviewEntrada() {
+  const modo = document.getElementById('entrada-modo').value;
+  const qtd = parseFloat(document.getElementById('entrada-qtd').value)||0;
+  const qtdPorEmb = parseFloat(document.getElementById('entrada-emb-qtd-por-emb').value)||0;
+  const unidade = document.getElementById('entrada-qtd-label').dataset.unidade || 'g';
+  const embNome = document.getElementById('entrada-qtd-label').dataset.embNome || 'embalagem';
+  const conv = document.getElementById('entrada-conversao');
+  if (!qtd) { conv.style.display = 'none'; return; }
+  if (modo === 'embalagem' && qtdPorEmb > 0) {
+    const totalGramas = qtd * qtdPorEmb;
+    conv.style.display = 'block';
+    conv.textContent = `= ${totalGramas.toLocaleString('pt-BR')} ${unidade} serão adicionados ao estoque`;
+  } else if (modo === 'unidade' && qtdPorEmb > 0) {
+    const embs = (qtd / qtdPorEmb).toFixed(1);
+    conv.style.display = 'block';
+    conv.textContent = `≈ ${embs} ${embNome}(s)`;
+  } else {
+    conv.style.display = 'none';
   }
 }
 
 function abrirEntradaInsumo(id, nome, unidade) {
+  const insumo = insumosCache.find(x => x.id == id);
   document.getElementById('entrada-ins-id').value = id;
-  document.getElementById('modal-entrada-titulo').textContent = '📦 Movimentação — '+nome+' ('+unidade+')';
+  document.getElementById('modal-entrada-titulo').textContent = '📦 Movimentação — '+nome;
   document.getElementById('entrada-qtd').value = '';
-  document.getElementById('entrada-qtd-label').textContent = 'Quantidade ('+unidade+')';
   document.getElementById('entrada-obs').value = '';
-  // Reset seleção para Compra
+  document.getElementById('entrada-conversao').style.display = 'none';
+
+  // Configura embalagem se existir
+  const temEmb = insumo && insumo.embalagem_nome && insumo.embalagem_qtd > 0;
+  document.getElementById('entrada-emb-toggle').style.display = temEmb ? 'block' : 'none';
+  document.getElementById('entrada-emb-qtd-por-emb').value = temEmb ? insumo.embalagem_qtd : 0;
+
+  // Guarda dados no label para usar nos helpers
+  const lbl = document.getElementById('entrada-qtd-label');
+  lbl.dataset.unidade = unidade;
+  lbl.dataset.embNome = temEmb ? insumo.embalagem_nome : '';
+
+  if (temEmb) {
+    // Default: lançar por embalagem
+    document.getElementById('entrada-modo').value = 'embalagem';
+    document.getElementById('btn-por-emb').classList.add('active');
+    document.getElementById('btn-por-unit').classList.remove('active');
+    lbl.textContent = `Quantidade de ${insumo.embalagem_nome}(s)`;
+    document.getElementById('entrada-qtd').step = '1';
+    document.getElementById('entrada-qtd').placeholder = `Ex: 10 ${insumo.embalagem_nome}(s)`;
+  } else {
+    document.getElementById('entrada-modo').value = 'unidade';
+    lbl.textContent = `Quantidade (${unidade})`;
+    document.getElementById('entrada-qtd').step = '0.001';
+    document.getElementById('entrada-qtd').placeholder = 'Ex: 500';
+  }
+
   selecionarMovInsumo('entrada', 'btn-mov-compra');
   abrirModal('modal-entrada-insumo');
 }
 
 async function salvarEntradaInsumo() {
   const id = document.getElementById('entrada-ins-id').value;
-  const qtd = parseFloat(document.getElementById('entrada-qtd').value);
+  const qtdInput = parseFloat(document.getElementById('entrada-qtd').value);
   const tipo = document.getElementById('entrada-tipo').value;
+  const modo = document.getElementById('entrada-modo').value;
+  const qtdPorEmb = parseFloat(document.getElementById('entrada-emb-qtd-por-emb').value)||0;
   const obs = document.getElementById('entrada-obs').value.trim();
-  if (!qtd || qtd <= 0) { alert('Informe uma quantidade válida!'); return; }
+  const embNome = document.getElementById('entrada-qtd-label').dataset.embNome || '';
+
+  if (!qtdInput || qtdInput <= 0) { alert('Informe uma quantidade válida!'); return; }
+
+  // Converte para unidade base se lançando por embalagem
+  const qtd = (modo === 'embalagem' && qtdPorEmb > 0)
+    ? qtdInput * qtdPorEmb
+    : qtdInput;
+
+  const obsFinal = (modo === 'embalagem' && embNome)
+    ? `${obs ? obs+' — ' : ''}${qtdInput} ${embNome}(s) = ${qtd}g`.trim()
+    : obs;
+
   const insumo = insumosCache.find(x => x.id == id);
   const isSaida = tipo.startsWith('saida');
   const novoEstoque = isSaida
     ? Math.max(0, (parseFloat(insumo?.estoque_atual)||0) - qtd)
     : (parseFloat(insumo?.estoque_atual)||0) + qtd;
+
   try {
     await Promise.all([
       supaFetch('insumos?id=eq.'+id, 'PATCH', {estoque_atual: novoEstoque}),
       supaFetch('insumo_movimentos','POST',{
         insumo_id:parseInt(id), tipo,
-        quantidade: qtd, observacao: obs,
+        quantidade: qtd, observacao: obsFinal,
         estabelecimento_id: estabelecimentoId
       })
     ]);
