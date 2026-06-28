@@ -2254,61 +2254,124 @@ async function renderPrevisaoEstoque(pedidos) {
   const el = document.getElementById('previsao-estoque-lista');
   if (!pedidos.length) { el.innerHTML='<p style="color:var(--muted);font-size:0.85rem;">Sem dados no período para calcular.</p>'; return; }
 
-  // Média diária de cada sabor no período
+  // Calcula média por dia da semana e por sabor
+  // mediaDow[sabor][0..6] = média de cookies vendidos naquele dia da semana
+  const contagemDow = {}; // [sabor][dow] = total no período
+  const ocorrenciasDow = Array(7).fill(0); // quantas vezes cada dia da semana aparece no período
+
+  // Descobre quais dias da semana existem no período
   const datas = pedidos.map(p => new Date(p.criado_em));
-  const diasPeriodo = Math.max(1, Math.round((Math.max(...datas) - Math.min(...datas)) / (24*60*60*1000))) + 1;
+  const minData = new Date(Math.min(...datas));
+  const maxData = new Date(Math.max(...datas));
 
-  const mediaDiaria = {};
-  pedidos.forEach(p => p.itens.forEach(i => {
-    mediaDiaria[i.sabor] = (mediaDiaria[i.sabor]||0) + i.quantidade;
-  }));
-  Object.keys(mediaDiaria).forEach(s => mediaDiaria[s] = mediaDiaria[s] / diasPeriodo);
+  // Conta quantas vezes cada dia da semana aparece no período
+  const cur = new Date(minData);
+  cur.setHours(0,0,0,0);
+  const fim = new Date(maxData);
+  fim.setHours(23,59,59,999);
+  while (cur <= fim) {
+    ocorrenciasDow[cur.getDay()]++;
+    cur.setDate(cur.getDate()+1);
+  }
 
-  // Estoque atual do estoque de cookies (tabela estoque)
+  // Soma cookies por sabor e por dia da semana
+  pedidos.forEach(p => {
+    const dow = new Date(p.criado_em).getDay();
+    p.itens.forEach(i => {
+      if (!contagemDow[i.sabor]) contagemDow[i.sabor] = Array(7).fill(0);
+      contagemDow[i.sabor][dow] += i.quantidade;
+    });
+  });
+
+  // Média por dia da semana: total / quantas vezes aquele dia ocorreu no período
+  const mediaDow = {};
+  Object.keys(contagemDow).forEach(sabor => {
+    mediaDow[sabor] = contagemDow[sabor].map((total, dow) =>
+      ocorrenciasDow[dow] > 0 ? total / ocorrenciasDow[dow] : 0
+    );
+  });
+
+  // Estoque atual
   let estoqueAtual = {};
   try {
     const est = await supaFetch('estoque?estabelecimento_id=eq.'+estabelecimentoId+'&select=*');
     est.forEach(e => estoqueAtual[e.produto_nome] = e.quantidade);
   } catch(e) {}
 
-  const sabores = Object.keys(mediaDiaria).sort();
-  if (!sabores.length) { el.innerHTML='<p style="color:var(--muted);font-size:0.85rem;">Sem vendas registradas no período.</p>'; return; }
+  // Hoje em Brasília
+  const agora = new Date();
+  const brt = new Date(agora.toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}));
+  const diasSemana = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+
+  const sabores = Object.keys(mediaDow).sort();
+  if (!sabores.length) { el.innerHTML='<p style="color:var(--muted);font-size:0.85rem;">Sem vendas no período.</p>'; return; }
 
   el.innerHTML = sabores.map(s => {
-    const media = mediaDiaria[s];
     const qtdEstoque = estoqueAtual[s] ?? null;
-    const diasRestantes = qtdEstoque !== null && media > 0 ? qtdEstoque / media : null;
+    const mediasSabor = mediaDow[s];
+    const mediaDiaria = mediasSabor.reduce((a,b)=>a+b,0) / 7;
+
+    if (qtdEstoque === null) {
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:8px;flex-wrap:wrap;">
+        <div><div style="font-weight:500;">${s}</div><div style="font-size:0.75rem;color:var(--muted);">Média diária: ${mediaDiaria.toFixed(1)} un/dia</div></div>
+        <span style="color:var(--muted);font-size:0.78rem;">Estoque não cadastrado</span>
+      </div>`;
+    }
+
+    // Simula dia a dia: começa de amanhã, subtrai a demanda projetada de cada dia
+    let saldoSimulado = qtdEstoque;
+    let diasAteZerar = null;
+    let detalheDias = [];
+
+    for (let d = 1; d <= 30; d++) {
+      const proxData = new Date(brt);
+      proxData.setDate(brt.getDate() + d);
+      const dow = proxData.getDay();
+      const demandaDia = mediasSabor[dow];
+      saldoSimulado -= demandaDia;
+      detalheDias.push({ dia: diasSemana[dow], demanda: demandaDia, saldo: saldoSimulado });
+      if (saldoSimulado <= 0 && diasAteZerar === null) {
+        diasAteZerar = d;
+      }
+    }
+
+    // Monta os próximos 7 dias para mostrar demanda projetada
+    const proximosDias = detalheDias.slice(0,7).map(d =>
+      `<span style="font-size:0.68rem;color:var(--muted);">${d.dia.slice(0,3)}: ${d.demanda.toFixed(0)}</span>`
+    ).join(' · ');
 
     let statusHtml, cor;
-    if (qtdEstoque === null) {
-      statusHtml = '<span style="color:var(--muted);font-size:0.78rem;">Estoque não cadastrado</span>';
+    if (mediaDiaria === 0) {
+      statusHtml = `<span style="color:var(--muted);font-size:0.78rem;">Sem vendas no período</span>`;
       cor = 'var(--border)';
-    } else if (media === 0) {
-      statusHtml = '<span style="color:var(--muted);font-size:0.78rem;">Sem vendas no período</span>';
-      cor = 'var(--border)';
-    } else if (diasRestantes <= 1) {
+    } else if (diasAteZerar === null) {
+      statusHtml = `<span style="color:var(--green);font-weight:500;">✅ Dura mais de 30 dias</span>`;
+      cor = 'var(--green)';
+    } else if (diasAteZerar <= 1) {
       statusHtml = `<span style="color:var(--red);font-weight:500;">⛔ Acaba hoje!</span>`;
       cor = 'var(--red)';
-    } else if (diasRestantes <= 3) {
-      statusHtml = `<span style="color:var(--red);font-weight:500;">🔴 Acaba em aprox. ${Math.floor(diasRestantes)} dia${Math.floor(diasRestantes)>1?'s':''}</span>`;
+    } else if (diasAteZerar <= 3) {
+      statusHtml = `<span style="color:var(--red);font-weight:500;">🔴 Acaba em aprox. ${diasAteZerar} dias (${diasSemana[(brt.getDay()+diasAteZerar)%7]})</span>`;
       cor = 'var(--red)';
-    } else if (diasRestantes <= 7) {
-      statusHtml = `<span style="color:#B08000;font-weight:500;">🟡 Acaba em aprox. ${Math.floor(diasRestantes)} dias</span>`;
+    } else if (diasAteZerar <= 7) {
+      statusHtml = `<span style="color:#B08000;font-weight:500;">🟡 Acaba em aprox. ${diasAteZerar} dias (${diasSemana[(brt.getDay()+diasAteZerar)%7]})</span>`;
       cor = '#B08000';
     } else {
-      statusHtml = `<span style="color:var(--green);font-weight:500;">✅ Dura aprox. ${Math.floor(diasRestantes)} dias</span>`;
+      statusHtml = `<span style="color:var(--green);font-weight:500;">✅ Dura aprox. ${diasAteZerar} dias (${diasSemana[(brt.getDay()+diasAteZerar)%7]})</span>`;
       cor = 'var(--green)';
     }
 
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:8px;flex-wrap:wrap;">
-      <div>
-        <div style="font-weight:500;">${s}</div>
-        <div style="font-size:0.75rem;color:var(--muted);">
-          Média: ${media.toFixed(1)} un/dia
-          ${qtdEstoque !== null ? ` · Estoque: ${qtdEstoque} un` : ''}
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:500;">${s}</div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">
+            Estoque: ${qtdEstoque} un · Média geral: ${mediaDiaria.toFixed(1)} un/dia
+          </div>
+          <div style="margin-top:4px;">${proximosDias}</div>
         </div>
+        <div style="text-align:right;">${statusHtml}</div>
       </div>
-      <div style="text-align:right;">${statusHtml}</div>
     </div>`;
   }).join('');
 }
