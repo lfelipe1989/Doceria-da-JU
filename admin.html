@@ -2245,7 +2245,7 @@ function renderDowChart(pedidos, cores) {
         <div style="flex:1;height:22px;background:var(--border);border-radius:6px;position:relative;overflow:hidden;">
           ${segmentos}
         </div>
-        <span style="font-size:0.78rem;color:var(--muted);min-width:110px;text-align:right;">${total} un <span style="font-size:0.7rem;">(~${media}/sem)</span></span>
+        <span style="font-size:0.78rem;color:var(--muted);min-width:110px;text-align:right;">${total} un <span style="font-size:0.7rem;">(média: ${media}/sem)</span></span>
       </div>`;
   }).join('');
 }
@@ -2290,13 +2290,13 @@ async function renderPrevisaoEstoque(pedidos) {
       statusHtml = `<span style="color:var(--red);font-weight:500;">⛔ Acaba hoje!</span>`;
       cor = 'var(--red)';
     } else if (diasRestantes <= 3) {
-      statusHtml = `<span style="color:var(--red);font-weight:500;">🔴 Acaba em ~${Math.floor(diasRestantes)} dia${Math.floor(diasRestantes)>1?'s':''}</span>`;
+      statusHtml = `<span style="color:var(--red);font-weight:500;">🔴 Acaba em aprox. ${Math.floor(diasRestantes)} dia${Math.floor(diasRestantes)>1?'s':''}</span>`;
       cor = 'var(--red)';
     } else if (diasRestantes <= 7) {
-      statusHtml = `<span style="color:#B08000;font-weight:500;">🟡 Acaba em ~${Math.floor(diasRestantes)} dias</span>`;
+      statusHtml = `<span style="color:#B08000;font-weight:500;">🟡 Acaba em aprox. ${Math.floor(diasRestantes)} dias</span>`;
       cor = '#B08000';
     } else {
-      statusHtml = `<span style="color:var(--green);font-weight:500;">✅ ~${Math.floor(diasRestantes)} dias</span>`;
+      statusHtml = `<span style="color:var(--green);font-weight:500;">✅ Dura aprox. ${Math.floor(diasRestantes)} dias</span>`;
       cor = 'var(--green)';
     }
 
