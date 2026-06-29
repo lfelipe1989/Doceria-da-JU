@@ -568,16 +568,18 @@
     <div id="nota-step-upload">
       <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">Tire uma foto da nota ou cupom, ou escolha da galeria. O sistema vai identificar os produtos automaticamente.</p>
 
-      <div id="nota-preview-area" onclick="document.getElementById('nota-img-input').click()"
-        style="border:2px dashed var(--pink-border);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;margin-bottom:1rem;background:var(--pink-pale);min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
-        <span style="font-size:2.5rem;">📷</span>
-        <div style="font-size:0.85rem;color:var(--muted);">Toque para tirar foto ou escolher da galeria</div>
-        <div style="font-size:0.72rem;color:var(--muted);">JPG, PNG — máx. 10MB</div>
-      </div>
       <input type="file" id="nota-img-input" accept="image/*" capture="environment" style="display:none;" onchange="previewNota(this)"/>
 
-      <button id="btn-analisar-nota" onclick="analisarNota()" disabled
-        style="width:100%;padding:0.85rem;background:var(--brown);color:var(--pink);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;opacity:0.5;">
+      <!-- Área de upload — clique abre câmera/galeria -->
+      <div id="nota-preview-area" onclick="document.getElementById('nota-img-input').click()"
+        style="border:2px dashed var(--pink-border);border-radius:12px;padding:2.5rem 1rem;text-align:center;cursor:pointer;margin-bottom:1rem;background:var(--pink-pale);min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
+        <span style="font-size:3rem;">📷</span>
+        <div style="font-size:0.9rem;font-weight:500;color:var(--brown);">Toque aqui para fotografar ou escolher da galeria</div>
+        <div style="font-size:0.72rem;color:var(--muted);">JPG, PNG — máx. 10MB</div>
+      </div>
+
+      <!-- Botão analisar — só aparece após escolher imagem -->
+      <button id="btn-analisar-nota" onclick="analisarNota()" style="display:none;width:100%;padding:0.85rem;background:var(--brown);color:var(--pink);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">
         🔍 Analisar nota
       </button>
     </div>
@@ -4155,11 +4157,10 @@ function voltarUploadNota() {
   document.getElementById('nota-step-resultado').style.display = 'none';
   document.getElementById('nota-img-input').value = '';
   document.getElementById('nota-preview-area').innerHTML = `
-    <span style="font-size:2.5rem;">📷</span>
-    <div style="font-size:0.85rem;color:var(--muted);">Toque para tirar foto ou escolher da galeria</div>
+    <span style="font-size:3rem;">📷</span>
+    <div style="font-size:0.9rem;font-weight:500;color:var(--brown);">Toque aqui para fotografar ou escolher da galeria</div>
     <div style="font-size:0.72rem;color:var(--muted);">JPG, PNG — máx. 10MB</div>`;
-  document.getElementById('btn-analisar-nota').disabled = true;
-  document.getElementById('btn-analisar-nota').style.opacity = '0.5';
+  document.getElementById('btn-analisar-nota').style.display = 'none';
   notaImageBase64 = null;
 }
 
@@ -4171,10 +4172,10 @@ function previewNota(input) {
     const dataUrl = e.target.result;
     notaImageBase64 = dataUrl.split(',')[1];
     document.getElementById('nota-preview-area').innerHTML =
-      `<img src="${dataUrl}" style="max-width:100%;max-height:200px;border-radius:8px;object-fit:contain;"/>
-       <div style="font-size:0.75rem;color:var(--muted);margin-top:6px;">Toque para trocar a imagem</div>`;
-    document.getElementById('btn-analisar-nota').disabled = false;
-    document.getElementById('btn-analisar-nota').style.opacity = '1';
+      `<img src="${dataUrl}" style="max-width:100%;max-height:220px;border-radius:8px;object-fit:contain;"/>
+       <div style="font-size:0.75rem;color:var(--muted);margin-top:8px;">Toque para trocar a imagem</div>`;
+    // Agora sim mostra o botão de analisar
+    document.getElementById('btn-analisar-nota').style.display = 'block';
   };
   reader.readAsDataURL(file);
 }
