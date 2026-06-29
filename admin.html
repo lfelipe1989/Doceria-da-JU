@@ -3240,7 +3240,11 @@ function verificarAlertaInsumos() {
 
 function formatQtd(qtd, unidade) {
   const n = parseFloat(qtd)||0;
-  return n % 1 === 0 ? n+' '+unidade : n.toFixed(3).replace(/\.?0+$/,'')+' '+unidade;
+  // Inteiro: sem casas decimais. Decimal: 1 casa com vírgula
+  const formatado = n % 1 === 0
+    ? n.toLocaleString('pt-BR')
+    : n.toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1});
+  return formatado + ' ' + unidade;
 }
 
 function calcularEmbalagemPreview() {
@@ -3250,8 +3254,8 @@ function calcularEmbalagemPreview() {
   const preview = document.getElementById('ins-emb-preview');
   if (nome && qtd > 0) {
     preview.style.display = 'block';
-    const embs = estoqueAtual > 0 ? (estoqueAtual / qtd).toFixed(1) : '—';
-    preview.textContent = `📦 Cada ${nome} tem ${qtd}g · Estoque atual ≈ ${embs} ${nome}(s)`;
+    const embs = estoqueAtual > 0 ? (estoqueAtual / qtd).toLocaleString('pt-BR', {maximumFractionDigits:1}) : '—';
+    preview.textContent = `📦 Cada ${nome} tem ${qtd.toLocaleString('pt-BR')}g · Estoque atual ≈ ${embs} ${nome}(s)`;
   } else {
     preview.style.display = 'none';
   }
@@ -3260,7 +3264,8 @@ function calcularEmbalagemPreview() {
 function formatQtdComEmbalagem(insumo) {
   const base = formatQtd(insumo.estoque_atual, insumo.unidade);
   if (insumo.embalagem_nome && insumo.embalagem_qtd > 0) {
-    const embs = (parseFloat(insumo.estoque_atual) / parseFloat(insumo.embalagem_qtd)).toFixed(1);
+    const embs = (parseFloat(insumo.estoque_atual) / parseFloat(insumo.embalagem_qtd))
+      .toLocaleString('pt-BR', {maximumFractionDigits:1});
     return `${base} <span style="color:var(--muted);font-size:0.75rem;">(${embs} ${insumo.embalagem_nome})</span>`;
   }
   return base;
@@ -3327,8 +3332,8 @@ function renderInsumosLista() {
         <div style="flex:1;min-width:150px;">
           <div style="font-weight:500;font-size:0.95rem;">${i.nome}</div>
           <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">
-            R$ ${parseFloat(i.preco_por_unidade||0).toFixed(4).replace('.',',')} / ${i.unidade}
-            · Valor: R$ ${valorEstoque.toFixed(2).replace('.',',')}
+            R$ ${parseFloat(i.preco_por_unidade||0).toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4})} / ${i.unidade}
+            · Valor: R$ ${valorEstoque.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
           </div>
         </div>
         <div style="text-align:center;min-width:140px;">
@@ -3366,7 +3371,7 @@ function renderReceitasLista() {
       return `<div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;border-bottom:1px solid var(--border);">
         <span>${insumo.nome}</span>
         <span style="color:var(--muted);">${formatQtd(ing.quantidade,insumo.unidade)}</span>
-        <span style="color:var(--brown);">R$ ${custo.toFixed(4).replace('.',',')}</span>
+        <span style="color:var(--brown);">R$ ${custo.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4})}</span>
       </div>`;
     }).join('');
 
@@ -3386,7 +3391,7 @@ function renderReceitasLista() {
         recheioHtml = `<div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;border-bottom:1px solid var(--border);color:var(--pink-dark);">
           <span>🥣 ${recReceita.produto_nome}</span>
           <span>${r.recheio_qtd_por_unidade}g/un × ${r.rendimento} un</span>
-          <span>R$ ${custoRecheio.toFixed(4).replace('.',',')}</span>
+          <span>R$ ${custoRecheio.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4})}</span>
         </div>`;
       }
     }
@@ -3403,8 +3408,8 @@ function renderReceitasLista() {
         </div>
         <div style="text-align:right;">
           <div style="font-size:0.75rem;color:var(--muted);">Custo do lote</div>
-          <div style="font-weight:500;font-size:1.1rem;color:var(--brown);">R$ ${custoTotal.toFixed(2).replace('.',',')}</div>
-          <div style="font-size:0.78rem;color:var(--tiffany-dark);">R$ ${custoUnit.toFixed(4).replace('.',',')} / ${isRecheio?'g':'un'}</div>
+          <div style="font-weight:500;font-size:1.1rem;color:var(--brown);">R$ ${custoTotal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+          <div style="font-size:0.78rem;color:var(--tiffany-dark);">R$ ${custoUnit.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4})} / ${isRecheio?'g':'un'}</div>
         </div>
       </div>
       ${ingsHtml ? `<div style="margin-bottom:4px;">${ingsHtml}</div>` : ''}
@@ -3484,7 +3489,7 @@ function calcularPrecoPorUnidade() {
   if (precoTotal > 0 && qtdCompra > 0) {
     const custoPorUnidade = precoTotal / qtdCompra;
     document.getElementById('ins-preco').value = custoPorUnidade.toFixed(6);
-    document.getElementById('ins-custo-calculado').textContent = 'R$ ' + custoPorUnidade.toFixed(6).replace('.', ',');
+    document.getElementById('ins-custo-calculado').textContent = 'R$ ' + custoPorUnidade.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:6});
 
     // Mostra também o custo por kg/l se unidade for g ou ml
     const custoKgEl = document.getElementById('ins-custo-kg');
@@ -3925,7 +3930,7 @@ function calcularCustoReceita() {
       }, 0);
       const custoPorGRecheio = recReceita.rendimento > 0 ? custoLoteRecheio / recReceita.rendimento : 0;
       custoRecheio = custoPorGRecheio * recheioQtdUnit * rendimento;
-      document.getElementById('rec-custo-recheio-val').textContent = 'R$ '+custoRecheio.toFixed(4).replace('.',',');
+      document.getElementById('rec-custo-recheio-val').textContent = 'R$ '+custoRecheio.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4});
       if (linhaRecheio) linhaRecheio.style.display = 'flex';
     }
   } else {
@@ -3934,9 +3939,9 @@ function calcularCustoReceita() {
 
   const custoTotal = custoIngredientes + custoRecheio;
   const custoUnit = rendimento > 0 ? custoTotal/rendimento : 0;
-  document.getElementById('rec-custo-ingredientes').textContent = 'R$ '+custoIngredientes.toFixed(4).replace('.',',');
-  document.getElementById('rec-custo-total').textContent = 'R$ '+custoTotal.toFixed(2).replace('.',',');
-  document.getElementById('rec-custo-unit').textContent = 'R$ '+custoUnit.toFixed(4).replace('.',',');
+  document.getElementById('rec-custo-ingredientes').textContent = 'R$ '+custoIngredientes.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4});
+  document.getElementById('rec-custo-total').textContent = 'R$ '+custoTotal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('rec-custo-unit').textContent = 'R$ '+custoUnit.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4});
   document.getElementById('rec-rendimento-display').textContent = rendimento+' unidades';
 }
 
