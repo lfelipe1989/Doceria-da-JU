@@ -4282,11 +4282,27 @@ function renderItensNota(resultado) {
         `<option value="${i.id}" ${i.nome === item.insumo_associado ? 'selected' : ''}>${i.nome} (${i.unidade})</option>`
       ).join('');
 
+    // Preview de atualização de preço
+    let precoHtml = '';
+    if (item.preco_total > 0 && item.quantidade > 0) {
+      const insumoAssoc = insumosCache.find(x => x.nome === item.insumo_associado);
+      const precoAtual = insumoAssoc ? parseFloat(insumoAssoc.preco_por_unidade)||0 : 0;
+      const novoPreco = item.preco_total / item.quantidade;
+      if (precoAtual > 0) {
+        if (novoPreco > precoAtual) {
+          precoHtml = `<div style="font-size:0.72rem;color:var(--brown);margin-top:4px;">📈 Preço será atualizado: R$ ${precoAtual.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4})} → R$ ${novoPreco.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4})} /${item.unidade}</div>`;
+        } else {
+          precoHtml = `<div style="font-size:0.72rem;color:var(--muted);margin-top:4px;">💰 Preço mantido (nota está em promoção)</div>`;
+        }
+      }
+    }
+
     return `<div style="background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:0.85rem;" data-idx="${idx}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;gap:8px;flex-wrap:wrap;">
         <div>
           <div style="font-weight:500;font-size:0.88rem;">${item.produto_nota}</div>
           <div style="font-size:0.72rem;color:${confCor};margin-top:2px;">${confLabel} confiança</div>
+          ${precoHtml}
         </div>
         <div style="text-align:right;font-size:0.82rem;">
           <div style="font-weight:500;">R$ ${(item.preco_total||0).toFixed(2).replace('.',',')}</div>
@@ -4315,35 +4331,64 @@ async function confirmarLancamentoNota() {
   const qtds = document.querySelectorAll('.nota-qtd-inp');
   let lancados = 0;
   let erros = 0;
+  let precosAtualizados = 0;
 
   for (let i = 0; i < sels.length; i++) {
     const insumoId = sels[i].value;
     const qtd = parseFloat(qtds[i].value)||0;
-    if (!insumoId || !qtd) continue; // pulou ou zerado
+    if (!insumoId || !qtd) continue;
 
     const insumo = insumosCache.find(x => x.id == insumoId);
     if (!insumo) continue;
 
-    const novoEstoque = (parseFloat(insumo.estoque_atual)||0) + qtd;
     const item = notaItensIdentificados[i];
+    const novoEstoque = (parseFloat(insumo.estoque_atual)||0) + qtd;
+
+    // ── ATUALIZAÇÃO DE PREÇO ─────────────────────────────
+    // Só atualiza se a nota trouxe preço total e quantidade
+    let patchPreco = {};
+    if (item.preco_total > 0 && qtd > 0) {
+      const precoAtualPorUnit = parseFloat(insumo.preco_por_unidade)||0;
+
+      // Calcula novo preço por unidade base (g, ml, un)
+      // A quantidade da nota (qtd) já está convertida para unidade base
+      const novoPrecoUnit = item.preco_total / qtd;
+
+      // Só atualiza se o novo preço for MAIOR que o atual
+      // (promoção/desconto não sobrescreve)
+      if (novoPrecoUnit > precoAtualPorUnit) {
+        patchPreco = {
+          preco_por_unidade: novoPrecoUnit,
+          preco_compra: item.preco_total,
+          qtd_compra: qtd
+        };
+        precosAtualizados++;
+      }
+    }
 
     try {
       await Promise.all([
-        supaFetch('insumos?id=eq.'+insumoId, 'PATCH', {estoque_atual: novoEstoque}),
+        supaFetch('insumos?id=eq.'+insumoId, 'PATCH', {
+          estoque_atual: novoEstoque,
+          ...patchPreco
+        }),
         supaFetch('insumo_movimentos','POST',{
           insumo_id: parseInt(insumoId),
           tipo: 'entrada',
           quantidade: qtd,
-          observacao: `📷 Nota fiscal: ${item.produto_nota}`,
+          observacao: `📷 Nota fiscal: ${item.produto_nota}${Object.keys(patchPreco).length ? ' (preço atualizado)' : ''}`,
           estabelecimento_id: estabelecimentoId
         })
       ]);
       lancados++;
-    } catch(e) { erros++; }
+    } catch(e) { console.error(e); erros++; }
   }
 
   fecharModal('modal-ler-nota');
-  showToast(`✅ ${lancados} item(s) lançado(s) no inventário!${erros ? ` (${erros} erro(s))` : ''}`);
+  let msg = `✅ ${lancados} item(s) lançado(s)!`;
+  if (precosAtualizados > 0) msg += ` · ${precosAtualizados} preço(s) atualizado(s)`;
+  if (erros > 0) msg += ` · ${erros} erro(s)`;
+  showToast(msg);
   await carregarInventario();
 }
 
