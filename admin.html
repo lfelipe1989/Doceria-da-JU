@@ -1406,9 +1406,29 @@ async function doLogin() {
       return;
     }
     const u = usuarios[0];
+
+    // Verifica se o estabelecimento está ativo antes de liberar o acesso
+    const estabRes = await supaFetch('estabelecimentos?id=eq.'+u.estabelecimento_id);
+    const estab = estabRes && estabRes[0];
+
+    if (!estab) {
+      errEl.textContent = 'Estabelecimento não encontrado.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    if (estab.plano === 'inativo') {
+      errEl.textContent = '🔒 Acesso suspenso. Entre em contato com o suporte para reativar sua conta.';
+      errEl.classList.add('show');
+      document.getElementById('login-input').value = '';
+      return;
+    }
+
+    errEl.classList.remove('show');
     estabelecimentoId = u.estabelecimento_id;
     ativarAdmin(u);
   } catch(e) {
+    errEl.textContent = 'E-mail ou senha incorretos.';
     errEl.classList.add('show');
   }
 }
@@ -1528,12 +1548,20 @@ if (_stored) {
       estabelecimentoId = d.id;
       document.getElementById('login-screen').style.display='none';
       document.getElementById('main-layout').style.display='flex';
-      // Aplica tema e nome antes de iniciar (mesmo no recarregamento de página)
+      // Verifica se o estabelecimento ainda está ativo antes de continuar a sessão
       supaFetch('estabelecimentos?id=eq.'+estabelecimentoId).then(res => {
-        if (res && res[0]) {
-          document.querySelector('.sidebar-logo .s-title').textContent = res[0].nome;
-          aplicarTema(res[0]);
+        const estab = res && res[0];
+        if (!estab || estab.plano === 'inativo') {
+          // Estabelecimento foi desativado — encerra a sessão imediatamente
+          sessionStorage.removeItem('ju-admin');
+          document.getElementById('main-layout').style.display='none';
+          document.getElementById('login-screen').style.display='flex';
+          document.getElementById('login-error').textContent = '🔒 Acesso suspenso. Entre em contato com o suporte para reativar sua conta.';
+          document.getElementById('login-error').classList.add('show');
+          return;
         }
+        document.querySelector('.sidebar-logo .s-title').textContent = estab.nome;
+        aplicarTema(estab);
       }).catch(()=>{});
       iniciar();
     } else {
@@ -1544,6 +1572,21 @@ if (_stored) {
     sessionStorage.removeItem('ju-admin');
   }
 }
+
+// Verifica periodicamente (a cada 60s) se o estabelecimento ainda está ativo,
+// para encerrar a sessão de quem já está logado caso seja desativado pelo super admin
+setInterval(async () => {
+  if (!sessionStorage.getItem('ju-admin')) return;
+  try {
+    const res = await supaFetch('estabelecimentos?id=eq.'+estabelecimentoId);
+    const estab = res && res[0];
+    if (!estab || estab.plano === 'inativo') {
+      sessionStorage.removeItem('ju-admin');
+      alert('🔒 Seu acesso foi suspenso. A página será recarregada.');
+      location.reload();
+    }
+  } catch(e) {}
+}, 60000);
 
 // ── API ────────────────────────────────────
 async function supaFetch(path, method='GET', body=null) {
