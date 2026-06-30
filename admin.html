@@ -2277,8 +2277,20 @@ async function salvarOuAtualizarCliente(nome, tel, end) {
   try {
     const existe = await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&telefone=eq.'+encodeURIComponent(tel));
     if (existe && existe.length > 0) {
-      await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&telefone=eq.'+encodeURIComponent(tel),'PATCH',{ nome, endereco:end });
+      const clienteExistente = existe[0];
+      // Só atualiza o cadastro se o nome for o mesmo (ou muito parecido)
+      // Se o nome for diferente, é provavelmente uma pessoa diferente com o mesmo telefone
+      // Nesse caso preserva o cadastro existente e o pedido fica com o nome digitado
+      const nomeSimilar = clienteExistente.nome.toLowerCase().trim() === nome.toLowerCase().trim();
+      if (nomeSimilar) {
+        // Mesmo cliente — atualiza só o endereço se mudou
+        if (clienteExistente.endereco !== end) {
+          await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&telefone=eq.'+encodeURIComponent(tel),'PATCH',{ endereco:end });
+        }
+      }
+      // Se nome diferente: não toca no cadastro — o pedido salva o nome digitado normalmente
     } else {
+      // Telefone novo — cria o cliente
       await supaFetch('clientes','POST',{ nome, telefone:tel, endereco:end, estabelecimento_id:estabelecimentoId });
       todosClientes = await supaFetch('clientes?estabelecimento_id=eq.'+estabelecimentoId+'&order=nome.asc');
     }
@@ -2679,10 +2691,11 @@ async function carregarFinanceiro() {
     document.getElementById('fin-meios').innerHTML=Object.entries(meios).sort((a,b)=>b[1]-a[1]).map(([m,v])=>
       `<div class="bar-row"><span class="bar-label" style="width:110px;">${m}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxMeio*100)}%;background:var(--tiffany);"></div></div><span style="font-size:0.78rem;font-weight:500;color:var(--muted);width:80px;text-align:right;">R$ ${v.toFixed(2).replace('.',',')}</span></div>`).join('')||'<p style="color:var(--muted);font-size:0.85rem;">Nenhum pagamento no período.</p>';
 
-    // Contas em aberto por cliente
+    // Contas em aberto por cliente — agrupa por telefone+nome para não misturar
+    // clientes diferentes que tenham o mesmo telefone (ex: dois estabelecimentos do mesmo dono)
     const porCliente={};
     data.forEach(p=>{
-      const k=p.cliente_telefone;
+      const k = p.cliente_telefone + '||' + p.cliente_nome.trim().toLowerCase();
       if(!porCliente[k])porCliente[k]={nome:p.cliente_nome,tel:p.cliente_telefone,pedidos:[],total:0,recebido:0};
       const pagsPed=pags.filter(pg=>pg.pedido_id===p.id);
       const totalPago=pagsPed.reduce((s,pg)=>s+parseFloat(pg.valor),0);
@@ -2706,7 +2719,7 @@ function renderContasAberto(clientes) {
       <td>R$ ${c.total.toFixed(2).replace('.',',')}</td>
       <td>R$ ${c.recebido.toFixed(2).replace('.',',')}</td>
       <td class="em-aberto">R$ ${aberto}</td>
-      <td><button class="action-btn btn-pay" onclick="abrirExtrato('${c.tel}')">📋 Extrato</button></td>
+      <td><button class="action-btn btn-pay" onclick="abrirExtrato('${c.tel}','${c.nome.replace(/'/g,"\\'")}')">📋 Extrato</button></td>
     </tr>`;
   }).join('') :
     '<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:1.5rem;">✅ Nenhuma conta em aberto no período!</td></tr>';
@@ -2751,8 +2764,9 @@ function limparBuscaFinanceiro() {
 let dadosFinanceiros = {};
 let extratoAtual = null;
 
-function abrirExtrato(tel) {
-  const c = dadosFinanceiros[tel];
+function abrirExtrato(tel, nome) {
+  const k = tel + '||' + (nome||'').trim().toLowerCase();
+  const c = dadosFinanceiros[k];
   if (!c) return;
   extratoAtual = c;
 
@@ -2924,23 +2938,13 @@ async function salvarEdicaoCliente() {
   if (!nome || !tel) { alert('Nome e telefone são obrigatórios!'); return; }
 
   try {
+    // Atualiza o cadastro do cliente (para contato futuro)
+    // Pedidos anteriores NÃO são alterados — cada pedido guarda os dados da época
     await supaFetch('clientes?id=eq.'+id, 'PATCH', { nome, telefone: tel, endereco: end });
 
-    // Atualiza também os pedidos existentes com o telefone antigo para manter consistência
-    const clienteAntigo = clientesCache.find(x => x.id == id);
-    if (clienteAntigo && clienteAntigo.telefone !== tel) {
-      await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&cliente_telefone=eq.'+encodeURIComponent(clienteAntigo.telefone), 'PATCH', {
-        cliente_nome: nome, cliente_telefone: tel, cliente_endereco: end
-      });
-    } else if (clienteAntigo) {
-      await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&cliente_telefone=eq.'+encodeURIComponent(tel), 'PATCH', {
-        cliente_nome: nome, cliente_endereco: end
-      });
-    }
-
     fecharModal('modal-editar-cliente');
-    showToast('✓ Cliente atualizado com sucesso!');
-    await carregarClientes(); // recarrega a lista com dados frescos
+    showToast('✓ Cliente atualizado! Pedidos anteriores mantidos como estavam.');
+    await carregarClientes();
   } catch(e) {
     showToast('Erro ao salvar. Verifique se o telefone já está cadastrado.');
   }
