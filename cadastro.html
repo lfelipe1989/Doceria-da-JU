@@ -118,12 +118,20 @@
     <!-- SUCESSO -->
     <div class="step" id="step-sucesso">
       <div class="sucesso">
-        <div class="sucesso-icon">🎉</div>
-        <h2>Conta criada com sucesso!</h2>
-        <p>Seu sistema está pronto. Acesse o painel admin com seu e-mail e senha.</p>
+        <div class="sucesso-icon">✅</div>
+        <h2>Sua conta foi criada com sucesso!</h2>
+        <p>Seu login já está ativo. Use as credenciais abaixo para acessar o painel administrativo sempre que quiser.</p>
+
+        <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:1rem;margin:1rem 0;text-align:left;font-size:0.85rem;line-height:1.8;">
+          <div>📧 <strong>Login:</strong> <span id="sucesso-email" style="color:var(--teal);"></span></div>
+          <div>🔒 <strong>Senha:</strong> a que você acabou de criar</div>
+        </div>
+
+        <p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.4rem;">Link de acesso ao painel (salve ou copie):</p>
         <div class="link-acesso" id="link-acesso"></div>
-        <p style="font-size:0.78rem;color:var(--muted);">Guarde esse link! Você também pode acessar direto pelo admin.html informando suas credenciais.</p>
-        <button class="btn-next" onclick="window.location.href='admin.html'">Ir para o painel →</button>
+
+        <button class="btn-next" onclick="copiarLinkAcesso()" style="background:transparent;border:1px solid var(--teal);color:var(--teal);margin-bottom:0.6rem;">📋 Copiar link de acesso</button>
+        <button class="btn-next" onclick="window.location.href='admin.html'">Ir para o painel agora →</button>
       </div>
     </div>
   </div>
@@ -181,13 +189,16 @@ function irStep3() {
 async function criarConta() {
   const btn = document.getElementById('btn-criar');
   btn.textContent = 'Criando...'; btn.disabled = true;
-  try {
-    const nome = document.getElementById('s1-nome').value.trim();
-    const slug = document.getElementById('s1-slug').value.trim();
-    const nomeUser = document.getElementById('s2-nome').value.trim();
-    const email = document.getElementById('s2-email').value.trim();
-    const senha = document.getElementById('s2-senha').value;
 
+  const nome = document.getElementById('s1-nome').value.trim();
+  const slug = document.getElementById('s1-slug').value.trim();
+  const nomeUser = document.getElementById('s2-nome').value.trim();
+  const email = document.getElementById('s2-email').value.trim();
+  const senha = document.getElementById('s2-senha').value;
+
+  let estabId = null;
+
+  try {
     // Verifica slug novamente antes de criar
     const slugExiste = await supaFetch('estabelecimentos?slug=eq.'+slug);
     if (slugExiste && slugExiste.length > 0) {
@@ -205,25 +216,26 @@ async function criarConta() {
       return;
     }
 
-    // Cria o estabelecimento
+    // ── ETAPA CRÍTICA: cria o estabelecimento e o login ──
+    // Se isso falhar, é erro de verdade — interrompe e avisa o usuário.
     const res = await supaFetch('estabelecimentos','POST',{ nome, slug, plano:'trial', mensalidade:0, vencimento_dia:5 });
-    const estabId = res[0].id;
-
-    // Cria o usuário admin
+    estabId = res[0].id;
     await supaFetch('usuarios','POST',{ estabelecimento_id:estabId, nome:nomeUser, email, senha_hash:senha, papel:'admin' });
 
-    // Cria produto padrão
+  } catch(e) {
+    console.error('Erro ao criar conta (etapa crítica):', e);
+    btn.textContent = '✓ Criar minha conta'; btn.disabled = false;
+    alert('Erro ao criar sua conta: ' + e.message + '\n\nTente novamente.');
+    return;
+  }
+
+  // ── ETAPAS OPCIONAIS: produto, estoque e mensagens padrão ──
+  // Se alguma falhar, a conta já existe e o login já funciona —
+  // não bloqueia a confirmação de sucesso, só avisa no console.
+  try {
     await supaFetch('produtos','POST',{ nome:'Produto 1', emoji:'🛍️', descricao:'Personalize no Cardápio', preco:10.00, ativo:true, estabelecimento_id:estabId });
+    await supaFetch('estoque','POST', {produto_nome:'Produto 1', quantidade:0, estabelecimento_id:estabId});
 
-    // Cria estoque inicial zerado
-    const saboresPadrao = [
-      {produto_nome:'Produto 1', quantidade:0, estabelecimento_id:estabId}
-    ];
-    for (const s of saboresPadrao) {
-      await supaFetch('estoque','POST', s);
-    }
-
-    // Cria mensagens padrão
     const msgs = [
       {chave:'msg_cobranca', valor:'Olá, {NOME}! 🎉\n\nSeu pedido foi recebido!\n\n📦 *Itens:*\n{ITENS}\n\n💰 *Total: {TOTAL}*\n\nEnvie o pagamento pelo link:\n👉 [LINK DO PAGAMENTO]\n\nObrigado! 💕', estabelecimento_id:estabId},
       {chave:'msg_extrato', valor:'📋 *Extrato em aberto — {NOME}*\n━━━━━━━━━━━━━━\n{EXTRATO}\n━━━━━━━━━━━━━━\nAceitamos Pix, cartão e dinheiro. 💕', estabelecimento_id:estabId},
@@ -232,14 +244,26 @@ async function criarConta() {
     for (const m of msgs) {
       await supaFetch('configuracoes','POST', m);
     }
-
-    document.getElementById('link-acesso').textContent = window.location.origin+'/admin.html';
-    irStep('sucesso');
   } catch(e) {
-    console.error('Erro ao criar conta:', e);
-    btn.textContent = '✓ Criar minha conta'; btn.disabled = false;
-    alert('Erro ao criar conta: ' + e.message);
+    // Não bloqueia o sucesso — o cliente já consegue logar e configurar manualmente
+    console.warn('Algumas configurações padrão não foram criadas:', e);
   }
+
+  // ── CONTA CRIADA COM SUCESSO ──
+  const linkAcesso = window.location.origin + '/admin.html';
+  document.getElementById('link-acesso').textContent = linkAcesso;
+  document.getElementById('sucesso-email').textContent = email;
+  irStep('sucesso');
+}
+
+function copiarLinkAcesso() {
+  const link = document.getElementById('link-acesso').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = event.target;
+    const textoOriginal = btn.textContent;
+    btn.textContent = '✓ Copiado!';
+    setTimeout(() => { btn.textContent = textoOriginal; }, 2000);
+  }).catch(() => alert('Link: ' + link));
 }
 
 function irStep(n) {
