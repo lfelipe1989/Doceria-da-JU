@@ -250,6 +250,7 @@ async function supaFetch(path, method='GET', body=null) {
 
 // ── DADOS ──────────────────────────────────
 let estabelecimentosCache = [];
+let usuariosCache = [];
 
 async function iniciarSA() {
   await carregarEstabelecimentos();
@@ -259,7 +260,12 @@ async function iniciarSA() {
 
 async function carregarEstabelecimentos() {
   try {
-    estabelecimentosCache = await supaFetch('estabelecimentos?order=criado_em.desc');
+    const [estabs, usuarios] = await Promise.all([
+      supaFetch('estabelecimentos?order=criado_em.desc'),
+      supaFetch('usuarios?order=criado_em.desc')
+    ]);
+    estabelecimentosCache = estabs;
+    usuariosCache = usuarios;
     renderEstabs(estabelecimentosCache);
   } catch(e) { showToast('Erro ao carregar estabelecimentos.'); }
 }
@@ -290,15 +296,22 @@ async function renderDashboard() {
 function renderEstabCard(e) {
   const badgeCls = e.plano==='ativo'?'badge-ativo':e.plano==='trial'?'badge-trial':'badge-inativo';
   const badgeLabel = e.plano==='ativo'?'✅ Ativo':e.plano==='trial'?'🟡 Trial':'🔴 Inativo';
+  const usuario = usuariosCache.find(u => u.estabelecimento_id === e.id);
+  const whatsappNum = usuario?.whatsapp ? usuario.whatsapp.replace(/\D/g,'') : null;
+  const whatsappBtn = whatsappNum
+    ? `<button class="btn btn-teal" onclick="window.open('https://wa.me/55${whatsappNum}','_blank')">💬 ${usuario.whatsapp}</button>`
+    : '';
   return `<div class="estab-card">
     <div class="estab-avatar">${e.logo_url?`<img src="${e.logo_url}" alt="logo"/>`:'🏪'}</div>
     <div class="estab-info">
       <div class="estab-nome">${e.nome}</div>
       <div class="estab-slug">/${e.slug}</div>
       <div class="estab-meta">Mensalidade: R$ ${parseFloat(e.mensalidade||0).toFixed(2).replace('.',',')} · Vence dia ${e.vencimento_dia||1}</div>
+      ${usuario ? `<div class="estab-meta">👤 ${usuario.nome} · ${usuario.email}</div>` : ''}
     </div>
     <span class="badge ${badgeCls}">${badgeLabel}</span>
     <div class="estab-actions">
+      ${whatsappBtn}
       <button class="btn btn-outline" onclick="abrirEditarEstab(${e.id})">✏️ Editar</button>
       <button class="btn btn-teal" onclick="abrirCriarUsuario(${e.id},'${e.nome.replace(/'/g,"\\'")}')">👤 Acesso</button>
       <button class="btn btn-outline" onclick="alternarPlano(${e.id},'${e.plano}')">${e.plano==='ativo'?'⏸ Desativar':'▶ Ativar'}</button>
