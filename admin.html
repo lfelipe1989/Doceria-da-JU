@@ -394,6 +394,7 @@
     #rec-tipo-seletor > div { flex-direction:column; }
   }
 </style>
+<style id="theme-override"></style>
 </head>
 <body>
 
@@ -1188,6 +1189,58 @@
       <div style="display:flex;flex-direction:column;gap:1.25rem;" id="mensagens-lista">
         <div class="empty"><div class="spinner"></div></div>
       </div>
+
+      <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--brown);margin:2rem 0 0.5rem;">🎨 Personalização visual</h2>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.25rem;">Deixe o sistema com a cara do seu negócio: logo e cores próprias.</p>
+
+      <div class="order-card" style="max-width:560px;">
+        <!-- LOGO -->
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+          <div id="pers-logo-preview" style="width:64px;height:64px;border-radius:50%;background:var(--pink-pale);border:2px dashed var(--pink-border);display:flex;align-items:center;justify-content:center;font-size:1.5rem;overflow:hidden;cursor:pointer;flex-shrink:0;" onclick="document.getElementById('pers-logo-input').click()">🏪</div>
+          <div style="flex:1;min-width:160px;">
+            <div style="font-weight:500;font-size:0.9rem;">Logo do estabelecimento</div>
+            <button onclick="document.getElementById('pers-logo-input').click()" style="background:none;border:1px solid var(--pink-border);color:var(--pink-dark);border-radius:8px;padding:5px 12px;font-size:0.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:6px;">📷 Trocar logo</button>
+          </div>
+          <input type="file" id="pers-logo-input" accept="image/*" style="display:none;" onchange="uploadLogoEstabelecimento(this)"/>
+        </div>
+
+        <!-- CORES -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">
+          <div>
+            <label class="form-label">Cor primária (destaques)</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="color" id="pers-cor-primaria" value="#2C2C2C" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;"/>
+              <input type="text" id="pers-cor-primaria-hex" value="#2C2C2C" class="form-input" style="flex:1;font-size:0.82rem;" oninput="syncColorHex('primaria')"/>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Cor secundária (apoio)</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="color" id="pers-cor-secundaria" value="#666666" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;"/>
+              <input type="text" id="pers-cor-secundaria-hex" value="#666666" class="form-input" style="flex:1;font-size:0.82rem;" oninput="syncColorHex('secundaria')"/>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Cor de fundo</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="color" id="pers-cor-fundo" value="#F5F5F5" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;"/>
+              <input type="text" id="pers-cor-fundo-hex" value="#F5F5F5" class="form-input" style="flex:1;font-size:0.82rem;" oninput="syncColorHex('fundo')"/>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Cor do texto</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="color" id="pers-cor-texto" value="#1A1A1A" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;"/>
+              <input type="text" id="pers-cor-texto-hex" value="#1A1A1A" class="form-input" style="flex:1;font-size:0.82rem;" oninput="syncColorHex('texto')"/>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button onclick="restaurarCoresPadrao()" style="flex:1;padding:0.7rem;background:white;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;">↺ Restaurar padrão</button>
+          <button onclick="salvarPersonalizacao()" style="flex:2;padding:0.7rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;">✓ Salvar personalização</button>
+        </div>
+      </div>
     </div>
 
     <!-- ESTOQUE -->
@@ -1361,10 +1414,11 @@ async function doLogin() {
 function ativarAdmin(usuario) {
   usuarioLogado = usuario;
   estabelecimentoId = usuario.estabelecimento_id || 1;
-  // Atualiza nome do estabelecimento no sidebar
+  // Atualiza nome e tema do estabelecimento
   supaFetch('estabelecimentos?id=eq.'+estabelecimentoId).then(res => {
     if (res && res[0]) {
       document.querySelector('.sidebar-logo .s-title').textContent = res[0].nome;
+      aplicarTema(res[0]);
     }
   }).catch(()=>{});
   document.getElementById('login-screen').style.display = 'none';
@@ -1375,6 +1429,63 @@ function ativarAdmin(usuario) {
     email: usuario.email || ''
   }));
   iniciar();
+}
+
+function aplicarTema(estab) {
+  // Estabelecimento 1 (Doceria da Ju) mantém o visual original mesmo sem cores customizadas
+  const isDoceriaJu = estabelecimentoId == 1;
+
+  const corPrimaria = estab.cor_primaria || (isDoceriaJu ? '#F2A7C3' : '#2C2C2C');
+  const corSecundaria = estab.cor_secundaria || (isDoceriaJu ? '#5BC8C0' : '#666666');
+  const corFundo = estab.cor_fundo || (isDoceriaJu ? '#FFF5F7' : '#F5F5F5');
+  const corTexto = estab.cor_texto || (isDoceriaJu ? '#3D1C02' : '#1A1A1A');
+
+  // Gera variações automáticas (mais clara/escura) a partir da cor base
+  const clarear = (hex, pct) => ajustarCor(hex, pct);
+  const escurecer = (hex, pct) => ajustarCor(hex, -pct);
+
+  const css = `
+    :root {
+      --pink: ${corPrimaria};
+      --pink-dark: ${escurecer(corPrimaria, 20)};
+      --pink-pale: ${clarear(corPrimaria, 88)};
+      --pink-border: ${corPrimaria}66;
+      --tiffany: ${corSecundaria};
+      --tiffany-dark: ${escurecer(corSecundaria, 20)};
+      --tiffany-pale: ${clarear(corSecundaria, 88)};
+      --brown: ${corTexto};
+      --cream: ${clarear(corFundo, 4)};
+      --text: ${corTexto};
+      --border: ${corTexto}1A;
+    }
+    body { background: ${corFundo}; }
+  `;
+  document.getElementById('theme-override').textContent = css;
+
+  // Logo
+  if (estab.logo_url) {
+    document.querySelectorAll('.sidebar-logo img, link[rel="apple-touch-icon"], link[rel="icon"]').forEach(el => {
+      if (el.tagName === 'IMG') el.src = estab.logo_url;
+      else el.href = estab.logo_url;
+    });
+  }
+}
+
+// Ajusta uma cor hex tornando-a mais clara (pct positivo) ou mais escura (pct negativo)
+function ajustarCor(hex, pct) {
+  hex = hex.replace('#','');
+  if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+  let r = parseInt(hex.substring(0,2),16);
+  let g = parseInt(hex.substring(2,4),16);
+  let b = parseInt(hex.substring(4,6),16);
+  const ajustar = (c) => {
+    if (pct > 0) return Math.round(c + (255-c)*(pct/100));
+    return Math.round(c * (1+pct/100));
+  };
+  r = Math.max(0,Math.min(255,ajustar(r)));
+  g = Math.max(0,Math.min(255,ajustar(g)));
+  b = Math.max(0,Math.min(255,ajustar(b)));
+  return '#' + [r,g,b].map(c => c.toString(16).padStart(2,'0')).join('');
 }
 
 function fazerLogout() {
@@ -1406,6 +1517,13 @@ if (_stored) {
       estabelecimentoId = d.id;
       document.getElementById('login-screen').style.display='none';
       document.getElementById('main-layout').style.display='flex';
+      // Aplica tema e nome antes de iniciar (mesmo no recarregamento de página)
+      supaFetch('estabelecimentos?id=eq.'+estabelecimentoId).then(res => {
+        if (res && res[0]) {
+          document.querySelector('.sidebar-logo .s-title').textContent = res[0].nome;
+          aplicarTema(res[0]);
+        }
+      }).catch(()=>{});
       iniciar();
     } else {
       sessionStorage.removeItem('ju-admin');
@@ -2935,6 +3053,125 @@ async function carregarCardapio() {
   } catch(e) {}
   await carregarMensagens();
   renderMensagens();
+  await carregarPersonalizacao();
+}
+
+// ── PERSONALIZAÇÃO VISUAL ───────────────────
+let estabAtualCache = null;
+
+async function carregarPersonalizacao() {
+  try {
+    const res = await supaFetch('estabelecimentos?id=eq.'+estabelecimentoId);
+    if (!res || !res[0]) return;
+    estabAtualCache = res[0];
+    const isDoceriaJu = estabelecimentoId == 1;
+
+    const corPrimaria = res[0].cor_primaria || (isDoceriaJu ? '#F2A7C3' : '#2C2C2C');
+    const corSecundaria = res[0].cor_secundaria || (isDoceriaJu ? '#5BC8C0' : '#666666');
+    const corFundo = res[0].cor_fundo || (isDoceriaJu ? '#FFF5F7' : '#F5F5F5');
+    const corTexto = res[0].cor_texto || (isDoceriaJu ? '#3D1C02' : '#1A1A1A');
+
+    setColorInputs('primaria', corPrimaria);
+    setColorInputs('secundaria', corSecundaria);
+    setColorInputs('fundo', corFundo);
+    setColorInputs('texto', corTexto);
+
+    if (res[0].logo_url) {
+      document.getElementById('pers-logo-preview').innerHTML = `<img src="${res[0].logo_url}" style="width:100%;height:100%;object-fit:cover;"/>`;
+    } else {
+      document.getElementById('pers-logo-preview').innerHTML = '🏪';
+    }
+  } catch(e) {}
+}
+
+function setColorInputs(campo, hex) {
+  const colorInput = document.getElementById('pers-cor-'+campo);
+  const hexInput = document.getElementById('pers-cor-'+campo+'-hex');
+  if (colorInput) colorInput.value = hex;
+  if (hexInput) hexInput.value = hex;
+}
+
+function syncColorHex(campo) {
+  const hexInput = document.getElementById('pers-cor-'+campo+'-hex');
+  const colorInput = document.getElementById('pers-cor-'+campo);
+  let val = hexInput.value.trim();
+  if (!val.startsWith('#')) val = '#'+val;
+  if (/^#[0-9A-Fa-f]{6}$/.test(val)) colorInput.value = val;
+}
+
+// Sincroniza o color picker → campo de texto
+document.addEventListener('DOMContentLoaded', () => {
+  ['primaria','secundaria','fundo','texto'].forEach(campo => {
+    const colorInput = document.getElementById('pers-cor-'+campo);
+    if (colorInput) {
+      colorInput.addEventListener('input', function() {
+        document.getElementById('pers-cor-'+campo+'-hex').value = this.value;
+      });
+    }
+  });
+});
+
+function restaurarCoresPadrao() {
+  const isDoceriaJu = estabelecimentoId == 1;
+  setColorInputs('primaria', isDoceriaJu ? '#F2A7C3' : '#2C2C2C');
+  setColorInputs('secundaria', isDoceriaJu ? '#5BC8C0' : '#666666');
+  setColorInputs('fundo', isDoceriaJu ? '#FFF5F7' : '#F5F5F5');
+  setColorInputs('texto', isDoceriaJu ? '#3D1C02' : '#1A1A1A');
+}
+
+async function uploadLogoEstabelecimento(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+
+  // Preview imediato
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('pers-logo-preview').innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;"/>`;
+  };
+  reader.readAsDataURL(file);
+
+  try {
+    const ext = file.name.split('.').pop();
+    const path = `${estabelecimentoId}/logo.${ext}`;
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/logos/${path}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': file.type,
+        'x-upsert': 'true'
+      },
+      body: file
+    });
+    if (!res.ok) throw new Error('Erro no upload');
+    const logo_url = `${SUPABASE_URL}/storage/v1/object/public/logos/${path}?t=${Date.now()}`;
+    await supaFetch('estabelecimentos?id=eq.'+estabelecimentoId, 'PATCH', { logo_url });
+
+    // Aplica imediatamente no sidebar e ícone
+    document.querySelectorAll('.sidebar-logo img').forEach(el => el.src = logo_url);
+    showToast('✓ Logo atualizada!');
+  } catch(e) {
+    console.error(e);
+    showToast('Erro ao enviar a logo.');
+  }
+}
+
+async function salvarPersonalizacao() {
+  const cor_primaria = document.getElementById('pers-cor-primaria-hex').value;
+  const cor_secundaria = document.getElementById('pers-cor-secundaria-hex').value;
+  const cor_fundo = document.getElementById('pers-cor-fundo-hex').value;
+  const cor_texto = document.getElementById('pers-cor-texto-hex').value;
+
+  try {
+    await supaFetch('estabelecimentos?id=eq.'+estabelecimentoId, 'PATCH', {
+      cor_primaria, cor_secundaria, cor_fundo, cor_texto
+    });
+    // Aplica imediatamente sem precisar recarregar a página
+    aplicarTema({ cor_primaria, cor_secundaria, cor_fundo, cor_texto, logo_url: estabAtualCache?.logo_url });
+    showToast('✓ Personalização salva!');
+  } catch(e) {
+    showToast('Erro ao salvar personalização.');
+  }
 }
 
 const defMensagens = [
