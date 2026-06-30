@@ -401,7 +401,8 @@
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="login-box">
-    <img src="logo.png" alt="Logo"/>
+    <img src="logo.png" alt="Logo" id="login-logo-img" style="display:none;"/>
+    <div id="login-logo-placeholder" style="width:90px;height:90px;border-radius:50%;background:var(--pink-pale);display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 1rem;">🏪</div>
     <h2>Painel Administrativo</h2>
     <p>Entre com seu e-mail e senha</p>
     <input class="login-input" type="email" id="login-email" placeholder="seu@email.com" style="text-align:left;letter-spacing:0;" onkeydown="if(event.key==='Enter') doLogin()"/>
@@ -966,8 +967,9 @@
 <div class="layout" id="main-layout" style="display:none;">
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <img src="logo.png" alt="Logo"/>
-      <div class="s-title">Doceria da Ju</div>
+      <img src="" alt="Logo" id="sidebar-logo-img" style="display:none;"/>
+      <div id="sidebar-logo-placeholder" style="width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 6px;">🏪</div>
+      <div class="s-title">Carregando...</div>
       <div class="s-sub">Painel Admin</div>
     </div>
     <nav>
@@ -1462,12 +1464,21 @@ function aplicarTema(estab) {
   `;
   document.getElementById('theme-override').textContent = css;
 
-  // Logo
-  if (estab.logo_url) {
-    document.querySelectorAll('.sidebar-logo img, link[rel="apple-touch-icon"], link[rel="icon"]').forEach(el => {
-      if (el.tagName === 'IMG') el.src = estab.logo_url;
-      else el.href = estab.logo_url;
-    });
+  // Logo — Doceria da Ju (id 1) usa a logo padrão do sistema se não tiver uma própria configurada
+  const logoParaUsar = estab.logo_url || (isDoceriaJu ? 'logo.png' : null);
+
+  const sidebarImg = document.getElementById('sidebar-logo-img');
+  const sidebarPlaceholder = document.getElementById('sidebar-logo-placeholder');
+
+  if (logoParaUsar) {
+    sidebarImg.src = logoParaUsar;
+    sidebarImg.style.display = 'block';
+    sidebarPlaceholder.style.display = 'none';
+    // Atualiza também favicon e apple-touch-icon
+    document.querySelectorAll('link[rel="apple-touch-icon"], link[rel="icon"]').forEach(el => el.href = logoParaUsar);
+  } else {
+    sidebarImg.style.display = 'none';
+    sidebarPlaceholder.style.display = 'flex';
   }
 }
 
@@ -3076,8 +3087,9 @@ async function carregarPersonalizacao() {
     setColorInputs('fundo', corFundo);
     setColorInputs('texto', corTexto);
 
-    if (res[0].logo_url) {
-      document.getElementById('pers-logo-preview').innerHTML = `<img src="${res[0].logo_url}" style="width:100%;height:100%;object-fit:cover;"/>`;
+    const logoParaPreview = res[0].logo_url || (isDoceriaJu ? 'logo.png' : null);
+    if (logoParaPreview) {
+      document.getElementById('pers-logo-preview').innerHTML = `<img src="${logoParaPreview}" style="width:100%;height:100%;object-fit:cover;"/>`;
     } else {
       document.getElementById('pers-logo-preview').innerHTML = '🏪';
     }
