@@ -875,7 +875,28 @@
       <span style="font-weight:500;font-size:0.95rem;">Total em aberto</span>
       <span style="font-weight:500;font-size:1.1rem;color:var(--red);" id="extrato-total-aberto">—</span>
     </div>
-    <button class="btn-wpp-extrato" onclick="enviarExtratoWhatsapp()">💬 Enviar pelo WhatsApp</button>
+
+    <!-- PAGAMENTO GLOBAL -->
+    <div style="background:var(--green-bg);border:1px solid #A5D5B5;border-radius:12px;padding:1rem;margin-top:1rem;">
+      <div style="font-size:0.82rem;font-weight:500;color:var(--green);margin-bottom:0.75rem;">💰 Registrar pagamento</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <input class="form-input" type="number" step="0.01" min="0" id="extrato-pag-valor"
+          placeholder="Valor recebido (R$)"
+          style="flex:1;min-width:130px;background:white;"/>
+        <select class="form-input" id="extrato-pag-meio"
+          style="flex:1;min-width:110px;background:white;">
+          <option value="Pix">Pix</option>
+          <option value="Dinheiro">Dinheiro</option>
+          <option value="Débito">Débito</option>
+          <option value="Crédito">Crédito</option>
+          <option value="Transferência">Transferência</option>
+        </select>
+      </div>
+      <div id="extrato-pag-preview" style="font-size:0.78rem;color:var(--green);margin-bottom:8px;display:none;"></div>
+      <button onclick="registrarPagamentoExtrato()" style="width:100%;padding:0.75rem;background:var(--green);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;">✓ Confirmar pagamento</button>
+    </div>
+
+    <button class="btn-wpp-extrato" onclick="enviarExtratoWhatsapp()" style="margin-top:0.75rem;">💬 Enviar pelo WhatsApp</button>
     <button class="btn-copiar" onclick="copiarExtrato()">📋 Copiar texto</button>
   </div>
 </div>
@@ -2800,6 +2821,90 @@ function abrirExtrato(tel, nome) {
   const totalAberto = c.total - c.recebido;
   document.getElementById('extrato-total-aberto').textContent = 'R$ '+totalAberto.toFixed(2).replace('.',',');
   abrirModal('modal-extrato');
+}
+
+// ── PAGAMENTO GLOBAL NO EXTRATO ────────────
+// Atualiza preview conforme o valor digitado
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('extrato-pag-valor');
+  if (input) input.addEventListener('input', atualizarPreviewPagamento);
+});
+
+function atualizarPreviewPagamento() {
+  const valor = parseFloat(document.getElementById('extrato-pag-valor').value)||0;
+  const preview = document.getElementById('extrato-pag-preview');
+  if (!extratoAtual || valor <= 0) { preview.style.display='none'; return; }
+
+  // Pedidos em aberto do mais antigo ao mais novo
+  const pedidosAbertos = extratoAtual.pedidos
+    .filter(p => (parseFloat(p.total) - p.totalPago) > 0.01)
+    .sort((a,b) => new Date(a.criado_em) - new Date(b.criado_em));
+
+  let restante = valor;
+  const linhas = [];
+  for (const p of pedidosAbertos) {
+    if (restante <= 0) break;
+    const emAberto = parseFloat(p.total) - p.totalPago;
+    const abate = Math.min(restante, emAberto);
+    const data = new Date(p.criado_em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
+    linhas.push(`Pedido ${data}: abate R$ ${abate.toFixed(2).replace('.',',')}${abate < emAberto ? ' (parcial)' : ' ✓ quitado'}`);
+    restante -= abate;
+  }
+
+  if (restante > 0) linhas.push(`Sobra R$ ${restante.toFixed(2).replace('.',',')} (além do saldo em aberto)`);
+
+  preview.innerHTML = linhas.join('<br/>');
+  preview.style.display = 'block';
+}
+
+async function registrarPagamentoExtrato() {
+  const valor = parseFloat(document.getElementById('extrato-pag-valor').value)||0;
+  const meio = document.getElementById('extrato-pag-meio').value;
+  if (!valor || valor <= 0) { alert('Informe o valor recebido!'); return; }
+  if (!extratoAtual) return;
+
+  // Pedidos em aberto do mais antigo ao mais novo
+  const pedidosAbertos = extratoAtual.pedidos
+    .filter(p => (parseFloat(p.total) - p.totalPago) > 0.01)
+    .sort((a,b) => new Date(a.criado_em) - new Date(b.criado_em));
+
+  if (!pedidosAbertos.length) { alert('Nenhum pedido em aberto!'); return; }
+
+  const btn = document.querySelector('#modal-extrato button[onclick="registrarPagamentoExtrato()"]');
+  btn.textContent = '⏳ Registrando...'; btn.disabled = true;
+
+  let restante = valor;
+  let lancados = 0;
+
+  try {
+    for (const p of pedidosAbertos) {
+      if (restante <= 0.009) break;
+      const emAberto = parseFloat(p.total) - p.totalPago;
+      const abate = Math.min(restante, emAberto);
+
+      await supaFetch('pagamentos','POST',{
+        pedido_id: p.id,
+        valor: parseFloat(abate.toFixed(2)),
+        meio,
+        observacao: 'Pagamento extrato — ' + meio,
+        estabelecimento_id: estabelecimentoId
+      });
+      lancados++;
+      restante -= abate;
+    }
+
+    showToast(`✅ R$ ${valor.toFixed(2).replace('.',',')} registrado em ${lancados} pedido(s)!`);
+    document.getElementById('extrato-pag-valor').value = '';
+    document.getElementById('extrato-pag-preview').style.display = 'none';
+    fecharModal('modal-extrato');
+    // Recarrega financeiro para refletir os novos pagamentos
+    await carregarFinanceiro();
+  } catch(e) {
+    console.error(e);
+    showToast('Erro ao registrar pagamento.');
+  } finally {
+    btn.textContent = '✓ Confirmar pagamento'; btn.disabled = false;
+  }
 }
 
 function gerarTextoExtrato() {
