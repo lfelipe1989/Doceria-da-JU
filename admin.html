@@ -2693,12 +2693,14 @@ function limparFiltroClienteRelatorio() {
 async function carregarFinanceiro() {
   try {
     const range = getRangeQuery('fin');
-    const data = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&'+(range?range+'&':'')+'order=criado_em.desc');
-    const todosIds = data.map(d=>d.id);
-    const pags = todosIds.length ? await supaFetch('pagamentos?pedido_id=in.('+todosIds.join(',')+')'): [];
 
-    const previsto = data.reduce((s,p)=>s+parseFloat(p.total),0);
-    const recebido = pags.reduce((s,p)=>s+parseFloat(p.valor),0);
+    // Métricas do período filtrado (previsto/recebido no período)
+    const dataPeriodo = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&'+(range?range+'&':'')+'order=criado_em.desc');
+    const idsPeriodo = dataPeriodo.map(d=>d.id);
+    const pagsPeriodo = idsPeriodo.length ? await supaFetch('pagamentos?pedido_id=in.('+idsPeriodo.join(',')+')'): [];
+
+    const previsto = dataPeriodo.reduce((s,p)=>s+parseFloat(p.total),0);
+    const recebido = pagsPeriodo.reduce((s,p)=>s+parseFloat(p.valor),0);
     const aberto = previsto - recebido;
 
     document.getElementById('fin-previsto').textContent='R$ '+previsto.toFixed(2).replace('.',',');
@@ -2707,19 +2709,26 @@ async function carregarFinanceiro() {
 
     // Meios de pagamento
     const meios={};
-    pags.forEach(p=>{meios[p.meio]=(meios[p.meio]||0)+parseFloat(p.valor);});
+    pagsPeriodo.forEach(p=>{meios[p.meio]=(meios[p.meio]||0)+parseFloat(p.valor);});
     const maxMeio=Math.max(...Object.values(meios),1);
     document.getElementById('fin-meios').innerHTML=Object.entries(meios).sort((a,b)=>b[1]-a[1]).map(([m,v])=>
       `<div class="bar-row"><span class="bar-label" style="width:110px;">${m}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxMeio*100)}%;background:var(--tiffany);"></div></div><span style="font-size:0.78rem;font-weight:500;color:var(--muted);width:80px;text-align:right;">R$ ${v.toFixed(2).replace('.',',')}</span></div>`).join('')||'<p style="color:var(--muted);font-size:0.85rem;">Nenhum pagamento no período.</p>';
 
-    // Contas em aberto por cliente — agrupa por telefone+nome para não misturar
-    // clientes diferentes que tenham o mesmo telefone (ex: dois estabelecimentos do mesmo dono)
+    // Contas em aberto — busca TODOS os pedidos de todos os tempos, sem filtro de período
+    // para não perder pedidos antigos que ainda estão em aberto
+    const todosOsPedidos = await supaFetch('pedidos?estabelecimento_id=eq.'+estabelecimentoId+'&order=criado_em.asc');
+    const todosIds = todosOsPedidos.map(d=>d.id);
+    const todosOsPags = todosIds.length ? await supaFetch('pagamentos?pedido_id=in.('+todosIds.join(',')+')'): [];
+
     const porCliente={};
-    data.forEach(p=>{
+    todosOsPedidos.forEach(p=>{
+      const pagsPed=todosOsPags.filter(pg=>pg.pedido_id===p.id);
+      const totalPago=pagsPed.reduce((s,pg)=>s+parseFloat(pg.valor),0);
+      const emAberto = parseFloat(p.total) - totalPago;
+      // Só inclui pedidos com saldo em aberto
+      if (emAberto <= 0.01) return;
       const k = p.cliente_telefone + '||' + p.cliente_nome.trim().toLowerCase();
       if(!porCliente[k])porCliente[k]={nome:p.cliente_nome,tel:p.cliente_telefone,pedidos:[],total:0,recebido:0};
-      const pagsPed=pags.filter(pg=>pg.pedido_id===p.id);
-      const totalPago=pagsPed.reduce((s,pg)=>s+parseFloat(pg.valor),0);
       porCliente[k].pedidos.push({...p, pagamentos:pagsPed, totalPago});
       porCliente[k].total+=parseFloat(p.total);
       porCliente[k].recebido+=totalPago;
@@ -2818,7 +2827,8 @@ function abrirExtrato(tel, nome) {
     </div>`;
   }).join('');
 
-  const totalAberto = c.total - c.recebido;
+  // Total em aberto = soma do saldo de cada pedido individualmente
+  const totalAberto = c.pedidos.reduce((s,p) => s + Math.max(0, parseFloat(p.total) - p.totalPago), 0);
   document.getElementById('extrato-total-aberto').textContent = 'R$ '+totalAberto.toFixed(2).replace('.',',');
   abrirModal('modal-extrato');
 }
