@@ -3432,9 +3432,22 @@ function renderCardapio() {
       <div style="display:flex;gap:6px;flex-shrink:0;">
         <button class="btn-edit" onclick="abrirModalProduto(${p.id})">✏️ Editar</button>
         <button class="btn-edit" onclick="toggleAtivoProduto(${p.id})" style="background:${p.ativo?'var(--red-bg)':'var(--green-bg)'};color:${p.ativo?'var(--red)':'var(--green)'};">${p.ativo?'⛔ Desativar':'✅ Ativar'}</button>
+        <button class="btn-edit" onclick="excluirProduto(${p.id},'${p.nome.replace(/'/g,"\\'")}')" style="background:var(--red-bg);color:var(--red);">🗑️ Excluir</button>
       </div>
     </div>`;
   }).join('');
+}
+
+async function excluirProduto(id, nome) {
+  if (!confirm(`Tem certeza que deseja excluir o produto "${nome}"?\n\nEsta ação não pode ser desfeita.`)) return;
+  try {
+    await supaFetch('produtos?id=eq.'+id+'&estabelecimento_id=eq.'+estabelecimentoId, 'DELETE');
+    produtosAdmin = produtosAdmin.filter(p => p.id !== id);
+    renderCardapio();
+    showToast('Produto excluído com sucesso.');
+  } catch(e) {
+    alert('Erro ao excluir produto: ' + e.message);
+  }
 }
 
 // ── MODAL PRODUTO ──────────────────────────
