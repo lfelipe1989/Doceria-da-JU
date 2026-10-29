@@ -10,240 +10,263 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,300;9..144,600&display=swap" rel="stylesheet"/>
 <style>
   :root {
-    --pink:#F2A7C3; --pink-dark:#D4759C; --pink-pale:#FDF0F6; --pink-border:rgba(242,167,195,0.4);
-    --tiffany:#5BC8C0; --tiffany-dark:#3AADA5; --tiffany-pale:#EAF8F7;
-    --brown:#4A2410; --cream:#FFF9FB; --text:#3A1A10; --muted:#9A6070; --border:rgba(74,36,16,0.10);
-    --green:#1A6B3C; --green-bg:#E8F5EE; --blue:#1A4A7A; --blue-bg:#E8F0FA;
-    --purple:#4A2A7A; --purple-bg:#F0EAF8; --red:#8B1A1A; --red-bg:#FAE8E8;
-    --radius:14px;
+    /* ── SIDEBAR ── */
+    --sidebar-bg:#1C1917; --sidebar-hover:rgba(255,255,255,0.05); --sidebar-act:rgba(255,255,255,0.08);
+
+    /* ── SURFACES ── */
+    --bg:#F7F6F5; --cream:#FFFFFF; --pink-pale:#F7F6F5; --surface2:#F2F0EE;
+
+    /* ── ACCENT (mauve/viola) ── */
+    --pink:#9B6FD4; --pink-dark:#7A52B8; --pink-pale-color:rgba(155,111,212,0.10);
+    --pink-border:rgba(155,111,212,0.18);
+    --tiffany:#0D9488; --tiffany-dark:#0D9488; --tiffany-pale:#CCFBF1;
+
+    /* ── TEXT ── */
+    --brown:#111111; --text:#111111; --muted:#666666; --border:rgba(0,0,0,0.07);
+
+    /* ── SEMANTIC COLORS ── */
+    --green:#16A34A; --green-bg:#DCFCE7;
+    --blue:#2563EB; --blue-bg:#DBEAFE;
+    --purple:#7C3AED; --purple-bg:#EDE9FE;
+    --red:#E11D48; --red-bg:#FFE4E6;
+
+    --radius:12px;
+
+    /* backward compat aliases */
+    --pink-dark: #7A52B8;
   }
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'DM Sans',sans-serif; background:var(--pink-pale); color:var(--text); min-height:100vh; }
+  body { font-family:'Inter',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; -webkit-font-smoothing:antialiased; }
 
   /* LOGIN */
-  #login-screen { position:fixed; inset:0; z-index:9999; background:var(--brown); display:flex; align-items:center; justify-content:center; }
-  .login-box { background:white; border-radius:20px; padding:2.5rem 2rem; width:100%; max-width:360px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+  #login-screen { position:fixed; inset:0; z-index:9999; background:var(--sidebar-bg); display:flex; align-items:center; justify-content:center; }
+  .login-box { background:white; border-radius:16px; padding:2.5rem 2rem; width:100%; max-width:360px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
   .login-box img { width:90px; height:90px; object-fit:contain; margin-bottom:1rem; }
-  .login-box h2 { font-family:'Playfair Display',serif; font-size:1.3rem; color:var(--brown); margin-bottom:0.25rem; }
+  .login-box h2 { font-family:'Fraunces',serif; font-size:1.3rem; color:var(--brown); margin-bottom:0.25rem; font-weight:600; }
   .login-box p { font-size:0.8rem; color:var(--muted); margin-bottom:1.5rem; }
-  .login-input { width:100%; padding:0.85rem 1rem; border:1.5px solid var(--pink-border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:1rem; color:var(--text); outline:none; margin-bottom:0.75rem; text-align:center; letter-spacing:0.2em; transition:border-color 0.2s; }
+  .login-input { width:100%; padding:0.85rem 1rem; border:1.5px solid var(--border); border-radius:10px; font-family:'Inter',sans-serif; font-size:1rem; color:var(--text); outline:none; margin-bottom:0.75rem; text-align:center; letter-spacing:0.2em; transition:border-color 0.2s; }
   .login-input:focus { border-color:var(--pink); }
-  .login-btn { width:100%; padding:0.85rem; background:var(--tiffany); color:white; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:1rem; font-weight:500; cursor:pointer; }
-  .login-error { font-size:0.8rem; color:#B03030; margin-top:0.5rem; display:none; }
+  .login-btn { width:100%; padding:0.85rem; background:var(--pink); color:white; border:none; border-radius:10px; font-family:'Inter',sans-serif; font-size:1rem; font-weight:600; cursor:pointer; }
+  .login-error { font-size:0.8rem; color:var(--red); margin-top:0.5rem; display:none; }
   .login-error.show { display:block; }
 
   /* LAYOUT */
   .layout { display:flex; min-height:100vh; }
-  .sidebar { width:220px; background:var(--brown); padding:1.5rem 1rem; display:flex; flex-direction:column; flex-shrink:0; }
-  .sidebar-logo { color:var(--pink); margin-bottom:2rem; padding:0 0.5rem; text-align:center; }
-  .sidebar-logo img { width:70px; height:70px; object-fit:contain; border-radius:50%; margin-bottom:6px; }
-  .sidebar-logo .s-title { font-family:'Playfair Display',serif; font-size:0.9rem; color:var(--pink); }
-  .sidebar-logo .s-sub { font-size:0.65rem; opacity:0.5; letter-spacing:0.1em; text-transform:uppercase; margin-top:2px; color:var(--pink); }
-  .nav-item { display:flex; align-items:center; gap:10px; padding:0.6rem 0.75rem; border-radius:8px; color:rgba(242,167,195,0.6); font-size:0.85rem; cursor:pointer; margin-bottom:4px; transition:all 0.15s; }
-  .nav-item:hover { color:var(--pink); background:rgba(255,255,255,0.05); }
-  .nav-item.active { color:var(--pink); background:rgba(242,167,195,0.15); }
-  .nav-icon { font-size:1rem; width:20px; text-align:center; }
+  .sidebar { width:220px; background:var(--sidebar-bg); padding:0; display:flex; flex-direction:column; flex-shrink:0; }
+  .sidebar-logo { color:rgba(255,255,255,0.9); margin-bottom:0; padding:16px 12px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:10px; text-align:left; }
+  .sidebar-logo img { width:34px; height:34px; object-fit:contain; border-radius:9px; flex-shrink:0; box-shadow:0 2px 8px rgba(155,111,212,0.4); }
+  .sidebar-logo .s-title { font-family:'Fraunces',serif; font-size:0.85rem; color:rgba(255,255,255,0.92); font-weight:600; }
+  .sidebar-logo .s-sub { font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; margin-top:2px; color:rgba(255,255,255,0.28); }
+  .nav-item { display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:7px; color:rgba(255,255,255,0.45); font-size:0.8rem; cursor:pointer; margin-bottom:1px; transition:all 0.12s; position:relative; }
+  .nav-item:hover { color:rgba(255,255,255,0.8); background:var(--sidebar-hover); }
+  .nav-item.active { color:rgba(255,255,255,0.95); background:var(--sidebar-act); font-weight:500; }
+  .nav-item.active::before { content:''; position:absolute; left:0; top:25%; bottom:25%; width:2.5px; background:var(--pink); border-radius:0 2px 2px 0; }
+  .nav-icon { font-size:0.88rem; width:16px; text-align:center; flex-shrink:0; }
 
-  .content { flex:1; padding:1.5rem; overflow-y:auto; }
+  .content { flex:1; background:var(--bg); overflow-y:auto; }
   .page { display:none; }
-  .page.active { display:block; }
-  .page-title { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--brown); margin-bottom:1.5rem; }
+  .page.active { display:block; padding:1.5rem; }
+  .page-title { font-family:'Fraunces',serif; font-size:1.5rem; color:var(--brown); margin-bottom:1.5rem; font-weight:600; }
 
   /* METRICS */
   .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:1.5rem; }
-  .metric { background:white; border-radius:var(--radius); padding:1rem 1.25rem; border:1px solid var(--pink-border); }
-  .metric-val { font-size:1.5rem; font-weight:500; color:var(--brown); }
-  .metric-lbl { font-size:0.75rem; color:var(--muted); margin-top:4px; }
+  .metric { background:white; border-radius:var(--radius); padding:1rem 1.25rem; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+  .metric-val { font-size:1.5rem; font-weight:700; color:var(--brown); letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
+  .metric-lbl { font-size:0.72rem; color:var(--muted); margin-top:4px; font-weight:500; }
   .metric-new { display:inline-block; font-size:0.7rem; background:var(--tiffany-pale); color:var(--tiffany-dark); padding:2px 8px; border-radius:20px; margin-top:6px; }
 
   /* ORDERS */
   .orders-grid { display:flex; flex-direction:column; gap:10px; }
-  .order-card { background:white; border-radius:var(--radius); border:1px solid var(--pink-border); padding:1rem 1.25rem; transition:box-shadow 0.2s; }
-  .order-card:hover { box-shadow:0 2px 12px rgba(242,167,195,0.2); }
+  .order-card { background:white; border-radius:var(--radius); border:1px solid var(--border); padding:1rem 1.25rem; transition:box-shadow 0.15s; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+  .order-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.08); }
   .order-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:0.75rem; }
-  .order-client { font-weight:500; font-size:0.95rem; }
+  .order-client { font-weight:600; font-size:0.92rem; }
   .order-detail { font-size:0.8rem; color:var(--muted); margin-top:3px; }
-  .badge { display:inline-block; font-size:0.72rem; font-weight:500; padding:3px 10px; border-radius:20px; }
-  .badge-wait { background:#FEF3E2; color:#8B5E00; }
+  .badge { display:inline-flex; align-items:center; gap:5px; font-size:0.7rem; font-weight:600; padding:3px 10px; border-radius:6px; letter-spacing:0.02em; }
+  .badge::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; opacity:0.7; }
+  .badge-wait { background:#FEF3C7; color:#D97706; }
   .badge-accepted { background:var(--blue-bg); color:var(--blue); }
   .badge-prep { background:var(--purple-bg); color:var(--purple); }
   .badge-delivery { background:var(--green-bg); color:var(--green); }
-  .badge-done { background:#F0F0F0; color:#666; }
+  .badge-done { background:#F4F4F5; color:#71717A; }
   .order-actions { display:flex; gap:8px; margin-top:0.75rem; flex-wrap:wrap; }
-  .action-btn { padding:5px 14px; border-radius:8px; border:1px solid; cursor:pointer; font-size:0.78rem; font-weight:500; font-family:'DM Sans',sans-serif; transition:all 0.15s; }
-  .action-btn:hover { opacity:0.85; }
-  .btn-accept { background:var(--blue-bg); color:var(--blue); border-color:#B5CEF0; }
-  .btn-prep { background:var(--purple-bg); color:var(--purple); border-color:#CEBEF0; }
-  .btn-deliver { background:var(--green-bg); color:var(--green); border-color:#A5D5B5; }
-  .btn-done { background:#F0F0F0; color:#666; border-color:#DDD; }
-  .btn-reject { background:var(--red-bg); color:var(--red); border-color:#F0B5B5; }
-  .btn-wpp { background:#E7F7EF; color:#1A6B3C; border-color:#A5D5B5; font-weight:500; }
-  .btn-pay { background:var(--tiffany-pale); color:var(--tiffany-dark); border-color:var(--tiffany); }
+  .action-btn { padding:5px 13px; border-radius:7px; border:1px solid var(--border); cursor:pointer; font-size:0.75rem; font-weight:500; font-family:'Inter',sans-serif; transition:all 0.12s; background:white; color:var(--muted); }
+  .action-btn:hover { opacity:0.9; transform:translateY(-1px); }
+  .btn-accept { background:var(--blue-bg); color:var(--blue); border-color:rgba(37,99,235,0.2); }
+  .btn-prep { background:var(--purple-bg); color:var(--purple); border-color:rgba(124,58,237,0.2); }
+  .btn-deliver { background:var(--green-bg); color:var(--green); border-color:rgba(22,163,74,0.2); }
+  .btn-done { background:#F4F4F5; color:#71717A; border-color:#E4E4E7; }
+  .btn-reject { background:var(--red-bg); color:var(--red); border-color:rgba(225,29,72,0.2); }
+  .btn-wpp { background:#DCFCE7; color:#15803D; border-color:rgba(22,163,74,0.2); font-weight:500; }
+  .btn-pay { background:rgba(155,111,212,0.1); color:var(--pink-dark); border-color:var(--pink-border); }
 
   .empty { text-align:center; padding:3rem 1rem; color:var(--muted); }
   .empty-icon { font-size:3rem; margin-bottom:0.75rem; }
-  .spinner { display:inline-block; width:20px; height:20px; border:2px solid var(--pink-border); border-top-color:var(--pink); border-radius:50%; animation:spin 0.8s linear infinite; }
+  .spinner { display:inline-block; width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--pink); border-radius:50%; animation:spin 0.8s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
 
   /* MODAL */
-  .modal-overlay { position:fixed; inset:0; background:rgba(74,36,16,0.4); z-index:500; display:none; align-items:center; justify-content:center; padding:1rem; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:500; display:none; align-items:center; justify-content:center; padding:1rem; backdrop-filter:blur(4px); }
   .modal-overlay.show { display:flex; }
-  .modal { background:white; border-radius:20px; padding:1.75rem; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+  .modal { background:white; border-radius:16px; padding:1.75rem; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:0 24px 60px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.05); }
   .modal.modal-wide { max-width:760px; }
 
   /* PERFIL DO CLIENTE */
   .perfil-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.25rem; }
-  .perfil-nome { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--brown); }
+  .perfil-nome { font-family:'Fraunces',serif; font-size:1.4rem; color:var(--brown); font-weight:600; }
   .perfil-tel { font-size:0.85rem; color:var(--muted); margin-top:2px; }
   .perfil-tags { margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; }
   .perfil-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:1.25rem; }
-  .perfil-mini-metric { background:var(--pink-pale); border-radius:10px; padding:0.75rem; text-align:center; }
-  .perfil-mini-val { font-size:1.15rem; font-weight:500; color:var(--brown); }
+  .perfil-mini-metric { background:var(--surface2,#F2F0EE); border-radius:10px; padding:0.75rem; text-align:center; border:1px solid var(--border); }
+  .perfil-mini-val { font-size:1.15rem; font-weight:700; color:var(--brown); }
   .perfil-mini-lbl { font-size:0.68rem; color:var(--muted); margin-top:2px; }
   .perfil-tabs { display:flex; gap:6px; margin-bottom:1rem; border-bottom:1px solid var(--border); }
-  .perfil-tab { padding:8px 14px; font-size:0.83rem; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; font-family:'DM Sans',sans-serif; }
-  .perfil-tab.active { color:var(--pink-dark); border-bottom-color:var(--pink); font-weight:500; }
+  .perfil-tab { padding:8px 14px; font-size:0.83rem; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; font-family:'Inter',sans-serif; }
+  .perfil-tab.active { color:var(--pink-dark); border-bottom-color:var(--pink); font-weight:600; }
   .perfil-tabcontent { display:none; }
   .perfil-tabcontent.active { display:block; }
-  .perfil-pedido-item { background:var(--cream); border:1px solid var(--border); border-radius:10px; padding:0.7rem 0.9rem; margin-bottom:8px; }
+  .perfil-pedido-item { background:#FAFAFA; border:1px solid var(--border); border-radius:10px; padding:0.7rem 0.9rem; margin-bottom:8px; }
   .perfil-pedido-top { display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:3px; }
   .perfil-pedido-itens { font-size:0.78rem; color:var(--muted); }
   .perfil-dow-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:0.82rem; }
   .perfil-dow-label { width:90px; color:var(--muted); flex-shrink:0; }
   .perfil-pag-row { display:flex; justify-content:space-between; font-size:0.82rem; padding:6px 0; border-bottom:1px solid var(--border); }
   .perfil-pag-row:last-child { border-bottom:none; }
-  .modal-title { font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--brown); margin-bottom:1.25rem; }
+  .modal-title { font-family:'Fraunces',serif; font-size:1.2rem; color:var(--brown); margin-bottom:1.25rem; font-weight:600; }
   .modal-close { float:right; background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--muted); margin-top:-4px; }
   .form-group { margin-bottom:0.9rem; }
-  .form-label { font-size:0.78rem; font-weight:500; color:var(--muted); display:block; margin-bottom:0.35rem; }
-  .form-input { width:100%; padding:0.7rem 0.9rem; border:1.5px solid var(--pink-border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:0.9rem; color:var(--text); outline:none; transition:border-color 0.2s; }
+  .form-label { font-size:0.75rem; font-weight:600; color:var(--muted); display:block; margin-bottom:0.35rem; letter-spacing:0.03em; text-transform:uppercase; }
+  .form-input { width:100%; padding:0.7rem 0.9rem; border:1.5px solid var(--border); border-radius:9px; font-family:'Inter',sans-serif; font-size:0.9rem; color:var(--text); outline:none; transition:border-color 0.15s; }
   .form-input:focus { border-color:var(--pink); }
   select.form-input { background:white; }
 
   /* AUTOCOMPLETE */
   .autocomplete-wrap { position:relative; }
-  .autocomplete-list { position:absolute; top:100%; left:0; right:0; background:white; border:1.5px solid var(--pink-border); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.1); z-index:100; max-height:200px; overflow-y:auto; display:none; }
+  .autocomplete-list { position:absolute; top:100%; left:0; right:0; background:white; border:1.5px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.1); z-index:100; max-height:200px; overflow-y:auto; display:none; }
   .autocomplete-list.show { display:block; }
   .autocomplete-item { padding:0.6rem 0.9rem; cursor:pointer; font-size:0.88rem; border-bottom:1px solid var(--border); transition:background 0.1s; }
   .autocomplete-item:last-child { border-bottom:none; }
-  .autocomplete-item:hover { background:var(--pink-pale); }
-  .autocomplete-item .ac-name { font-weight:500; }
+  .autocomplete-item:hover { background:#F7F6F5; }
+  .autocomplete-item .ac-name { font-weight:600; }
   .autocomplete-item .ac-tel { font-size:0.75rem; color:var(--muted); }
 
   /* PRODUTOS NO MODAL */
   .modal-product { display:flex; align-items:center; gap:0.75rem; padding:0.6rem 0; border-bottom:1px solid var(--border); }
   .modal-product:last-child { border-bottom:none; }
   .modal-product-info { flex:1; font-size:0.88rem; }
-  .modal-product-name { font-weight:500; }
+  .modal-product-name { font-weight:600; }
   .modal-product-price-row { display:flex; align-items:center; gap:6px; margin-top:2px; }
-  .modal-product-price { font-size:0.75rem; color:var(--muted); cursor:pointer; border-bottom:1px dashed var(--pink-border); padding-bottom:1px; }
+  .modal-product-price { font-size:0.75rem; color:var(--muted); cursor:pointer; border-bottom:1px dashed var(--border); padding-bottom:1px; }
   .modal-product-price:hover { color:var(--pink-dark); border-bottom-color:var(--pink); }
-  .modal-product-price-input { width:65px; padding:2px 6px; border:1.5px solid var(--pink); border-radius:6px; font-size:0.75rem; font-family:'DM Sans',sans-serif; color:var(--text); outline:none; display:none; }
+  .modal-product-price-input { width:65px; padding:2px 6px; border:1.5px solid var(--pink); border-radius:6px; font-size:0.75rem; font-family:'Inter',sans-serif; color:var(--text); outline:none; display:none; }
   .modal-product-price-edit-icon { font-size:0.7rem; color:var(--pink-dark); cursor:pointer; }
-  .modal-product-price-tag { font-size:0.65rem; background:var(--pink-pale); color:var(--pink-dark); padding:1px 6px; border-radius:8px; display:none; }
+  .modal-product-price-tag { font-size:0.65rem; background:rgba(155,111,212,0.1); color:var(--pink-dark); padding:1px 6px; border-radius:8px; display:none; }
   .modal-qty-ctrl { display:flex; align-items:center; gap:8px; }
-  .modal-qty-btn { width:26px; height:26px; border-radius:50%; background:var(--pink-pale); border:1px solid var(--pink-border); font-size:1rem; cursor:pointer; color:var(--pink-dark); display:flex; align-items:center; justify-content:center; }
-  .modal-qty-btn:hover { background:var(--pink); color:white; }
-  .modal-qty-num { font-size:0.9rem; font-weight:500; min-width:30px; max-width:42px; text-align:center; border:none; background:transparent; color:var(--text); font-family:'DM Sans',sans-serif; padding:2px 0; -moz-appearance:textfield; }
+  .modal-qty-btn { width:26px; height:26px; border-radius:7px; background:#F4F4F5; border:1px solid var(--border); font-size:1rem; cursor:pointer; color:var(--muted); display:flex; align-items:center; justify-content:center; transition:all 0.1s; }
+  .modal-qty-btn:hover { background:var(--pink); border-color:var(--pink); color:white; }
+  .modal-qty-num { font-size:0.9rem; font-weight:600; min-width:30px; max-width:42px; text-align:center; border:none; background:transparent; color:var(--text); font-family:'Inter',sans-serif; padding:2px 0; -moz-appearance:textfield; }
   .modal-qty-num::-webkit-outer-spin-button, .modal-qty-num::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
-  .modal-qty-num:focus { outline:none; background:var(--pink-pale); border-radius:6px; }
+  .modal-qty-num:focus { outline:none; background:#F4F4F5; border-radius:6px; }
 
   /* PAGAMENTOS NO CARD */
   .pagamentos-list { margin-top:8px; border-top:1px solid var(--border); padding-top:8px; }
   .pagamento-item { display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; padding:3px 0; }
-  .pagamento-meio { background:var(--tiffany-pale); color:var(--tiffany-dark); padding:2px 8px; border-radius:10px; font-size:0.7rem; }
+  .pagamento-meio { background:rgba(13,148,136,0.1); color:var(--tiffany-dark); padding:2px 8px; border-radius:6px; font-size:0.7rem; font-weight:600; }
 
   /* PERIODO */
   .periodo-bar { display:flex; gap:8px; margin-bottom:1rem; flex-wrap:wrap; align-items:center; }
-  .periodo-btn { padding:6px 14px; border-radius:20px; border:1px solid var(--pink-border); background:white; color:var(--muted); font-size:0.8rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s; }
-  .periodo-btn.active { background:var(--pink); color:white; border-color:var(--pink); font-weight:500; }
+  .periodo-btn { padding:6px 14px; border-radius:7px; border:1px solid var(--border); background:white; color:var(--muted); font-size:0.78rem; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.12s; }
+  .periodo-btn.active { background:var(--pink); color:white; border-color:var(--pink); font-weight:600; }
   .periodo-custom { display:none; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:1rem; }
   .periodo-custom.show { display:flex; }
-  .periodo-custom input { padding:6px 10px; border:1px solid var(--pink-border); border-radius:8px; font-size:0.8rem; font-family:'DM Sans',sans-serif; color:var(--text); outline:none; }
-  .periodo-custom button { padding:6px 14px; background:var(--tiffany); color:white; border:none; border-radius:8px; font-size:0.8rem; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .periodo-custom input { padding:6px 10px; border:1px solid var(--border); border-radius:8px; font-size:0.8rem; font-family:'Inter',sans-serif; color:var(--text); outline:none; }
+  .periodo-custom button { padding:6px 14px; background:var(--pink); color:white; border:none; border-radius:8px; font-size:0.8rem; cursor:pointer; font-family:'Inter',sans-serif; }
 
   /* REPORTS */
   .report-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-  .report-card { background:white; border-radius:var(--radius); border:1px solid var(--pink-border); padding:1.25rem; }
-  .report-card-title { font-size:0.8rem; font-weight:500; color:var(--muted); margin-bottom:1rem; text-transform:uppercase; letter-spacing:0.08em; }
+  .report-card { background:white; border-radius:var(--radius); border:1px solid var(--border); padding:1.25rem; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+  .report-card-title { font-size:0.68rem; font-weight:700; color:var(--muted); margin-bottom:1rem; text-transform:uppercase; letter-spacing:0.1em; }
   .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
   .bar-label { font-size:0.8rem; width:80px; color:var(--text); flex-shrink:0; }
-  .bar-track { flex:1; background:#F5EFE6; border-radius:4px; height:18px; overflow:hidden; }
+  .bar-track { flex:1; background:#F4F4F5; border-radius:4px; height:16px; overflow:hidden; }
   .bar-fill { height:100%; border-radius:4px; }
-  .bar-val { font-size:0.78rem; font-weight:500; color:var(--muted); width:30px; text-align:right; }
+  .bar-val { font-size:0.78rem; font-weight:600; color:var(--muted); width:30px; text-align:right; }
 
   /* FINANCEIRO */
   .fin-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:1.5rem; }
-  .fin-metric { background:white; border-radius:var(--radius); padding:1rem 1.25rem; border:1px solid var(--pink-border); }
-  .fin-metric.destaque { border-color:var(--tiffany); background:var(--tiffany-pale); }
-  .fin-metric.alerta { border-color:var(--pink); background:var(--pink-pale); }
-  .fin-metric-val { font-size:1.4rem; font-weight:500; color:var(--brown); }
-  .fin-metric-lbl { font-size:0.75rem; color:var(--muted); margin-top:4px; }
+  .fin-metric { background:white; border-radius:var(--radius); padding:1rem 1.25rem; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+  .fin-metric.destaque { border-left:3px solid var(--tiffany); }
+  .fin-metric.alerta { border-left:3px solid var(--red); }
+  .fin-metric-val { font-size:1.4rem; font-weight:700; color:var(--brown); letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
+  .fin-metric-lbl { font-size:0.72rem; color:var(--muted); margin-top:4px; font-weight:500; }
 
   .contas-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-  .contas-table th { text-align:left; padding:6px 0; color:var(--muted); font-weight:500; border-bottom:1px solid var(--border); font-size:0.75rem; }
+  .contas-table th { text-align:left; padding:6px 0; color:var(--muted); font-weight:700; border-bottom:1px solid var(--border); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; }
   .contas-table td { padding:8px 0; border-bottom:1px solid var(--border); vertical-align:middle; }
   .contas-table tr:last-child td { border-bottom:none; }
-  .em-aberto { color:var(--red); font-weight:500; }
+  .em-aberto { color:var(--red); font-weight:600; }
 
   /* EXTRATO */
-  .extrato-box { background:var(--pink-pale); border:1px solid var(--pink-border); border-radius:10px; padding:1rem; margin-bottom:1rem; font-size:0.85rem; white-space:pre-wrap; font-family:'DM Sans',sans-serif; line-height:1.7; max-height:320px; overflow-y:auto; }
-  .extrato-pedido { background:white; border:1px solid var(--border); border-radius:8px; padding:0.75rem; margin-bottom:8px; }
+  .extrato-box { background:#F7F6F5; border:1px solid var(--border); border-radius:10px; padding:1rem; margin-bottom:1rem; font-size:0.85rem; white-space:pre-wrap; font-family:'Inter',sans-serif; line-height:1.7; max-height:320px; overflow-y:auto; }
+  .extrato-pedido { background:white; border:1px solid var(--border); border-radius:8px; padding:0.75rem; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,0.03); }
   .extrato-pedido-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
   .extrato-pedido-data { font-size:0.75rem; color:var(--muted); }
-  .extrato-pedido-valor { font-weight:500; }
+  .extrato-pedido-valor { font-weight:600; }
   .extrato-pedido-itens { font-size:0.8rem; color:var(--muted); }
-  .extrato-pedido-pag { font-size:0.75rem; color:var(--green); margin-top:3px; }
-  .extrato-pedido-resto { font-size:0.78rem; color:var(--red); font-weight:500; margin-top:3px; }
-  .extrato-total-row { display:flex; justify-content:space-between; padding:0.75rem 0 0; border-top:2px solid var(--pink-border); margin-top:4px; }
-  .btn-copiar { width:100%; padding:0.75rem; background:var(--brown); color:var(--pink); border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:0.9rem; font-weight:500; cursor:pointer; margin-top:0.5rem; }
-  .btn-wpp-extrato { width:100%; padding:0.75rem; background:#25D366; color:white; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:0.9rem; font-weight:500; cursor:pointer; margin-top:0.5rem; }
+  .extrato-pedido-pag { font-size:0.75rem; color:var(--green); margin-top:3px; font-weight:500; }
+  .extrato-pedido-resto { font-size:0.78rem; color:var(--red); font-weight:600; margin-top:3px; }
+  .extrato-total-row { display:flex; justify-content:space-between; padding:0.75rem 0 0; border-top:2px solid var(--border); margin-top:4px; }
+  .btn-copiar { width:100%; padding:0.75rem; background:var(--sidebar-bg); color:rgba(255,255,255,0.9); border:none; border-radius:10px; font-family:'Inter',sans-serif; font-size:0.9rem; font-weight:600; cursor:pointer; margin-top:0.5rem; }
+  .btn-wpp-extrato { width:100%; padding:0.75rem; background:#25D366; color:white; border:none; border-radius:10px; font-family:'Inter',sans-serif; font-size:0.9rem; font-weight:600; cursor:pointer; margin-top:0.5rem; }
 
   /* CARDÁPIO */
-  .product-edit-card { background:white; border-radius:var(--radius); border:1px solid var(--pink-border); padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; margin-bottom:10px; }
+  .product-edit-card { background:white; border-radius:var(--radius); border:1px solid var(--border); padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.04); transition:box-shadow 0.15s; }
+  .product-edit-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.07); }
   .price-edit-row { display:flex; align-items:center; gap:6px; flex-shrink:0; }
-  .price-display { font-weight:500; color:var(--tiffany-dark); font-size:1rem; min-width:65px; text-align:right; }
-  .price-input-edit { width:85px; padding:6px 8px; border:1.5px solid var(--pink-border); border-radius:8px; font-size:0.88rem; font-family:'DM Sans',sans-serif; color:var(--text); outline:none; display:none; }
+  .price-display { font-weight:700; color:var(--pink); font-size:1rem; min-width:65px; text-align:right; }
+  .price-input-edit { width:85px; padding:6px 8px; border:1.5px solid var(--border); border-radius:8px; font-size:0.88rem; font-family:'Inter',sans-serif; color:var(--text); outline:none; display:none; }
   .price-input-edit:focus { border-color:var(--pink); }
-  .btn-edit { padding:4px 10px; border-radius:8px; border:1px solid var(--pink-border); background:var(--pink-pale); color:var(--pink-dark); font-size:0.73rem; cursor:pointer; font-family:'DM Sans',sans-serif; }
-  .btn-save-p { padding:4px 10px; border-radius:8px; border:none; background:var(--tiffany); color:white; font-size:0.73rem; cursor:pointer; font-family:'DM Sans',sans-serif; display:none; }
-  .btn-cancel-p { padding:4px 10px; border-radius:8px; border:1px solid var(--border); background:white; color:var(--muted); font-size:0.73rem; cursor:pointer; font-family:'DM Sans',sans-serif; display:none; }
-  .ativo-badge { font-size:0.72rem; padding:3px 10px; border-radius:20px; background:var(--green-bg); color:var(--green); flex-shrink:0; }
+  .btn-edit { padding:4px 10px; border-radius:7px; border:1px solid var(--border); background:white; color:var(--muted); font-size:0.72rem; cursor:pointer; font-family:'Inter',sans-serif; font-weight:500; transition:all 0.1s; }
+  .btn-edit:hover { border-color:var(--pink); color:var(--pink); }
+  .btn-save-p { padding:4px 10px; border-radius:7px; border:none; background:var(--pink); color:white; font-size:0.72rem; cursor:pointer; font-family:'Inter',sans-serif; font-weight:600; display:none; }
+  .btn-cancel-p { padding:4px 10px; border-radius:7px; border:1px solid var(--border); background:white; color:var(--muted); font-size:0.72rem; cursor:pointer; font-family:'Inter',sans-serif; display:none; }
+  .ativo-badge { font-size:0.67rem; padding:3px 9px; border-radius:6px; background:var(--green-bg); color:var(--green); flex-shrink:0; font-weight:700; letter-spacing:0.03em; }
 
   .client-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-  .client-table th { text-align:left; padding:6px 0; color:var(--muted); font-weight:500; border-bottom:1px solid var(--border); font-size:0.75rem; }
+  .client-table th { text-align:left; padding:6px 0; color:var(--muted); font-weight:700; border-bottom:1px solid var(--border); font-size:0.67rem; text-transform:uppercase; letter-spacing:0.08em; }
   .client-table td { padding:8px 0; border-bottom:1px solid var(--border); }
   .client-table tr:last-child td { border-bottom:none; }
-  .client-table tr.abaixo-media { background:#FAE8E8; }
+  .client-table tr.abaixo-media { background:rgba(225,29,72,0.03); }
   .client-table tr.abaixo-media td:first-child { border-left:3px solid var(--red); padding-left:8px; }
 
-  .status-tag { font-size:0.72rem; font-weight:500; padding:3px 10px; border-radius:20px; display:inline-block; }
+  .status-tag { font-size:0.67rem; font-weight:700; padding:3px 9px; border-radius:6px; display:inline-block; letter-spacing:0.03em; }
   .status-acima { background:var(--green-bg); color:var(--green); }
   .status-abaixo { background:var(--red-bg); color:var(--red); }
-  .status-neutro { background:#F0F0F0; color:#777; }
+  .status-neutro { background:#F4F4F5; color:#71717A; }
 
-  .alerta-resumo-box { background:var(--red-bg); border:1px solid #F0B5B5; border-radius:10px; padding:0.85rem 1.1rem; font-size:0.85rem; color:var(--red); }
-  .alerta-resumo-box.ok { background:var(--green-bg); border-color:#A5D5B5; color:var(--green); }
+  .alerta-resumo-box { background:var(--red-bg); border:1px solid rgba(225,29,72,0.2); border-radius:10px; padding:0.85rem 1.1rem; font-size:0.85rem; color:var(--red); }
+  .alerta-resumo-box.ok { background:var(--green-bg); border-color:rgba(22,163,74,0.2); color:var(--green); }
 
-  .cliente-detalhe-card { background:white; border:1.5px solid var(--pink-border); border-radius:var(--radius); padding:1.25rem; margin-bottom:1.5rem; }
+  .cliente-detalhe-card { background:white; border:1px solid var(--border); border-radius:var(--radius); padding:1.25rem; margin-bottom:1.5rem; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
   .cliente-detalhe-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
-  .cliente-detalhe-nome { font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--brown); }
-  .btn-limpar-filtro { background:none; border:1px solid var(--border); color:var(--muted); border-radius:8px; padding:5px 12px; font-size:0.78rem; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .cliente-detalhe-nome { font-family:'Fraunces',serif; font-size:1.2rem; color:var(--brown); font-weight:600; }
+  .btn-limpar-filtro { background:none; border:1px solid var(--border); color:var(--muted); border-radius:7px; padding:5px 12px; font-size:0.75rem; cursor:pointer; font-family:'Inter',sans-serif; }
   .cliente-detalhe-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:1.25rem; }
-  .cliente-mini-metric { background:var(--pink-pale); border-radius:10px; padding:0.75rem; text-align:center; }
-  .cliente-mini-val { font-size:1.2rem; font-weight:500; color:var(--brown); }
+  .cliente-mini-metric { background:#F7F6F5; border-radius:10px; padding:0.75rem; text-align:center; border:1px solid var(--border); }
+  .cliente-mini-val { font-size:1.2rem; font-weight:700; color:var(--brown); }
   .cliente-mini-lbl { font-size:0.7rem; color:var(--muted); margin-top:2px; }
   .historico-semanal-row { display:flex; align-items:center; gap:10px; margin-bottom:6px; font-size:0.82rem; }
   .historico-semana-label { width:90px; color:var(--muted); flex-shrink:0; }
-  .historico-bar-track { flex:1; background:#F5EFE6; border-radius:4px; height:16px; overflow:hidden; }
-  .historico-bar-fill { height:100%; border-radius:4px; background:var(--tiffany); }
+  .historico-bar-track { flex:1; background:#F4F4F5; border-radius:4px; height:14px; overflow:hidden; }
+  .historico-bar-fill { height:100%; border-radius:4px; background:var(--pink); }
   .historico-bar-val { width:50px; text-align:right; font-weight:500; color:var(--muted); }
 
   /* ESTOQUE */
-  .estoque-card { background:white; border-radius:var(--radius); border:1px solid var(--pink-border); padding:1.25rem; display:flex; align-items:center; gap:1.25rem; margin-bottom:10px; }
+  .estoque-card { background:white; border-radius:var(--radius); border:1px solid var(--border); padding:1.25rem; display:flex; align-items:center; gap:1.25rem; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.04); transition:box-shadow 0.15s; }
+  .estoque-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.08); }
   .estoque-emoji { font-size:2.5rem; flex-shrink:0; }
   .estoque-info { flex:1; }
   .estoque-nome { font-weight:500; font-size:1rem; color:var(--brown); }
@@ -264,14 +287,16 @@
   .estoque-alerta { background:#FEF3E2; border:1px solid #F0C84A; border-radius:10px; padding:0.75rem 1rem; font-size:0.83rem; color:#7A5C00; margin-bottom:1rem; display:none; }
   .estoque-alerta.show { display:block; }
 
-  .inv-mov-btn { padding:0.65rem;border-radius:10px;border:1.5px solid var(--border);background:white;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;transition:all 0.15s;text-align:center; }
-  .inv-mov-btn.active { border-color:var(--tiffany);background:var(--tiffany-pale);color:var(--tiffany-dark);font-weight:500; }
-  .inv-mov-btn.active-red { border-color:var(--red);background:var(--red-bg);color:var(--red);font-weight:500; }
+  .inv-mov-btn { padding:0.65rem;border-radius:9px;border:1px solid var(--border);background:white;color:var(--muted);font-family:'Inter',sans-serif;font-size:0.82rem;cursor:pointer;transition:all 0.15s;text-align:center; }
+  .inv-mov-btn:hover { border-color:var(--pink); color:var(--pink); }
+  .inv-mov-btn.active { border-color:var(--tiffany);background:var(--tiffany-pale);color:var(--tiffany-dark);font-weight:600; }
+  .inv-mov-btn.active-red { border-color:var(--red);background:var(--red-bg);color:var(--red);font-weight:600; }
 
-  .exp-periodo-btn { padding:8px; border-radius:8px; border:1px solid var(--pink-border); background:white; color:var(--muted); font-size:0.82rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s; }
-  .exp-periodo-btn.active { background:var(--tiffany); color:white; border-color:var(--tiffany); font-weight:500; }
+  .exp-periodo-btn { padding:8px; border-radius:8px; border:1px solid var(--border); background:white; color:var(--muted); font-size:0.8rem; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s; }
+  .exp-periodo-btn:hover { border-color:var(--pink); color:var(--pink); }
+  .exp-periodo-btn.active { background:var(--tiffany); color:white; border-color:var(--tiffany); font-weight:600; }
 
-  .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:var(--brown); color:var(--pink); padding:0.75rem 1.25rem; border-radius:10px; font-size:0.85rem; box-shadow:0 4px 20px rgba(0,0,0,0.2); transform:translateY(100px); opacity:0; transition:all 0.3s; z-index:1000; }
+  .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#1C1917; color:white; padding:0.75rem 1.25rem; border-radius:10px; font-size:0.85rem; font-family:'Inter',sans-serif; box-shadow:0 8px 24px rgba(0,0,0,0.25); transform:translateY(100px); opacity:0; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); z-index:1000; }
   .toast.show { transform:translateY(0); opacity:1; }
 
   @media (max-width:768px) {
@@ -483,8 +508,8 @@
       </select>
     </div>
 
-    <button onclick="salvarModalPedido()" id="btn-salvar-pedido" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">Lançar pedido</button>
-    <button onclick="confirmarExclusaoPedido()" id="btn-excluir-pedido" style="display:none;width:100%;padding:0.75rem;background:white;color:var(--red);border:1.5px solid var(--red);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;margin-top:8px;">🗑️ Excluir este pedido</button>
+    <button onclick="salvarModalPedido()" id="btn-salvar-pedido" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">Lançar pedido</button>
+    <button onclick="confirmarExclusaoPedido()" id="btn-excluir-pedido" style="display:none;width:100%;padding:0.75rem;background:white;color:var(--red);border:1.5px solid var(--red);border-radius:10px;font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;margin-top:8px;">🗑️ Excluir este pedido</button>
   </div>
 </div>
 
@@ -512,7 +537,7 @@
       <label class="form-label">Observação (opcional)</label>
       <input class="form-input" type="text" id="pay-obs" placeholder="Ex: entrada, parcela 1..."/>
     </div>
-    <button onclick="salvarPagamento()" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">Registrar pagamento</button>
+    <button onclick="salvarPagamento()" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">Registrar pagamento</button>
   </div>
 </div>
 
@@ -556,7 +581,7 @@
       </div>
     </div>
 
-    <button onclick="executarExportacao()" id="btn-exportar" style="width:100%;padding:0.9rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">📥 Baixar Excel</button>
+    <button onclick="executarExportacao()" id="btn-exportar" style="width:100%;padding:0.9rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">📥 Baixar Excel</button>
   </div>
 </div>
 
@@ -567,7 +592,7 @@
     <div class="modal-title">🛒 Lista de compras</div>
     <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">Insumos abaixo do estoque mínimo, em ordem alfabética.</p>
     <div id="lista-compras-conteudo"></div>
-    <button onclick="copiarListaCompras()" style="width:100%;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;margin-top:1rem;">📋 Copiar lista</button>
+    <button onclick="copiarListaCompras()" style="width:100%;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'Inter',sans-serif;font-size:0.9rem;cursor:pointer;margin-top:1rem;">📋 Copiar lista</button>
   </div>
 </div>
 
@@ -632,7 +657,7 @@
     <div class="form-group">
       <label class="form-label" style="display:flex;justify-content:space-between;">
         <span>Custo por <span id="ins-unidade-label2">g</span> (calculado automaticamente)</span>
-        <button onclick="togglePrecoManual()" style="background:none;border:none;color:var(--tiffany-dark);font-size:0.72rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✏️ editar manual</button>
+        <button onclick="togglePrecoManual()" style="background:none;border:none;color:var(--tiffany-dark);font-size:0.72rem;cursor:pointer;font-family:'Inter',sans-serif;">✏️ editar manual</button>
       </label>
       <input class="form-input" type="number" step="0.000001" min="0" id="ins-preco" placeholder="0,000000" readonly style="background:var(--pink-pale);color:var(--muted);"/>
     </div>
@@ -660,8 +685,8 @@
     </div>
 
     <div style="display:flex;gap:8px;margin-top:0.5rem;">
-      <button onclick="fecharModal('modal-insumo')" style="flex:1;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
-      <button onclick="salvarInsumo()" style="flex:2;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">✓ Salvar</button>
+      <button onclick="fecharModal('modal-insumo')" style="flex:1;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'Inter',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
+      <button onclick="salvarInsumo()" style="flex:2;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">✓ Salvar</button>
     </div>
   </div>
 </div>
@@ -706,7 +731,7 @@
       <input class="form-input" type="text" id="entrada-obs" placeholder="Ex: Compra mercado, nota fiscal 123..."/>
     </div>
 
-    <button onclick="salvarEntradaInsumo()" id="btn-confirmar-mov" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">✓ Confirmar entrada</button>
+    <button onclick="salvarEntradaInsumo()" id="btn-confirmar-mov" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">✓ Confirmar entrada</button>
   </div>
 </div>
 
@@ -753,7 +778,7 @@
     <div class="form-group">
       <label class="form-label" style="margin-bottom:0.5rem;">Ingredientes</label>
       <div id="rec-ingredientes-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
-      <button onclick="addIngredienteModal()" style="width:100%;padding:8px;background:var(--pink-pale);color:var(--pink-dark);border:1.5px dashed var(--pink-border);border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.85rem;">+ Adicionar ingrediente</button>
+      <button onclick="addIngredienteModal()" style="width:100%;padding:8px;background:var(--pink-pale);color:var(--pink-dark);border:1.5px dashed var(--pink-border);border-radius:10px;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.85rem;">+ Adicionar ingrediente</button>
     </div>
 
     <!-- RECHEIO (só aparece em receitas de produto) -->
@@ -807,8 +832,8 @@
     </div>
 
     <div style="display:flex;gap:8px;margin-top:1rem;">
-      <button onclick="fecharModal('modal-receita')" style="flex:1;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
-      <button onclick="salvarReceita()" style="flex:2;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">✓ Salvar receita</button>
+      <button onclick="fecharModal('modal-receita')" style="flex:1;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'Inter',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
+      <button onclick="salvarReceita()" style="flex:2;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">✓ Salvar receita</button>
     </div>
   </div>
 </div>
@@ -826,7 +851,7 @@
         <span id="prod-emoji-display">🛍️</span>
       </div>
       <input type="file" id="prod-img-input" accept="image/*" style="display:none;" onchange="previewImagem(this)"/>
-      <button onclick="document.getElementById('prod-img-input').click()" style="background:none;border:1px solid var(--pink-border);color:var(--pink-dark);border-radius:8px;padding:5px 12px;font-size:0.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;">📷 Alterar imagem</button>
+      <button onclick="document.getElementById('prod-img-input').click()" style="background:none;border:1px solid var(--pink-border);color:var(--pink-dark);border-radius:8px;padding:5px 12px;font-size:0.78rem;cursor:pointer;font-family:'Inter',sans-serif;">📷 Alterar imagem</button>
       <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;">Ou escolha um emoji:</div>
       <input class="form-input" type="text" id="prod-emoji" placeholder="Ex: 🍕" maxlength="4" style="text-align:center;font-size:1.5rem;width:80px;margin:6px auto 0;" oninput="atualizarEmojiPreview(this.value)"/>
     </div>
@@ -858,8 +883,8 @@
     <div id="prod-upload-progress" style="display:none;font-size:0.78rem;color:var(--muted);text-align:center;margin-bottom:0.5rem;">⏳ Enviando imagem...</div>
 
     <div style="display:flex;gap:8px;margin-top:0.5rem;">
-      <button onclick="fecharModal('modal-produto')" style="flex:1;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
-      <button onclick="salvarProduto()" style="flex:2;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">✓ Salvar produto</button>
+      <button onclick="fecharModal('modal-produto')" style="flex:1;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'Inter',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
+      <button onclick="salvarProduto()" style="flex:2;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">✓ Salvar produto</button>
     </div>
   </div>
 </div>
@@ -893,7 +918,7 @@
         </select>
       </div>
       <div id="extrato-pag-preview" style="font-size:0.78rem;color:var(--green);margin-bottom:8px;display:none;"></div>
-      <button onclick="registrarPagamentoExtrato()" style="width:100%;padding:0.75rem;background:var(--green);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;">✓ Confirmar pagamento</button>
+      <button onclick="registrarPagamentoExtrato()" style="width:100%;padding:0.75rem;background:var(--green);color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;">✓ Confirmar pagamento</button>
     </div>
 
     <button class="btn-wpp-extrato" onclick="enviarExtratoWhatsapp()" style="margin-top:0.75rem;">💬 Enviar pelo WhatsApp</button>
@@ -920,8 +945,8 @@
       <input class="form-input" type="text" id="ec-end" placeholder="Rua, número, bairro"/>
     </div>
     <div style="display:flex;gap:10px;margin-top:0.5rem;">
-      <button onclick="fecharModal('modal-editar-cliente')" style="flex:1;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
-      <button onclick="salvarEdicaoCliente()" style="flex:2;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">✓ Salvar alterações</button>
+      <button onclick="fecharModal('modal-editar-cliente')" style="flex:1;padding:0.85rem;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--pink-border);border-radius:10px;font-family:'Inter',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
+      <button onclick="salvarEdicaoCliente()" style="flex:2;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;">✓ Salvar alterações</button>
     </div>
   </div>
 </div>
@@ -944,8 +969,8 @@
       Esta ação é irreversível. O pedido será removido das vendas e os cookies retornarão ao estoque.
     </div>
     <div style="display:flex;gap:10px;">
-      <button onclick="fecharModal('modal-confirmar-exclusao')" style="flex:1;padding:0.85rem;background:white;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
-      <button onclick="executarExclusaoPedido()" style="flex:1;padding:0.85rem;background:var(--red);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;">Sim, excluir</button>
+      <button onclick="fecharModal('modal-confirmar-exclusao')" style="flex:1;padding:0.85rem;background:white;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-family:'Inter',sans-serif;font-size:0.9rem;cursor:pointer;">Cancelar</button>
+      <button onclick="executarExclusaoPedido()" style="flex:1;padding:0.85rem;background:var(--red);color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;">Sim, excluir</button>
     </div>
   </div>
 </div>
@@ -981,7 +1006,7 @@
       <input class="form-input" type="text" id="est-obs" placeholder="Ex: produção da tarde, contagem física..."/>
     </div>
 
-    <button onclick="salvarMovimento()" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">✓ Confirmar lançamento</button>
+    <button onclick="salvarMovimento()" style="width:100%;padding:0.85rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;margin-top:0.5rem;">✓ Confirmar lançamento</button>
   </div>
 </div>
 
@@ -989,9 +1014,11 @@
   <aside class="sidebar">
     <div class="sidebar-logo">
       <img src="" alt="Logo" id="sidebar-logo-img" style="display:none;"/>
-      <div id="sidebar-logo-placeholder" style="width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 6px;">🏪</div>
-      <div class="s-title">Carregando...</div>
-      <div class="s-sub">Painel Admin</div>
+      <div id="sidebar-logo-placeholder" style="width:34px;height:34px;border-radius:9px;background:rgba(155,111,212,0.25);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">🏪</div>
+      <div style="flex:1;min-width:0;">
+        <div class="s-title">Carregando...</div>
+        <div class="s-sub">Painel Admin</div>
+      </div>
     </div>
     <nav>
       <div class="nav-item active" onclick="showPage('pedidos',this)"><span class="nav-icon">📋</span><span>Pedidos</span></div>
@@ -1001,7 +1028,7 @@
       <div class="nav-item" onclick="showPage('cardapio',this)"><span class="nav-icon">🍫</span><span>Cardápio</span></div>
       <div class="nav-item" onclick="showPage('estoque',this)"><span class="nav-icon">📦</span><span>Estoque</span></div>
       <div class="nav-item" onclick="showPage('inventario',this)"><span class="nav-icon">🧾</span><span>Inventário</span></div>
-      <div class="nav-item" onclick="fazerLogout()" style="margin-top:auto;color:rgba(242,167,195,0.4);">
+      <div class="nav-item" onclick="fazerLogout()" style="margin-top:auto;color:rgba(255,255,255,0.28);">
         <span class="nav-icon">🚪</span><span>Sair</span>
       </div>
     </nav>
@@ -1014,8 +1041,8 @@
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;gap:8px;flex-wrap:wrap;">
         <h1 class="page-title" style="margin:0;" id="pedidos-titulo">Pedidos de hoje</h1>
         <div style="display:flex;gap:8px;">
-          <button onclick="abrirModalPedido()" style="background:var(--pink);color:white;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:0.85rem;font-family:'DM Sans',sans-serif;font-weight:500;">+ Novo pedido</button>
-          <button onclick="carregarPedidos()" style="background:var(--tiffany-pale);color:var(--tiffany-dark);border:1px solid var(--tiffany);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.82rem;font-family:'DM Sans',sans-serif;">↻ Atualizar</button>
+          <button onclick="abrirModalPedido()" style="background:var(--pink);color:white;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:0.85rem;font-family:'Inter',sans-serif;font-weight:600;">+ Novo pedido</button>
+          <button onclick="carregarPedidos()" style="background:var(--tiffany-pale);color:var(--tiffany-dark);border:1px solid var(--tiffany);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.82rem;font-family:'Inter',sans-serif;font-weight:500;">↻ Atualizar</button>
         </div>
       </div>
 
@@ -1024,7 +1051,7 @@
           <input type="text" id="ped-busca-cliente" class="form-input" placeholder="🔍 Buscar pedidos por cliente..." autocomplete="off" oninput="buscarClientePedidos(this.value)"/>
           <div class="autocomplete-list" id="ped-autocomplete-list"></div>
         </div>
-        <button id="ped-limpar-filtro" onclick="limparFiltroClientePedidos()" style="display:none;margin-top:8px;background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:0.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✕ Limpar filtro e voltar para hoje</button>
+        <button id="ped-limpar-filtro" onclick="limparFiltroClientePedidos()" style="display:none;margin-top:8px;background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:0.78rem;cursor:pointer;font-family:'Inter',sans-serif;">✕ Limpar filtro e voltar para hoje</button>
       </div>
 
       <div class="periodo-bar" id="ped-periodo-bar">
@@ -1058,7 +1085,7 @@
     <div id="page-relatorios" class="page">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px;">
         <h1 class="page-title" style="margin:0;">Relatórios de vendas</h1>
-        <button onclick="abrirModalExportar()" style="background:var(--green-bg);color:var(--green);border:1px solid #A5D5B5;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:0.85rem;font-family:'DM Sans',sans-serif;font-weight:500;">📥 Exportar dados</button>
+        <button onclick="abrirModalExportar()" style="background:var(--green-bg);color:var(--green);border:1px solid #A5D5B5;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:0.85rem;font-family:'Inter',sans-serif;font-weight:500;">📥 Exportar dados</button>
       </div>
       <div class="periodo-bar">
         <button class="periodo-btn active" onclick="selecionarPeriodo('rel','hoje',this)">Hoje</button>
@@ -1166,7 +1193,7 @@
             <input type="text" id="fin-busca-cliente" class="form-input" style="padding:6px 10px;font-size:0.82rem;" placeholder="🔍 Buscar cliente..." autocomplete="off" oninput="buscarClienteFinanceiro(this.value)"/>
             <div class="autocomplete-list" id="fin-autocomplete-list"></div>
           </div>
-          <button id="fin-limpar-busca" onclick="limparBuscaFinanceiro()" style="display:none;background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:0.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">✕ Limpar</button>
+          <button id="fin-limpar-busca" onclick="limparBuscaFinanceiro()" style="display:none;background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:0.78rem;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">✕ Limpar</button>
         </div>
         <table class="contas-table">
           <thead><tr><th>Cliente</th><th>Telefone</th><th>Pedidos</th><th>Total pedido</th><th>Pago</th><th class="em-aberto">Em aberto</th><th></th></tr></thead>
@@ -1181,7 +1208,7 @@
       <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;">Compara os cookies pedidos nos últimos 7 dias com a média semanal histórica de cada cliente. Quem está <strong style="color:var(--red);">abaixo da média</strong> aparece destacado — pode ser hora de entrar em contato.</p>
       <div id="clientes-alerta-resumo" style="margin-bottom:1rem;"></div>
       <div style="margin-bottom:1rem;">
-        <input type="text" id="busca-clientes" placeholder="🔍 Buscar cliente..." oninput="filtrarClientes(this.value)" style="padding:0.75rem 1rem;border:1.5px solid var(--pink-border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;width:100%;max-width:360px;outline:none;"/>
+        <input type="text" id="busca-clientes" placeholder="🔍 Buscar cliente..." oninput="filtrarClientes(this.value)" style="padding:0.75rem 1rem;border:1.5px solid var(--pink-border);border-radius:10px;font-family:'Inter',sans-serif;font-size:0.9rem;width:100%;max-width:360px;outline:none;"/>
       </div>
       <div class="report-card">
         <table class="client-table" id="tabela-clientes">
@@ -1195,12 +1222,12 @@
     <div id="page-cardapio" class="page">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;flex-wrap:wrap;gap:8px;">
         <h1 class="page-title" style="margin:0;">Cardápio</h1>
-        <button onclick="abrirModalProduto(null)" style="background:var(--tiffany);color:white;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:0.85rem;font-family:'DM Sans',sans-serif;font-weight:500;">+ Novo produto</button>
+        <button onclick="abrirModalProduto(null)" style="background:var(--tiffany);color:white;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:0.85rem;font-family:'Inter',sans-serif;font-weight:500;">+ Novo produto</button>
       </div>
       <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.25rem;">Crie e edite produtos, preços, imagens e ative ou desative quando precisar.</p>
       <div id="cardapio-lista"><div class="empty"><div class="spinner"></div></div></div>
 
-      <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--brown);margin:2rem 0 0.5rem;">💬 Mensagens automáticas</h2>
+      <h2 style="font-family:'Fraunces',serif;font-size:1.2rem;color:var(--brown);margin:2rem 0 0.5rem;">💬 Mensagens automáticas</h2>
       <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.25rem;">
         Edite o texto das mensagens enviadas pelo WhatsApp. Use as variáveis abaixo onde quiser:<br>
         <span style="background:var(--pink-pale);padding:2px 7px;border-radius:6px;font-size:0.78rem;color:var(--pink-dark);margin-right:4px;">{NOME}</span>
@@ -1213,7 +1240,7 @@
         <div class="empty"><div class="spinner"></div></div>
       </div>
 
-      <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--brown);margin:2rem 0 0.5rem;">🎨 Personalização visual</h2>
+      <h2 style="font-family:'Fraunces',serif;font-size:1.2rem;color:var(--brown);margin:2rem 0 0.5rem;">🎨 Personalização visual</h2>
       <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.25rem;">Deixe o sistema com a cara do seu negócio: logo e cores próprias.</p>
 
       <div class="order-card" style="max-width:560px;">
@@ -1222,7 +1249,7 @@
           <div id="pers-logo-preview" style="width:64px;height:64px;border-radius:50%;background:var(--pink-pale);border:2px dashed var(--pink-border);display:flex;align-items:center;justify-content:center;font-size:1.5rem;overflow:hidden;cursor:pointer;flex-shrink:0;" onclick="document.getElementById('pers-logo-input').click()">🏪</div>
           <div style="flex:1;min-width:160px;">
             <div style="font-weight:500;font-size:0.9rem;">Logo do estabelecimento</div>
-            <button onclick="document.getElementById('pers-logo-input').click()" style="background:none;border:1px solid var(--pink-border);color:var(--pink-dark);border-radius:8px;padding:5px 12px;font-size:0.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:6px;">📷 Trocar logo</button>
+            <button onclick="document.getElementById('pers-logo-input').click()" style="background:none;border:1px solid var(--pink-border);color:var(--pink-dark);border-radius:8px;padding:5px 12px;font-size:0.78rem;cursor:pointer;font-family:'Inter',sans-serif;margin-top:6px;">📷 Trocar logo</button>
           </div>
           <input type="file" id="pers-logo-input" accept="image/*" style="display:none;" onchange="uploadLogoEstabelecimento(this)"/>
         </div>
@@ -1260,8 +1287,8 @@
         </div>
 
         <div style="display:flex;gap:8px;">
-          <button onclick="restaurarCoresPadrao()" style="flex:1;padding:0.7rem;background:white;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;">↺ Restaurar padrão</button>
-          <button onclick="salvarPersonalizacao()" style="flex:2;padding:0.7rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;">✓ Salvar personalização</button>
+          <button onclick="restaurarCoresPadrao()" style="flex:1;padding:0.7rem;background:white;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">↺ Restaurar padrão</button>
+          <button onclick="salvarPersonalizacao()" style="flex:2;padding:0.7rem;background:var(--tiffany);color:white;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;">✓ Salvar personalização</button>
         </div>
       </div>
     </div>
@@ -1270,7 +1297,7 @@
     <div id="page-estoque" class="page">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px;">
         <h1 class="page-title" style="margin:0;">Estoque em tempo real</h1>
-        <button onclick="carregarEstoque()" style="background:var(--tiffany-pale);color:var(--tiffany-dark);border:1px solid var(--tiffany);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.82rem;font-family:'DM Sans',sans-serif;">↻ Atualizar</button>
+        <button onclick="carregarEstoque()" style="background:var(--tiffany-pale);color:var(--tiffany-dark);border:1px solid var(--tiffany);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.82rem;font-family:'Inter',sans-serif;">↻ Atualizar</button>
       </div>
 
       <div class="estoque-alerta" id="estoque-alerta"></div>
@@ -1279,22 +1306,22 @@
 
       <div style="margin-top:2rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
-          <h2 style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--brown);">📋 Extrato de movimentações</h2>
+          <h2 style="font-family:'Fraunces',serif;font-size:1.1rem;color:var(--brown);">📋 Extrato de movimentações</h2>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <select id="est-filtro-produto" onchange="filtrarMovimentos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'DM Sans',sans-serif;color:var(--text);background:white;">
+            <select id="est-filtro-produto" onchange="filtrarMovimentos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'Inter',sans-serif;color:var(--text);background:white;">
               <option value="">Todos os sabores</option>
               <option value="Nutella">Nutella</option>
               <option value="Red Velvet">Red Velvet</option>
               <option value="Oreo">Oreo</option>
             </select>
-            <select id="est-filtro-tipo" onchange="filtrarMovimentos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'DM Sans',sans-serif;color:var(--text);background:white;">
+            <select id="est-filtro-tipo" onchange="filtrarMovimentos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'Inter',sans-serif;color:var(--text);background:white;">
               <option value="">Todos os tipos</option>
               <option value="entrada_producao">Produção</option>
               <option value="entrada_ajuste">Entrada ajuste</option>
               <option value="saida_pedido">Saída por pedido</option>
               <option value="saida_ajuste">Saída ajuste</option>
             </select>
-            <input type="date" id="est-filtro-data" onchange="filtrarMovimentos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'DM Sans',sans-serif;color:var(--text);" placeholder="Filtrar data"/>
+            <input type="date" id="est-filtro-data" onchange="filtrarMovimentos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'Inter',sans-serif;color:var(--text);" placeholder="Filtrar data"/>
           </div>
         </div>
 
@@ -1315,8 +1342,8 @@
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px;">
         <h1 class="page-title" style="margin:0;">Inventário</h1>
         <div style="display:flex;gap:8px;">
-          <button onclick="abrirModalInsumo(null)" style="background:var(--tiffany);color:white;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.85rem;font-family:'DM Sans',sans-serif;font-weight:500;">+ Novo insumo</button>
-          <button onclick="abrirModalReceita(null)" style="background:var(--pink);color:white;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.85rem;font-family:'DM Sans',sans-serif;font-weight:500;">+ Nova receita</button>
+          <button onclick="abrirModalInsumo(null)" style="background:var(--tiffany);color:white;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.85rem;font-family:'Inter',sans-serif;font-weight:500;">+ Novo insumo</button>
+          <button onclick="abrirModalReceita(null)" style="background:var(--pink);color:white;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.85rem;font-family:'Inter',sans-serif;font-weight:500;">+ Nova receita</button>
         </div>
       </div>
 
@@ -1337,7 +1364,7 @@
           <div class="metric"><div class="metric-val" id="inv-alertas" style="color:var(--red);">—</div><div class="metric-lbl">Abaixo do mínimo</div></div>
           <div class="metric"><div class="metric-val" id="inv-valor-total">—</div><div class="metric-lbl">Valor em estoque</div></div>
           <div class="metric" style="display:flex;align-items:center;justify-content:center;">
-            <button onclick="abrirListaCompras()" style="background:var(--pink);color:white;border:none;border-radius:10px;padding:0.6rem 1rem;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;cursor:pointer;text-align:center;line-height:1.3;">🛒 Lista de<br/>compras</button>
+            <button onclick="abrirListaCompras()" style="background:var(--pink);color:white;border:none;border-radius:10px;padding:0.6rem 1rem;font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:500;cursor:pointer;text-align:center;line-height:1.3;">🛒 Lista de<br/>compras</button>
           </div>
         </div>
         <div id="insumos-lista"><div class="empty"><div class="spinner"></div></div></div>
@@ -1351,10 +1378,10 @@
       <!-- ABA EXTRATO -->
       <div id="inv-tab-extrato" class="perfil-tabcontent">
         <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;">
-          <select id="inv-filtro-insumo" onchange="filtrarMovInsumos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'DM Sans',sans-serif;color:var(--text);background:white;">
+          <select id="inv-filtro-insumo" onchange="filtrarMovInsumos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'Inter',sans-serif;color:var(--text);background:white;">
             <option value="">Todos os insumos</option>
           </select>
-          <select id="inv-filtro-tipo" onchange="filtrarMovInsumos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'DM Sans',sans-serif;color:var(--text);background:white;">
+          <select id="inv-filtro-tipo" onchange="filtrarMovInsumos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'Inter',sans-serif;color:var(--text);background:white;">
             <option value="">Todos os tipos</option>
             <option value="entrada">🛒 Compra</option>
             <option value="entrada_ajuste">📋 Ajuste entrada</option>
@@ -1362,7 +1389,7 @@
             <option value="saida_ajuste">📋 Ajuste saída</option>
             <option value="saida_descarte">🗑️ Descarte</option>
           </select>
-          <input type="date" id="inv-filtro-data" onchange="filtrarMovInsumos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'DM Sans',sans-serif;color:var(--text);"/>
+          <input type="date" id="inv-filtro-data" onchange="filtrarMovInsumos()" style="padding:6px 10px;border:1px solid var(--pink-border);border-radius:8px;font-size:0.82rem;font-family:'Inter',sans-serif;color:var(--text);"/>
         </div>
         <div class="report-card">
           <div id="inv-mov-lista"><div class="empty"><div class="spinner"></div></div></div>
@@ -3370,7 +3397,7 @@ function renderMensagens() {
         </div>
       </div>
       <div id="msg-display-${m.chave}" style="background:var(--pink-pale);border-radius:8px;padding:0.75rem;font-size:0.78rem;color:var(--text);white-space:pre-wrap;line-height:1.6;">${escHtml(getMensagem(m.chave))}</div>
-      <textarea id="msg-input-${m.chave}" style="display:none;width:100%;min-height:160px;padding:0.75rem;border:1.5px solid var(--pink);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem;color:var(--text);resize:vertical;outline:none;line-height:1.6;" onkeydown="if(event.ctrlKey&&event.key==='Enter') salvarMensagem('${m.chave}')">${escHtml(getMensagem(m.chave))}</textarea>
+      <textarea id="msg-input-${m.chave}" style="display:none;width:100%;min-height:160px;padding:0.75rem;border:1.5px solid var(--pink);border-radius:8px;font-family:'Inter',sans-serif;font-size:0.82rem;color:var(--text);resize:vertical;outline:none;line-height:1.6;" onkeydown="if(event.ctrlKey&&event.key==='Enter') salvarMensagem('${m.chave}')">${escHtml(getMensagem(m.chave))}</textarea>
       <div id="msg-hint-${m.chave}" style="display:none;font-size:0.72rem;color:var(--muted);margin-top:4px;">Ctrl+Enter para salvar rapidamente</div>
     </div>`).join('');
 }
