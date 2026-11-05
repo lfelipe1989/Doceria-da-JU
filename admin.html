@@ -3471,14 +3471,40 @@ function renderCardapio() {
 }
 
 async function excluirProduto(id, nome) {
-  if (!confirm(`Tem certeza que deseja excluir o produto "${nome}"?\n\nEsta ação não pode ser desfeita.`)) return;
+  if (!confirm(`Tem certeza que deseja excluir o produto "${nome}"?\n\nO produto será removido do cardápio e não aparecerá em novos pedidos.`)) return;
   try {
-    await supaFetch('produtos?id=eq.'+id+'&estabelecimento_id=eq.'+estabelecimentoId, 'DELETE');
-    produtosAdmin = produtosAdmin.filter(p => p.id !== id);
-    renderCardapio();
-    showToast('Produto excluído com sucesso.');
+    // Tenta DELETE real primeiro
+    const res = await fetch(SUPABASE_URL+'/rest/v1/produtos?id=eq.'+id+'&estabelecimento_id=eq.'+estabelecimentoId, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY, 'Content-Type': 'application/json' }
+    });
+    if (res.ok) {
+      // DELETE funcionou — remove da lista local
+      produtosAdmin = produtosAdmin.filter(p => p.id !== id);
+      produtosModal = []; // invalida cache do modal
+      renderCardapio();
+      showToast('Produto excluído com sucesso.');
+    } else {
+      // DELETE falhou (provavelmente FK com pedidos antigos) — faz soft delete: inativa o produto
+      await supaFetch('produtos?id=eq.'+id+'&estabelecimento_id=eq.'+estabelecimentoId, 'PATCH', { ativo: false });
+      const p = produtosAdmin.find(x => x.id === id);
+      if (p) p.ativo = false;
+      produtosModal = []; // invalida cache do modal
+      renderCardapio();
+      showToast('Produto desativado (possui pedidos vinculados e não pode ser excluído).');
+    }
   } catch(e) {
-    alert('Erro ao excluir produto: ' + e.message);
+    // Fallback: tenta pelo menos desativar
+    try {
+      await supaFetch('produtos?id=eq.'+id+'&estabelecimento_id=eq.'+estabelecimentoId, 'PATCH', { ativo: false });
+      const p = produtosAdmin.find(x => x.id === id);
+      if (p) p.ativo = false;
+      produtosModal = [];
+      renderCardapio();
+      showToast('Produto desativado (não foi possível excluir).');
+    } catch(e2) {
+      alert('Erro ao excluir produto: ' + e2.message);
+    }
   }
 }
 
