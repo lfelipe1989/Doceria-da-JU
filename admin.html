@@ -1914,8 +1914,8 @@ let precosModal = {};
 let todosClientes = [];
 let modoEdicaoId = null; // null = novo pedido; senão = id do pedido sendo editado
 
-async function garantirProdutosModal() {
-  if (!produtosModal.length) {
+async function garantirProdutosModal(forcarReload=false) {
+  if (!produtosModal.length || forcarReload) {
     produtosModal = await supaFetch('produtos?estabelecimento_id=eq.'+estabelecimentoId+'&order=id.asc'); // inclui inativos para permitir editar pedidos antigos
   }
   if (!todosClientes.length) {
@@ -1944,7 +1944,8 @@ async function abrirModalPedido() {
   document.getElementById('np-resumo').style.display='none';
   document.getElementById('autocomplete-list').classList.remove('show');
   abrirModal('modal-pedido');
-  await garantirProdutosModal();
+  produtosModal = []; // força recarregar para pegar exclusões/desativações recentes
+  await garantirProdutosModal(true);
   produtosModal.forEach(p => qtysModal[p.id]=0);
   renderProdutosModal();
 }
@@ -2057,7 +2058,11 @@ async function abrirModalRepetirPedido(pedidoId) {
 }
 
 function renderProdutosModal() {
-  document.getElementById('np-produtos').innerHTML = produtosModal.map(p => `
+  // No modo novo pedido: só mostrar produtos ativos. Em edição/repetição: mostra todos (incluindo inativos que estavam no pedido original)
+  const lista = modoEdicaoId === null
+    ? produtosModal.filter(p => p.ativo !== false && !p._legado)
+    : produtosModal;
+  document.getElementById('np-produtos').innerHTML = lista.map(p => `
     <div class="modal-product">
       <span style="font-size:1.5rem;">${p.emoji}</span>
       <div class="modal-product-info">
